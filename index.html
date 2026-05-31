@@ -258,6 +258,24 @@
     .about-left { flex: 1; }
     .about-div { width: 40px; height: 2px; background: linear-gradient(90deg, #f5b8cc, #b8a8e8, #a8d8b0); margin-bottom: 28px; }
     .about-intro { font-size: 13px; color: #444; line-height: 2.2; margin-bottom: 0; }
+    .tl-list { display: flex; flex-direction: column; gap: 24px; }
+    .tl-item { display: grid; grid-template-columns: 16px 52px 1fr; grid-template-rows: auto auto auto; gap: 0 12px; }
+    .tl-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 3px; grid-row: 1; }
+    .tl-dot.pink   { background: #f5b8cc; }
+    .tl-dot.purple { background: #b8a8e8; }
+    .tl-dot.amber  { background: #f5d08c; }
+    .tl-dot.coral  { background: #f5a898; }
+    .tl-dot.green  { background: #a8d8b0; }
+    .tl-year  { font-size: 11px; font-weight: 500; color: var(--light-gray); letter-spacing: 1px; grid-row: 1; }
+    .tl-event { font-size: 13px; font-weight: 500; color: var(--black); grid-row: 1; }
+    .tl-desc  { font-size: 12px; color: #666; line-height: 1.9; grid-column: 3; grid-row: 2; margin-top: 4px; }
+    .tl-tags  { display: flex; gap: 6px; flex-wrap: wrap; grid-column: 3; grid-row: 3; margin-top: 8px; }
+    .tl-tag   { font-size: 10px; padding: 3px 10px; border-radius: 10px; letter-spacing: 1px; }
+    .tag-pink   { background: #fde8ef; color: #d4607c; }
+    .tag-purple { background: #eceaff; color: #7060c8; }
+    .tag-amber  { background: #fef3d8; color: #b07820; }
+    .tag-coral  { background: #fde8e4; color: #c05840; }
+    .tag-green  { background: #e8f8ec; color: #3a9050; }
     .about-name { font-size: 22px; font-weight: 500; color: var(--black); margin-bottom: 16px; letter-spacing: 1px; }
     .about-desc { font-size: 13px; color: #444; line-height: 2.2; }
     .about-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
@@ -463,8 +481,45 @@
       <div class="section-ja">白岩 あやな</div>
       <div class="about-div"></div>
       <p class="about-intro">ゲーム会社でアートディレクターとして30名のクリエイターを率いた経験から、制作の品質管理・スケジュール管理・丁寧なコミュニケーションを大切にしています。デザインを届けるだけでなく、プロジェクト全体を一緒に考えるパートナーとして、あなたのWebをサポートします。</p>
-      <div style="width:40px;height:2px;background:linear-gradient(90deg,#f5b8cc,#b8a8e8,#a8d8b0);margin:28px 0;"></div>
-      <p style="font-size:11px;letter-spacing:2px;color:#aaa;margin-bottom:24px;">career history</p>
+      <div class="about-div" style="margin-top:28px;margin-bottom:28px;"></div>
+      <div class="section-ja" style="margin-bottom:24px;">career history</div>
+      <div class="tl-list">
+        <div class="tl-item">
+          <div class="tl-dot pink"></div>
+          <div class="tl-year">2015</div>
+          <div class="tl-event">上場ゲーム会社 入社</div>
+          <div class="tl-desc">イラストチームに配属。キャラクターデザインやゲーム内グラフィックの制作を担当。</div>
+          <div class="tl-tags"><span class="tl-tag tag-pink">イラスト制作</span></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot purple"></div>
+          <div class="tl-year">2018</div>
+          <div class="tl-event">イラストチーム サブリーダー就任</div>
+          <div class="tl-desc">6名のメンバーのメンタリングを担当。制作進行管理やフィードバック、育成を経験。</div>
+          <div class="tl-tags"><span class="tl-tag tag-purple">チームマネジメント</span><span class="tl-tag tag-purple">メンタリング</span></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot amber"></div>
+          <div class="tl-year">2020</div>
+          <div class="tl-event">アートディレクター昇格 / 社内MVP受賞</div>
+          <div class="tl-desc">30名のクリエイターチームを統括するアートディレクターに。同年、優れた成果を認められ社内MVPを受賞。</div>
+          <div class="tl-tags"><span class="tl-tag tag-amber">アートディレクション</span><span class="tl-tag tag-amber">30名マネジメント</span><span class="tl-tag tag-amber">MVP受賞</span></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot coral"></div>
+          <div class="tl-year">2021</div>
+          <div class="tl-event">第一子出産</div>
+          <div class="tl-desc">産休・育休を経て、仕事と育児を両立しながらクリエイティブ活動を継続。</div>
+          <div class="tl-tags"><span class="tl-tag tag-coral">ワーキングマザー</span></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot green"></div>
+          <div class="tl-year">2026</div>
+          <div class="tl-event">Webデザイナーとして独立</div>
+          <div class="tl-desc">ゲーム業界でのクリエイティブ経験を活かし、Webデザイナーとして独立。小さなお仕事から丁寧にお受けします。</div>
+          <div class="tl-tags"><span class="tl-tag tag-green">Web Design</span><span class="tl-tag tag-green">独立</span></div>
+        </div>
+      </div>
     </div>
     <div class="about-card fade-up"><img src="images/profile.png" alt="白岩あやな"></div>
   </section>
