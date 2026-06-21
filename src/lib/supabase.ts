@@ -1,1 +1,1 @@
-export { default, isSupabaseConfigured, supabase } from '../supabaseClient';
+export { default, isSupabaseConfigured, supabase, supabaseConfigSource } from '../supabaseClient';

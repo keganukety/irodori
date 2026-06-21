@@ -27,6 +27,17 @@ npx --yes wrangler@4 pages dev dist --compatibility-date=2026-06-21
 
 Wranglerが未導入の場合は、初回実行時に`npx`がWrangler 4を一時取得します。
 
+## Supabase公開接続設定
+
+ローカルのVite起動・ビルドでは、`.env.local`の次の値を使用します。
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Cloudflare Pagesでは、同名のVariables and secretsをPages Functionsのruntime bindingとして設定してください。ビルド時に値が渡らない場合、ブラウザは`/api/public-config`から公開用URLとanon keyを取得します。SERVICE_ROLE_KEYは使用しません。
+
 API確認例：
 
 ```text
