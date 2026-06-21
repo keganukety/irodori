@@ -22,6 +22,7 @@ type Product = {
 type ProductImage = {
   product_id: string | number;
   rakuten_image_html?: string | null;
+  image_url?: string | null;
   is_primary?: boolean | null;
   display_order?: number | null;
   sort_order?: number | null;
@@ -72,6 +73,7 @@ type HomeState = {
   brands: BrandCard[];
   mainHeroes: HomeMainHeroAsset[];
   hasLoaded: boolean;
+  loadError: string | null;
 };
 
 type HomeLoadResult = {
@@ -104,6 +106,7 @@ const initialState: HomeState = {
   brands: [],
   mainHeroes: [],
   hasLoaded: false,
+  loadError: null,
 };
 
 let currentHomeState = initialState;
@@ -182,10 +185,15 @@ async function loadHomeState(): Promise<HomeState> {
     ...initialState,
     productsByCategory: new Map(categories.map((category) => [category.label, []])),
     hasLoaded: true,
+    loadError: null,
   };
 
   if (!isSupabaseConfigured) {
-    return emptyState;
+    console.error('Supabaseの公開接続設定がありません。VITE_SUPABASE_URLとVITE_SUPABASE_ANON_KEYを確認してください。');
+    return {
+      ...emptyState,
+      loadError: '商品データを読み込めません。サイトの接続設定を確認してください。',
+    };
   }
 
   try {
@@ -210,10 +218,14 @@ async function loadHomeState(): Promise<HomeState> {
       brands,
       mainHeroes: [],
       hasLoaded: true,
+      loadError: null,
     };
   } catch (error) {
     console.error('トップページの商品取得に失敗しました。', error);
-    return emptyState;
+    return {
+      ...emptyState,
+      loadError: '商品データの読み込みに失敗しました。時間をおいて再度お試しください。',
+    };
   }
 }
 
@@ -261,7 +273,7 @@ async function loadProductImages(products: Product[]): Promise<Map<string, { pri
   try {
     const { data, error } = await supabase
       .from('product_affiliate_images')
-      .select('product_id, rakuten_image_html, is_primary, display_order, sort_order')
+      .select('product_id, rakuten_image_html, image_url, is_primary, display_order, sort_order')
       .eq('media_type', 'image')
       .in('product_id', productIds)
       .order('display_order', { ascending: true });
@@ -285,10 +297,10 @@ async function loadProductImages(products: Product[]): Promise<Map<string, { pri
         (a, b) => getProductImageOrder(a) - getProductImageOrder(b),
       );
       const primaryImage = sortedImages.find((image) => image.is_primary) ?? sortedImages[0];
-      const primary = extractImageSrc(primaryImage?.rakuten_image_html);
+      const primary = getProductImageSrc(primaryImage);
       const secondary = sortedImages
         .filter((image) => image !== primaryImage)
-        .map((image) => extractImageSrc(image.rakuten_image_html))
+        .map(getProductImageSrc)
         .find((src) => src && src !== primary);
 
       const categoryImage = sortedImages.find((image) => getProductImageOrder(image) === 2)
@@ -296,11 +308,12 @@ async function loadProductImages(products: Product[]): Promise<Map<string, { pri
       imagePairs.set(productId, {
         primary,
         secondary,
-        category: extractImageSrc(categoryImage?.rakuten_image_html),
+        category: getProductImageSrc(categoryImage),
       });
     });
   } catch (error) {
     console.error('トップページの商品画像取得に失敗しました。', error);
+    throw error;
   }
 
   return imagePairs;
@@ -651,6 +664,15 @@ function renderCategoryProducts(state: HomeState): string {
     return '<p class="home-empty-message">商品データを読み込んでいます。</p>';
   }
 
+  if (state.loadError) {
+    return `
+      <section class="home-empty-panel" role="alert">
+        <h3>商品データを表示できません</h3>
+        <p>${escapeHtml(state.loadError)}</p>
+      </section>
+    `;
+  }
+
   if (products.length === 0) {
     return `
       <section class="home-empty-panel">
@@ -832,6 +854,15 @@ function extractImageSrc(html: unknown): string {
   const template = document.createElement('template');
   template.innerHTML = html;
   return template.content.querySelector('img')?.getAttribute('src')?.trim() ?? '';
+}
+
+function getProductImageSrc(image: ProductImage | undefined): string {
+  const directUrl = image?.image_url?.trim();
+  if (isSafeImageUrl(directUrl)) {
+    return directUrl;
+  }
+
+  return extractImageSrc(image?.rakuten_image_html);
 }
 
 function getTags(product: Product): string[] {
