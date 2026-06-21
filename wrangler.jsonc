@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "irodori",
+  "name": "irodori-cu2",
   "compatibility_date": "2026-06-21",
+  // Runtime Secrets are managed in the Cloudflare Dashboard or with
+  // `wrangler pages secret put`; never commit their values here.
   "pages_build_output_dir": "./dist"
 }

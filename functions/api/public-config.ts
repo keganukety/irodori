@@ -8,18 +8,32 @@ type PagesContext = {
 };
 
 export async function onRequestGet(context: PagesContext): Promise<Response> {
-  const supabaseUrl = normalizeSupabaseUrl(context.env.VITE_SUPABASE_URL);
-  const supabaseAnonKey = context.env.VITE_SUPABASE_ANON_KEY?.trim() ?? '';
+  const availableEnvNames = Object.keys(context.env ?? {}).sort();
+  const rawSupabaseUrl = context.env?.VITE_SUPABASE_URL;
+  const rawSupabaseAnonKey = context.env?.VITE_SUPABASE_ANON_KEY;
+  const hasUrl = typeof rawSupabaseUrl === 'string' && rawSupabaseUrl.trim().length > 0;
+  const hasAnonKey = typeof rawSupabaseAnonKey === 'string' && rawSupabaseAnonKey.trim().length > 0;
+  const supabaseUrl = normalizeSupabaseUrl(rawSupabaseUrl);
+  const supabaseAnonKey = rawSupabaseAnonKey?.trim() ?? '';
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    // Temporary name-only diagnostics. Remove after the production binding is confirmed.
     console.error('[public-config] Supabase public configuration is incomplete.', {
-      hasUrl: Boolean(supabaseUrl),
-      hasAnonKey: Boolean(supabaseAnonKey),
+      hasUrl,
+      hasAnonKey,
+      hasValidUrl: Boolean(supabaseUrl),
+      availableEnvNames,
     });
 
     return json({
       ok: false,
       error: 'Supabase public configuration is unavailable.',
+      debug: {
+        hasUrl,
+        hasAnonKey,
+        hasValidUrl: Boolean(supabaseUrl),
+        availableEnvNames,
+      },
     }, 503);
   }
 
