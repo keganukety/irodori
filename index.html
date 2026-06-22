@@ -3,35 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IRODORI | 育児用品の比較・検索・選び方ガイド</title>
-    <meta
-      name="description"
-      content="IRODORIは、ベビーカー、抱っこ紐、チャイルドシートなどの育児用品を暮らしに合わせて比較・検索できる選び方ガイドです。"
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="IRODORI" />
-    <meta property="og:title" content="IRODORI | 育児用品の比較・検索・選び方ガイド" />
-    <meta
-      property="og:description"
-      content="ベビーカー、抱っこ紐、チャイルドシートなどの育児用品を暮らしに合わせて比較・検索できる選び方ガイドです。"
-    />
-    <meta property="og:locale" content="ja_JP" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="theme-color" content="#ffffff" />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "IRODORI",
-        "description": "ベビーカー、抱っこ紐、チャイルドシートなどの育児用品を比較・検索できる選び方ガイドです。",
-        "inLanguage": "ja"
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="googlebot" content="noindex, nofollow, noarchive" />
+    <meta name="description" content="IRODORIはただいま公開準備中です。" />
+    <meta name="theme-color" content="#fffafc" />
+    <title>IRODORI | Coming soon</title>
+    <style>
+      :root {
+        font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+        color: #302a31;
+        background: #fffafc;
+        font-synthesis: none;
       }
-    </script>
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+      }
+
+      main {
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 15% 18%, rgba(255, 210, 225, 0.65), transparent 30%),
+          radial-gradient(circle at 86% 24%, rgba(220, 211, 255, 0.65), transparent 29%),
+          radial-gradient(circle at 72% 84%, rgba(205, 242, 226, 0.65), transparent 31%),
+          #fffafc;
+      }
+
+      .coming-soon {
+        width: min(100%, 640px);
+        padding: clamp(48px, 9vw, 88px) clamp(28px, 8vw, 72px);
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 36px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: 0 24px 70px rgba(101, 76, 99, 0.12);
+        backdrop-filter: blur(14px);
+      }
+
+      .brand {
+        display: block;
+        margin-bottom: 28px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.4rem, 9vw, 4.6rem);
+        font-weight: 400;
+        letter-spacing: 0.16em;
+        line-height: 1;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #9b718d;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.35rem, 4.5vw, 2rem);
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+
+      p:last-child {
+        margin: 20px 0 0;
+        color: #746b73;
+        font-size: 0.95rem;
+        line-height: 1.9;
+      }
+    </style>
   </head>
   <body>
-    <div id="app">
-      <div id="home-app"></div>
-    </div>
-    <script type="module" src="/src/home.ts"></script>
+    <main>
+      <section class="coming-soon" aria-labelledby="coming-soon-title">
+        <span class="brand">IRODORI</span>
+        <p class="eyebrow">Coming soon</p>
+        <h1 id="coming-soon-title">ただいま準備中です</h1>
+        <p>公開まで、もうしばらくお待ちください。</p>
+      </section>
+    </main>
   </body>
 </html>
