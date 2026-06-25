@@ -1,4 +1,5 @@
 import './assetsAdmin.css';
+import JSZip from 'jszip';
 import { supabase } from './lib/supabase';
 import {
   siteAssetTypes,
@@ -19,7 +20,10 @@ if (!appElement) {
 const app: HTMLDivElement = appElement;
 const storageBucket = 'site-assets';
 const maxFileSize = 5 * 1024 * 1024;
-const allowedMimeTypes: SiteAssetMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const maxIconZipEntries = 100;
+const allowedMimeTypes: SiteAssetMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml'];
+const uploadAccept = 'image/avif,image/webp,image/png,image/jpeg,image/svg+xml,.avif,.webp,.png,.jpg,.jpeg,.svg';
+const iconZipAccept = 'application/zip,application/x-zip-compressed,.zip';
 const ASSET_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 const CREATE_DRAFT_STORAGE_KEY = 'irodori_site_asset_create_draft';
 
@@ -27,6 +31,7 @@ type BrandOption = {
   id: string;
   slug: string;
   display_name: string;
+  sort_order?: number | null;
   logo_asset_key: string | null;
   hero_asset_key?: string | null;
 };
@@ -40,6 +45,7 @@ const assetTypeLabels: Record<SiteAssetType, string> = {
   article: '記事アイキャッチ',
   brand_logo: 'ブランドロゴ',
   brand_hero: 'ブランドヒーロー',
+  icon: 'アイコン',
 };
 
 const sizeRecommendations: Record<SiteAssetType, string> = {
@@ -51,6 +57,7 @@ const sizeRecommendations: Record<SiteAssetType, string> = {
   article: 'PC・スマホ 1200×630',
   brand_logo: '正方形または横長',
   brand_hero: 'PC 1600×700 / スマホ 750×900',
+  icon: 'SVG推奨 / 48×48表示想定 / ZIP一括登録可',
 };
 
 let assets: SiteAsset[] = [];
@@ -202,6 +209,7 @@ function renderAssetForm() {
         <label>altテキスト<input name="alt_text" /></label>
         <label>リンク先<input name="link_url" placeholder="/products.html または https://..." /></label>
       </div>
+      ${renderIconFields()}
       <label>キャプション<textarea name="caption" rows="2"></textarea></label>
       <div class="field-grid period-grid">
         <label>公開開始<input name="starts_at" type="datetime-local" /></label>
@@ -230,7 +238,44 @@ function renderBrandField(selectedBrandId = '') {
   `;
 }
 
+function renderIconFields(isEdit = false) {
+  return `
+    <section class="icon-upload-panel" data-icon-fields hidden>
+      <div>
+        <h3>アイコンSVGを登録</h3>
+        <p>SVGを1つずつ登録するか、SVGをまとめたZIPをアップロードできます。</p>
+      </div>
+      <div class="field-grid icon-upload-grid">
+        <label>
+          単体SVGアップロード
+          <input name="icon_svg_file" type="file" accept="image/svg+xml,.svg" />
+          <small>ファイル名から asset_key / title / alt_text を自動生成します。</small>
+        </label>
+        <label>
+          ZIP一括アップロード
+          <input name="icon_zip_file" type="file" accept="${iconZipAccept}" ${isEdit ? 'disabled' : ''} />
+          <small>${isEdit ? '一括登録は新規登録フォームで利用できます。' : `SVGのみ最大${maxIconZipEntries}件まで登録します。`}</small>
+        </label>
+      </div>
+      <ul class="icon-upload-result" data-icon-upload-result hidden></ul>
+    </section>
+  `;
+}
+
 async function loadBrands() {
+  const orderedWithHero = await supabase
+    .from('brands')
+    .select('id, slug, display_name, sort_order, logo_asset_key, hero_asset_key')
+    .eq('is_published', true)
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('display_name', { ascending: true });
+
+  if (!orderedWithHero.error) {
+    brands = (orderedWithHero.data ?? []) as BrandOption[];
+    brandHeroLinkAvailable = true;
+    return;
+  }
+
   const withHero = await supabase
     .from('brands')
     .select('id, slug, display_name, logo_asset_key, hero_asset_key')
@@ -262,8 +307,8 @@ function renderUploadField(name: string, label: string, required: boolean, varia
   return `
     <label class="upload-field">
       <span>${label}</span>
-      <input name="${name}" type="file" accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif" ${required ? 'required' : ''} />
-      <span class="file-note">JPEG・PNG・WebP・AVIF / 最大5MB</span>
+      <input name="${name}" type="file" accept="${uploadAccept}" ${required ? 'required' : ''} />
+      <span class="file-note">JPEG・PNG・WebP・AVIF・SVG / 最大5MB</span>
       <span class="image-preview" data-preview="${variant}"><span>プレビュー未選択</span></span>
     </label>
   `;
@@ -301,9 +346,24 @@ function renderAssetCard(asset: SiteAsset) {
   const mobileDimensions = asset.mobile_width && asset.mobile_height
     ? `${asset.mobile_width}×${asset.mobile_height}`
     : `PC画像を使用 (${asset.desktop_width}×${asset.desktop_height})`;
+  const previewMarkup = asset.asset_type === 'icon'
+    ? `
+      <div class="current-previews current-previews--icon">
+        <figure>
+          <div class="preview-frame icon-frame"><img src="${escapeAttr(asset.desktop_image_url)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div>
+          <figcaption>${asset.desktop_width}×${asset.desktop_height}</figcaption>
+        </figure>
+      </div>
+    `
+    : `
+      <div class="current-previews">
+        <figure><div class="preview-frame desktop-frame"><img src="${escapeAttr(asset.desktop_image_url)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>PC ${asset.desktop_width}×${asset.desktop_height}</figcaption></figure>
+        <figure><div class="preview-frame mobile-frame"><img src="${escapeAttr(mobileUrl)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>スマホ ${mobileDimensions}</figcaption></figure>
+      </div>
+    `;
 
   return `
-    <article class="asset-card" data-asset-id="${escapeAttr(asset.id)}">
+    <article class="asset-card asset-card--${escapeAttr(asset.asset_type)}" data-asset-id="${escapeAttr(asset.id)}">
       <div class="asset-card-head">
         <div>
           <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
@@ -312,10 +372,7 @@ function renderAssetCard(asset: SiteAsset) {
         </div>
         <button type="button" class="quiet-button" data-action="toggle-edit" aria-expanded="false">編集</button>
       </div>
-      <div class="current-previews">
-        <figure><div class="preview-frame desktop-frame"><img src="${escapeAttr(asset.desktop_image_url)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>PC ${asset.desktop_width}×${asset.desktop_height}</figcaption></figure>
-        <figure><div class="preview-frame mobile-frame"><img src="${escapeAttr(mobileUrl)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>スマホ ${mobileDimensions}</figcaption></figure>
-      </div>
+      ${previewMarkup}
       <form class="asset-form edit-form" hidden>
         <div class="field-grid identity-grid">
           <label>asset_key<input name="asset_key" value="${escapeAttr(asset.asset_key)}" required /></label>
@@ -330,6 +387,7 @@ function renderAssetCard(asset: SiteAsset) {
           <label>altテキスト<input name="alt_text" value="${escapeAttr(asset.alt_text)}" /></label>
           <label>リンク先<input name="link_url" value="${escapeAttr(asset.link_url ?? '')}" placeholder="/products.html または https://..." /></label>
         </div>
+        ${renderIconFields(true)}
         <label>キャプション<textarea name="caption" rows="2">${escapeText(asset.caption)}</textarea></label>
         <div class="field-grid period-grid">
           <label>公開開始<input name="starts_at" type="datetime-local" value="${escapeAttr(toDatetimeLocal(asset.starts_at))}" /></label>
@@ -354,7 +412,7 @@ function renderReplacementField(name: string, label: string, variant: 'desktop' 
   return `
     <label class="upload-field">
       <span>${label}</span>
-      <input name="${name}" type="file" accept=".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif" />
+      <input name="${name}" type="file" accept="${uploadAccept}" />
       <span class="file-note">未選択なら現在の画像を維持</span>
       <span class="image-preview" data-preview="${variant}"><img src="${escapeAttr(url)}" alt="" /><small>${escapeText(dimensions)}</small></span>
     </label>
@@ -384,6 +442,7 @@ function bindCreateForm() {
       preview.innerHTML = '<span>プレビュー未選択</span>';
     });
     setFormMessage(form, '入力内容をクリアしました。', 'normal');
+    syncIconControls(form);
   });
   form.addEventListener('submit', (event) => void handleCreate(event));
 }
@@ -441,6 +500,7 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
   select.addEventListener('change', () => {
     recommendation.textContent = sizeRecommendations[select.value as SiteAssetType];
     syncBrandControls(form, true);
+    syncIconControls(form);
   });
   const brandSelect = form.elements.namedItem('brand_id');
   if (brandSelect instanceof HTMLSelectElement) {
@@ -459,6 +519,64 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
     });
   }
   syncBrandControls(form, false);
+  bindIconFileInputs(form);
+  syncIconControls(form);
+}
+
+function bindIconFileInputs(form: HTMLFormElement) {
+  const svgInput = getFileInput(form, 'icon_svg_file');
+  const zipInput = getFileInput(form, 'icon_zip_file');
+  svgInput?.addEventListener('change', async () => {
+    const file = svgInput.files?.[0];
+    if (!file) return;
+    zipInput && (zipInput.value = '');
+    try {
+      await readImageMetadata(file);
+      applyIconMetadataFromFileName(form, file.name);
+      setFormMessage(form, 'アイコンSVGを選択しました。', 'normal');
+    } catch (error) {
+      svgInput.value = '';
+      setFormMessage(form, getErrorMessage(error), 'error');
+    }
+    syncIconControls(form);
+  });
+  zipInput?.addEventListener('change', () => {
+    if (zipInput.files?.[0]) {
+      svgInput && (svgInput.value = '');
+      const assetKeyInput = form.elements.namedItem('asset_key');
+      if (assetKeyInput instanceof HTMLInputElement) {
+        assetKeyInput.required = false;
+      }
+      setFormMessage(form, 'ZIP一括登録を選択しました。', 'normal');
+    }
+    syncIconControls(form);
+  });
+}
+
+function syncIconControls(form: HTMLFormElement) {
+  const typeSelect = form.elements.namedItem('asset_type');
+  const assetKeyInput = form.elements.namedItem('asset_key');
+  const desktopInput = getFileInput(form, 'desktop_file');
+  const mobileInput = getFileInput(form, 'mobile_file');
+  const iconPanel = form.querySelector<HTMLElement>('[data-icon-fields]');
+  const zipInput = getFileInput(form, 'icon_zip_file');
+  const removeMobile = form.querySelector<HTMLElement>('.remove-mobile');
+  if (!(typeSelect instanceof HTMLSelectElement) || !(assetKeyInput instanceof HTMLInputElement) || !iconPanel) return;
+
+  const isIcon = typeSelect.value === 'icon';
+  const hasZip = Boolean(zipInput?.files?.[0]);
+  iconPanel.hidden = !isIcon;
+  form.querySelectorAll<HTMLElement>('.upload-grid').forEach((grid) => {
+    grid.hidden = isIcon;
+  });
+  assetKeyInput.required = !isIcon || !hasZip;
+  if (desktopInput) desktopInput.required = !isIcon;
+  if (mobileInput) mobileInput.required = false;
+  if (removeMobile) removeMobile.hidden = isIcon;
+
+  form.querySelectorAll<HTMLElement>('[data-brand-field]').forEach((field) => {
+    if (isIcon) field.hidden = true;
+  });
 }
 
 function syncBrandControls(form: HTMLFormElement, generateAssetKey: boolean) {
@@ -483,7 +601,7 @@ function syncBrandControls(form: HTMLFormElement, generateAssetKey: boolean) {
 
     const brand = brands.find((item) => item.id === brandSelect.value);
     if (generateAssetKey && brand) {
-      assetKeyInput.value = assetType === 'brand_logo' ? `brand_${brand.slug}_logo` : `brand_${brand.slug}_hero`;
+      assetKeyInput.value = assetType === 'brand_logo' ? `brand_logo_${brand.slug}` : `brand_hero_${brand.slug}`;
     }
   }
   syncAutomaticAlt(form);
@@ -522,6 +640,7 @@ function getSuggestedAlt(form: HTMLFormElement) {
 
   if (assetType === 'brand_logo' && brand) return `${brand.display_name} ロゴ`;
   if (assetType === 'brand_hero' && brand) return `${brand.display_name} ブランドイメージ`;
+  if (assetType === 'icon' && title) return `${title} アイコン`;
   if ((assetType === 'hero' || assetType === 'main_banner') && title) return title;
   if ((assetType === 'category' || assetType === 'category_image') && title) return `${title} カテゴリ画像`;
   if ((assetType === 'article' || assetType === 'article_image') && title) return `${title} 記事画像`;
@@ -571,10 +690,18 @@ function clearCreateDraft() {
 
 function getBrandIdForAsset(asset: SiteAsset) {
   if (asset.asset_type === 'brand_logo') {
-    return brands.find((brand) => brand.logo_asset_key === asset.asset_key || asset.asset_key === `brand_${brand.slug}_logo`)?.id ?? '';
+    return brands.find((brand) =>
+      brand.logo_asset_key === asset.asset_key
+      || asset.asset_key === `brand_logo_${brand.slug}`
+      || asset.asset_key === `brand_${brand.slug}_logo`,
+    )?.id ?? '';
   }
   if (asset.asset_type === 'brand_hero') {
-    return brands.find((brand) => brand.hero_asset_key === asset.asset_key || asset.asset_key === `brand_${brand.slug}_hero`)?.id ?? '';
+    return brands.find((brand) =>
+      brand.hero_asset_key === asset.asset_key
+      || asset.asset_key === `brand_hero_${brand.slug}`
+      || asset.asset_key === `brand_${brand.slug}_hero`,
+    )?.id ?? '';
   }
   return '';
 }
@@ -603,6 +730,25 @@ async function handleCreate(event: SubmitEvent) {
   const form = event.currentTarget;
   if (!(form instanceof HTMLFormElement)) return;
 
+  const assetTypeInput = form.elements.namedItem('asset_type');
+  const isIcon = assetTypeInput instanceof HTMLSelectElement && assetTypeInput.value === 'icon';
+  const iconSvgFile = getFileInput(form, 'icon_svg_file')?.files?.[0] ?? null;
+  const iconZipFile = getFileInput(form, 'icon_zip_file')?.files?.[0] ?? null;
+
+  if (isIcon && iconZipFile) {
+    await handleIconZipCreate(form, iconZipFile);
+    return;
+  }
+
+  if (isIcon && iconSvgFile) {
+    applyIconMetadataFromFileName(form, iconSvgFile.name);
+  }
+
+  if (isIcon && !iconSvgFile) {
+    setFormMessage(form, 'アイコンSVGまたはZIPファイルを選択してください。', 'error');
+    return;
+  }
+
   let fields: ReturnType<typeof readFormFields>;
   try {
     const assetKey = readAssetKeyAtSubmit(form);
@@ -612,7 +758,7 @@ async function handleCreate(event: SubmitEvent) {
     return;
   }
 
-  const desktopFile = getFileInput(form, 'desktop_file')?.files?.[0];
+  const desktopFile = iconSvgFile ?? getFileInput(form, 'desktop_file')?.files?.[0];
   const mobileFile = getFileInput(form, 'mobile_file')?.files?.[0];
   if (!desktopFile) {
     setFormMessage(form, 'PC画像を選択してください。', 'error');
@@ -652,6 +798,7 @@ async function handleCreate(event: SubmitEvent) {
     const recommendation = form.querySelector<HTMLElement>('[data-size-recommendation]');
     if (recommendation) recommendation.textContent = sizeRecommendations.hero;
     syncBrandControls(form, false);
+    syncIconControls(form);
     setFormMessage(form, brandLinkWarning || '登録しました。', brandLinkWarning ? 'warning' : 'success');
   } catch (error) {
     const rollbackWarning = await rollbackUploads(uploadedPaths);
@@ -661,6 +808,189 @@ async function handleCreate(event: SubmitEvent) {
   }
 }
 
+type IconUploadResult = {
+  fileName: string;
+  status: 'success' | 'skip' | 'error';
+  message: string;
+};
+
+async function handleIconZipCreate(form: HTMLFormElement, zipFile: File) {
+  if (!/\.zip$/i.test(zipFile.name)) {
+    setFormMessage(form, 'ZIPファイルを選択してください。', 'error');
+    return;
+  }
+  if (zipFile.size <= 0 || zipFile.size > maxFileSize) {
+    setFormMessage(form, 'ZIPファイルは5MB以下にしてください。', 'error');
+    return;
+  }
+
+  let baseFields: ReturnType<typeof readFormFields>;
+  try {
+    baseFields = readFormFields(form, 'icon_batch');
+  } catch (error) {
+    setFormMessage(form, getErrorMessage(error), 'error');
+    return;
+  }
+
+  setFormBusy(form, true);
+  const results: IconUploadResult[] = [];
+  try {
+    setFormMessage(form, 'ZIPを展開しています...', 'normal');
+    await loadAssets();
+    const existingKeys = new Set(assets.map((asset) => asset.asset_key));
+    const zip = await JSZip.loadAsync(zipFile);
+    const entries = Object.values(zip.files);
+    const svgEntries = entries.filter((entry) => isValidIconZipEntry(entry.name, entry.dir));
+
+    entries
+      .filter((entry) => !isValidIconZipEntry(entry.name, entry.dir) && !entry.dir)
+      .slice(0, 20)
+      .forEach((entry) => {
+        results.push({ fileName: entry.name, status: 'skip', message: 'SVG以外、隠しファイル、または安全でないパスのためスキップ' });
+      });
+
+    if (svgEntries.length > maxIconZipEntries) {
+      svgEntries.slice(maxIconZipEntries).forEach((entry) => {
+        results.push({ fileName: entry.name, status: 'skip', message: `上限${maxIconZipEntries}件を超えたためスキップ` });
+      });
+    }
+
+    for (const [index, entry] of svgEntries.slice(0, maxIconZipEntries).entries()) {
+      const fileName = getBaseFileName(entry.name);
+      const assetKey = createIconAssetKey(fileName);
+      if (!assetKey || assetKey === 'icon') {
+        results.push({ fileName: entry.name, status: 'skip', message: 'asset_keyを生成できないためスキップ' });
+        continue;
+      }
+      if (existingKeys.has(assetKey)) {
+        results.push({ fileName: entry.name, status: 'skip', message: `${assetKey} は既に存在するためスキップ` });
+        continue;
+      }
+
+      const blob = await entry.async('blob');
+      if (blob.size <= 0) {
+        results.push({ fileName: entry.name, status: 'skip', message: '空ファイルのためスキップ' });
+        continue;
+      }
+      if (blob.size > maxFileSize) {
+        results.push({ fileName: entry.name, status: 'skip', message: 'ファイルサイズ上限を超えたためスキップ' });
+        continue;
+      }
+
+      const iconFile = new File([blob], fileName, { type: 'image/svg+xml' });
+      const iconText = createIconTitle(fileName);
+      const fields = {
+        ...baseFields,
+        assetKey,
+        title: iconText,
+        altText: `${iconText} アイコン`,
+        displayOrder: baseFields.displayOrder + index,
+      };
+
+      try {
+        await createIconAsset(fields, iconFile);
+        existingKeys.add(assetKey);
+        results.push({ fileName: entry.name, status: 'success', message: `${assetKey} を登録` });
+      } catch (error) {
+        results.push({ fileName: entry.name, status: 'error', message: getErrorMessage(error) });
+      }
+    }
+
+    await loadAssets();
+    renderAssetList();
+    const summary = summarizeIconResults(results);
+    setIconResults(form, results);
+    setFormMessage(form, summary, results.some((result) => result.status === 'error') ? 'warning' : 'success');
+  } catch (error) {
+    setFormMessage(form, getErrorMessage(error), 'error');
+  } finally {
+    setFormBusy(form, false);
+  }
+}
+
+async function createIconAsset(fields: ReturnType<typeof readFormFields>, file: File) {
+  const metadata = await readImageMetadata(file);
+  const uploaded = await uploadImage(metadata, fields.assetKey, 'desktop');
+  try {
+    const { error } = await supabase.rpc('create_site_asset', buildRpcPayload(fields, uploaded, null));
+    if (error) throw error;
+  } catch (error) {
+    await rollbackUploads([uploaded.storagePath]);
+    throw error;
+  }
+}
+
+function isValidIconZipEntry(name: string, isDirectory: boolean) {
+  if (isDirectory) return false;
+  const normalized = name.replace(/\\/g, '/');
+  if (!/\.svg$/i.test(normalized)) return false;
+  if (normalized.startsWith('/') || normalized.includes('../') || normalized.includes('/..')) return false;
+  const parts = normalized.split('/');
+  return parts.every((part) => part && !part.startsWith('.') && part !== '__MACOSX' && part !== '.DS_Store');
+}
+
+function getBaseFileName(path: string) {
+  return path.replace(/\\/g, '/').split('/').pop() ?? path;
+}
+
+function createIconAssetKey(fileName: string) {
+  const normalized = normalizeIconBase(fileName);
+  return normalized.startsWith('icon_') ? normalized : `icon_${normalized}`;
+}
+
+function createIconTitle(fileName: string) {
+  return normalizeIconBase(fileName).replace(/^icon_/, '').split('_').filter(Boolean).join(' ').toUpperCase();
+}
+
+function normalizeIconBase(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
+}
+
+function applyIconMetadataFromFileName(form: HTMLFormElement, fileName: string) {
+  const assetKey = createIconAssetKey(fileName);
+  const title = createIconTitle(fileName);
+  const assetKeyInput = form.elements.namedItem('asset_key');
+  const titleInput = form.elements.namedItem('title');
+  const altInput = form.elements.namedItem('alt_text');
+
+  if (assetKeyInput instanceof HTMLInputElement && (!assetKeyInput.value.trim() || assetKeyInput.dataset.generatedIcon === 'true')) {
+    assetKeyInput.value = assetKey;
+    assetKeyInput.dataset.generatedIcon = 'true';
+  }
+  if (titleInput instanceof HTMLInputElement && (!titleInput.value.trim() || titleInput.dataset.generatedIcon === 'true')) {
+    titleInput.value = title;
+    titleInput.dataset.generatedIcon = 'true';
+  }
+  if (altInput instanceof HTMLInputElement && (!altInput.value.trim() || altInput.dataset.generatedIcon === 'true' || altInput.value === altInput.dataset.generatedAlt)) {
+    altInput.value = `${title} アイコン`;
+    altInput.dataset.generatedIcon = 'true';
+    altInput.dataset.generatedAlt = altInput.value;
+  }
+}
+
+function setIconResults(form: HTMLFormElement, results: IconUploadResult[]) {
+  const list = form.querySelector<HTMLElement>('[data-icon-upload-result]');
+  if (!list) return;
+  list.hidden = results.length === 0;
+  list.innerHTML = results
+    .map((result) => `<li data-status="${result.status}">${escapeText(result.fileName)}: ${escapeText(result.message)}</li>`)
+    .join('');
+}
+
+function summarizeIconResults(results: IconUploadResult[]) {
+  const success = results.filter((result) => result.status === 'success').length;
+  const skip = results.filter((result) => result.status === 'skip').length;
+  const error = results.filter((result) => result.status === 'error').length;
+  return `アイコン一括登録: 成功 ${success}件 / スキップ ${skip}件 / 失敗 ${error}件`;
+}
+
 async function handleUpdate(event: SubmitEvent) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -668,6 +998,12 @@ async function handleUpdate(event: SubmitEvent) {
   const card = form.closest<HTMLElement>('.asset-card');
   const asset = assets.find((item) => item.id === card?.dataset.assetId);
   if (!asset) return;
+  const typeSelect = form.elements.namedItem('asset_type');
+  const selectedAssetType = typeSelect instanceof HTMLSelectElement ? typeSelect.value : asset.asset_type;
+  const iconSvgFile = getFileInput(form, 'icon_svg_file')?.files?.[0] ?? null;
+  if (selectedAssetType === 'icon' && iconSvgFile) {
+    applyIconMetadataFromFileName(form, iconSvgFile.name);
+  }
 
   let fields: ReturnType<typeof readFormFields>;
   try {
@@ -678,7 +1014,7 @@ async function handleUpdate(event: SubmitEvent) {
     return;
   }
 
-  const desktopFile = getFileInput(form, 'desktop_file')?.files?.[0];
+  const desktopFile = iconSvgFile ?? getFileInput(form, 'desktop_file')?.files?.[0];
   const mobileFile = getFileInput(form, 'mobile_file')?.files?.[0];
   const removeMobileInput = form.elements.namedItem('remove_mobile');
   const removeMobile = removeMobileInput instanceof HTMLInputElement && removeMobileInput.checked;
@@ -852,8 +1188,11 @@ function buildRpcPayload(
 
 async function readImageMetadata(file: File): Promise<ImageMetadata> {
   const mimeType = getSupportedMimeType(file);
-  if (!mimeType) throw new Error('JPEG・PNG・WebP・AVIF形式の画像を選択してください。');
+  if (!mimeType) throw new Error('JPEG・PNG・WebP・AVIF・SVG形式の画像を選択してください。');
   if (file.size <= 0 || file.size > maxFileSize) throw new Error('画像サイズは5MB以下にしてください。');
+  if (mimeType === 'image/svg+xml') {
+    return { file, ...(await readSvgMetadata(file)), mimeType };
+  }
 
   const objectUrl = URL.createObjectURL(file);
   try {
@@ -870,12 +1209,38 @@ async function readImageMetadata(file: File): Promise<ImageMetadata> {
   }
 }
 
+async function readSvgMetadata(file: File): Promise<{ width: number; height: number }> {
+  const text = await file.text();
+  const document = new DOMParser().parseFromString(text, 'image/svg+xml');
+  if (document.querySelector('parsererror')) throw new Error('SVGファイルを読み込めませんでした。');
+  const svg = document.documentElement;
+  if (svg.tagName.toLowerCase() !== 'svg') throw new Error('SVGファイルを選択してください。');
+
+  const width = parseSvgLength(svg.getAttribute('width'));
+  const height = parseSvgLength(svg.getAttribute('height'));
+  if (width > 0 && height > 0) return { width, height };
+
+  const viewBox = svg.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number) ?? [];
+  const viewBoxWidth = viewBox.length === 4 && Number.isFinite(viewBox[2]) ? viewBox[2] : 0;
+  const viewBoxHeight = viewBox.length === 4 && Number.isFinite(viewBox[3]) ? viewBox[3] : 0;
+  if (viewBoxWidth > 0 && viewBoxHeight > 0) return { width: Math.round(viewBoxWidth), height: Math.round(viewBoxHeight) };
+
+  return { width: 48, height: 48 };
+}
+
+function parseSvgLength(value: string | null) {
+  if (!value) return 0;
+  const number = Number.parseFloat(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : 0;
+}
+
 async function uploadImage(metadata: ImageMetadata, assetKey: string, variant: 'desktop' | 'mobile'): Promise<StoredImage> {
   const extension: Record<SiteAssetMimeType, string> = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
     'image/webp': 'webp',
     'image/avif': 'avif',
+    'image/svg+xml': 'svg',
   };
   const storagePath = `${assetKey}/${variant}/${Date.now()}-${crypto.randomUUID()}.${extension[metadata.mimeType]}`;
   const { error } = await supabase.storage.from(storageBucket).upload(storagePath, metadata.file, {
@@ -891,6 +1256,7 @@ async function uploadImage(metadata: ImageMetadata, assetKey: string, variant: '
 function getSupportedMimeType(file: File): SiteAssetMimeType | null {
   if (allowedMimeTypes.includes(file.type as SiteAssetMimeType)) return file.type as SiteAssetMimeType;
   if (/\.avif$/i.test(file.name)) return 'image/avif';
+  if (/\.svg$/i.test(file.name)) return 'image/svg+xml';
   return null;
 }
 

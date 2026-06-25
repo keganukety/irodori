@@ -1,7 +1,7 @@
-export const siteAssetTypes = ['hero', 'campaign', 'feature', 'diagnosis', 'category', 'article', 'brand_logo', 'brand_hero'] as const;
+export const siteAssetTypes = ['hero', 'campaign', 'feature', 'diagnosis', 'category', 'article', 'brand_logo', 'brand_hero', 'icon'] as const;
 
 export type SiteAssetType = (typeof siteAssetTypes)[number];
-export type SiteAssetMimeType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif';
+export type SiteAssetMimeType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif' | 'image/svg+xml';
 
 export type SiteAsset = {
   id: string;
