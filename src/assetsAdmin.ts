@@ -66,6 +66,7 @@ let typeFilter: 'all' | SiteAssetType = 'all';
 let brands: BrandOption[] = [];
 let brandHeroLinkAvailable = true;
 const previewUrls = new Set<string>();
+const selectedIconIds = new Set<string>();
 
 void init();
 
@@ -176,6 +177,7 @@ async function renderAdmin() {
           <label>検索<input id="asset-search" type="search" value="${escapeAttr(query)}" placeholder="asset_key / タイトル" /></label>
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
         </div>
+        <div id="icon-bulk-actions" class="icon-bulk-actions" hidden></div>
         <p id="page-message" class="page-message" aria-live="polite">読み込み中...</p>
         <div id="asset-list" class="asset-list"></div>
       </section>
@@ -332,21 +334,45 @@ function renderAssetList() {
     const matchesQuery = !normalizedQuery || `${asset.asset_key} ${asset.title}`.toLowerCase().includes(normalizedQuery);
     return matchesType && matchesQuery;
   });
+  const currentIconIds = new Set(assets.filter((asset) => asset.asset_type === 'icon').map((asset) => asset.id));
+  selectedIconIds.forEach((id) => {
+    if (!currentIconIds.has(id)) selectedIconIds.delete(id);
+  });
+  const visibleIconAssets = visibleAssets.filter((asset) => asset.asset_type === 'icon');
+  const visibleIconIds = new Set(visibleIconAssets.map((asset) => asset.id));
+  selectedIconIds.forEach((id) => {
+    if (!visibleIconIds.has(id)) selectedIconIds.delete(id);
+  });
+  const isIconGrid = visibleAssets.length > 0 && visibleAssets.every((asset) => asset.asset_type === 'icon');
 
   count.textContent = `${visibleAssets.length}件`;
   message.textContent = visibleAssets.length ? '' : '条件に一致する素材はありません。';
+  list.classList.toggle('asset-list--icons', isIconGrid);
   list.innerHTML = visibleAssets.map(renderAssetCard).join('');
+  renderIconBulkActions(visibleIconAssets);
   bindAssetCards();
+  bindIconBulkActions(visibleIconAssets);
+  updateIconSelectionUi();
 }
 
 function renderAssetCard(asset: SiteAsset) {
   const publication = getPublicationState(asset);
   const selectedBrandId = getBrandIdForAsset(asset);
+  const isIcon = asset.asset_type === 'icon';
+  const isSelected = selectedIconIds.has(asset.id);
   const mobileUrl = asset.mobile_image_url || asset.desktop_image_url;
   const mobileDimensions = asset.mobile_width && asset.mobile_height
     ? `${asset.mobile_width}×${asset.mobile_height}`
     : `PC画像を使用 (${asset.desktop_width}×${asset.desktop_height})`;
-  const previewMarkup = asset.asset_type === 'icon'
+  const selectionMarkup = isIcon
+    ? `
+      <label class="icon-select-control">
+        <input type="checkbox" data-icon-select value="${escapeAttr(asset.id)}" ${isSelected ? 'checked' : ''} aria-label="${escapeAttr(asset.asset_key)}を選択" />
+        <span>選択</span>
+      </label>
+    `
+    : '';
+  const previewMarkup = isIcon
     ? `
       <div class="current-previews current-previews--icon">
         <figure>
@@ -369,8 +395,12 @@ function renderAssetCard(asset: SiteAsset) {
           <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
           <h3>${escapeText(asset.asset_key)}</h3>
           <p>${escapeText(asset.title || 'タイトル未設定')}</p>
+          ${isIcon ? `<p class="asset-card-alt">${escapeText(asset.alt_text || 'alt未設定')}</p>` : ''}
         </div>
-        <button type="button" class="quiet-button" data-action="toggle-edit" aria-expanded="false">編集</button>
+        <div class="asset-card-actions">
+          ${selectionMarkup}
+          <button type="button" class="quiet-button" data-action="toggle-edit" aria-expanded="false">編集</button>
+        </div>
       </div>
       ${previewMarkup}
       <form class="asset-form edit-form" hidden>
@@ -470,6 +500,7 @@ function bindAssetCards() {
 
     toggle.addEventListener('click', () => {
       form.hidden = !form.hidden;
+      card.classList.toggle('is-editing', !form.hidden);
       toggle.textContent = form.hidden ? '編集' : '閉じる';
       toggle.setAttribute('aria-expanded', String(!form.hidden));
     });
@@ -490,6 +521,71 @@ function bindAssetCards() {
 
     form.addEventListener('submit', (event) => void handleUpdate(event));
     form.querySelector<HTMLButtonElement>('[data-action="delete"]')?.addEventListener('click', () => void handleDelete(card));
+
+    const iconSelect = card.querySelector<HTMLInputElement>('[data-icon-select]');
+    iconSelect?.addEventListener('change', () => {
+      const id = iconSelect.value;
+      if (iconSelect.checked) selectedIconIds.add(id);
+      else selectedIconIds.delete(id);
+      updateIconSelectionUi();
+    });
+  });
+}
+
+function renderIconBulkActions(visibleIconAssets: SiteAsset[]) {
+  const container = document.querySelector<HTMLElement>('#icon-bulk-actions');
+  if (!container) return;
+  if (visibleIconAssets.length === 0) {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+  container.hidden = false;
+  container.innerHTML = `
+    <div>
+      <strong>アイコン一括操作</strong>
+      <span data-icon-selected-count>${selectedIconIds.size}件選択中</span>
+    </div>
+    <div class="icon-bulk-buttons">
+      <button type="button" class="quiet-button" data-action="select-visible-icons">すべて選択</button>
+      <button type="button" class="quiet-button" data-action="clear-icon-selection">選択解除</button>
+      <button type="button" class="danger-action" data-action="delete-selected-icons" disabled>選択したアイコンを削除</button>
+    </div>
+  `;
+}
+
+function bindIconBulkActions(visibleIconAssets: SiteAsset[]) {
+  const container = document.querySelector<HTMLElement>('#icon-bulk-actions');
+  if (!container || container.hidden) return;
+
+  container.querySelector<HTMLButtonElement>('[data-action="select-visible-icons"]')?.addEventListener('click', () => {
+    visibleIconAssets.forEach((asset) => selectedIconIds.add(asset.id));
+    updateIconSelectionUi();
+  });
+
+  container.querySelector<HTMLButtonElement>('[data-action="clear-icon-selection"]')?.addEventListener('click', () => {
+    selectedIconIds.clear();
+    updateIconSelectionUi();
+  });
+
+  container.querySelector<HTMLButtonElement>('[data-action="delete-selected-icons"]')?.addEventListener('click', () => void handleDeleteSelectedIcons());
+}
+
+function updateIconSelectionUi() {
+  document.querySelectorAll<HTMLElement>('.asset-card--icon').forEach((card) => {
+    const id = card.dataset.assetId ?? '';
+    const selected = selectedIconIds.has(id);
+    card.classList.toggle('is-selected', selected);
+    const checkbox = card.querySelector<HTMLInputElement>('[data-icon-select]');
+    if (checkbox) checkbox.checked = selected;
+  });
+
+  const selectedCount = selectedIconIds.size;
+  document.querySelectorAll<HTMLElement>('[data-icon-selected-count]').forEach((element) => {
+    element.textContent = `${selectedCount}件選択中`;
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-action="delete-selected-icons"]').forEach((button) => {
+    button.disabled = selectedCount === 0;
   });
 }
 
@@ -1073,11 +1169,8 @@ async function handleDelete(card: HTMLElement) {
   setFormBusy(form, true);
   setFormMessage(form, 'DBから削除しています...', 'normal');
   try {
-    const { data, error } = await supabase.rpc('delete_site_asset', { p_asset_id: asset.id });
-    if (error) throw error;
-    const result = Array.isArray(data) ? data[0] : data;
-    const paths = [result?.desktop_storage_path, result?.mobile_storage_path].filter((path): path is string => Boolean(path));
-    const cleanupWarning = await removeOldStorageFiles(paths);
+    const cleanupWarning = await deleteAssetRecordAndStorage(asset.id);
+    selectedIconIds.delete(asset.id);
     await loadAssets();
     renderAssetList();
     showPageMessage(cleanupWarning || '削除しました。', cleanupWarning ? 'warning' : 'success');
@@ -1085,6 +1178,49 @@ async function handleDelete(card: HTMLElement) {
     setFormMessage(form, getErrorMessage(error), 'error');
     setFormBusy(form, false);
   }
+}
+
+async function handleDeleteSelectedIcons() {
+  const selectedAssets = assets.filter((asset) => asset.asset_type === 'icon' && selectedIconIds.has(asset.id));
+  if (selectedAssets.length === 0) return;
+  if (!window.confirm(`${selectedAssets.length}件のアイコンを削除しますか？`)) return;
+
+  const container = document.querySelector<HTMLElement>('#icon-bulk-actions');
+  container?.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
+    button.disabled = true;
+  });
+  showPageMessage('選択したアイコンを削除しています...', 'warning');
+
+  const deletedIds: string[] = [];
+  const warnings: string[] = [];
+  const failures: string[] = [];
+  for (const asset of selectedAssets) {
+    try {
+      const warning = await deleteAssetRecordAndStorage(asset.id);
+      if (warning) warnings.push(`${asset.asset_key}: ${warning}`);
+      deletedIds.push(asset.id);
+    } catch (error) {
+      failures.push(`${asset.asset_key}: ${getErrorMessage(error)}`);
+    }
+  }
+
+  deletedIds.forEach((id) => selectedIconIds.delete(id));
+  await loadAssets();
+  renderAssetList();
+
+  if (failures.length > 0) {
+    showPageMessage(`削除 ${deletedIds.length}件 / 失敗 ${failures.length}件。${failures.slice(0, 2).join(' ')}`, 'warning');
+    return;
+  }
+  showPageMessage(warnings.length > 0 ? `削除しました。ただしStorage削除の警告があります: ${warnings.slice(0, 2).join(' ')}` : `${deletedIds.length}件のアイコンを削除しました。`, warnings.length > 0 ? 'warning' : 'success');
+}
+
+async function deleteAssetRecordAndStorage(assetId: string) {
+  const { data, error } = await supabase.rpc('delete_site_asset', { p_asset_id: assetId });
+  if (error) throw error;
+  const result = Array.isArray(data) ? data[0] : data;
+  const paths = [result?.desktop_storage_path, result?.mobile_storage_path].filter((path): path is string => Boolean(path));
+  return removeOldStorageFiles(paths);
 }
 
 function readAssetKeyAtSubmit(form: HTMLFormElement) {
