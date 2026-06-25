@@ -4409,3 +4409,230 @@ body {
 .brand-product-card dl {
   display: none !important;
 }
+
+/* Current storefront polish: compact filters, no badges/dots, and lighter product metadata. */
+.quick-filters {
+  gap: 8px !important;
+  margin-top: 20px !important;
+  padding-bottom: 16px !important;
+}
+
+.quick-filters button {
+  min-height: 30px !important;
+  padding: 5px 11px !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+}
+
+.rank-label,
+.home-product-card__rank {
+  display: none !important;
+}
+
+.product-card .color-swatches,
+.url-product-card .color-swatches,
+.brand-product-card__colors,
+.home-color-swatches,
+.recommend-card .color-swatches,
+.recent-card .color-swatches,
+.compare-product .color-swatches {
+  display: none !important;
+}
+
+.product-brand,
+.url-product-card__brand,
+.brand-product-card__category,
+.home-product-card__brand {
+  display: inline !important;
+  margin: 0 !important;
+  color: #777 !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  line-height: 1.8 !important;
+}
+
+.product-brand::after,
+.url-product-card__brand::after,
+.brand-product-card__category::after,
+.home-product-card__brand::after {
+  content: "　";
+}
+
+.product-name,
+.product-name a,
+.url-product-card__name,
+.brand-product-card h3,
+.brand-product-card h3 a,
+.home-product-card__name,
+.home-product-card__name a {
+  display: inline !important;
+  margin: 0 !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.8 !important;
+}
+
+.product-price,
+.url-product-card__price,
+.brand-product-card__price,
+.home-product-card__price {
+  display: block !important;
+  clear: both !important;
+  margin: 6px 0 0 !important;
+}
+
+.mall-links,
+.product-card .mall-links,
+.product-card .store-links,
+.card-actions,
+.product-actions,
+.compare-actions,
+.url-product-card__actions {
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mall-links a,
+.product-card .mall-links a,
+.product-card .store-links a,
+.compare-mall-links a {
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .08em !important;
+  line-height: 1.6 !important;
+}
+
+.compare-check,
+.compare-inline-control,
+.url-product-card__compare {
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #333 !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  line-height: 1.6 !important;
+}
+
+.compare-check:hover,
+.compare-inline-control:hover,
+.url-product-card__compare:hover {
+  background: transparent !important;
+  color: #333 !important;
+}
+
+.compare-check input,
+.compare-inline-control input,
+.url-product-card__compare input {
+  width: 13px !important;
+  height: 13px !important;
+  margin: 0 !important;
+}
+
+.product-card,
+.brand-product-card,
+.url-product-card,
+.home-product-card,
+.recommend-card,
+.recent-card,
+.compare-product {
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.product-media,
+.brand-product-card__image,
+.url-product-card__image,
+.home-product-card__image,
+.home-product-card__media,
+.recommend-image,
+.recent-image {
+  border: 0 !important;
+  outline: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.product-card:hover .image-hover-stack.has-hover-image .image-main,
+.brand-product-card:hover .image-hover-stack.has-hover-image .image-main,
+.recommend-card:hover .image-hover-stack.has-hover-image .image-main,
+.url-product-card:hover .image-hover-stack.has-hover-image .image-main,
+.home-product-card:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary) {
+  opacity: 1 !important;
+}
+
+.product-card:hover .image-hover-stack.has-hover-image .image-secondary,
+.brand-product-card:hover .image-hover-stack.has-hover-image .image-secondary,
+.recommend-card:hover .image-hover-stack.has-hover-image .image-secondary,
+.url-product-card:hover .image-hover-stack.has-hover-image .image-secondary,
+.home-product-card:hover .home-product-card__img--secondary {
+  opacity: 0 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .product-media-link:hover .image-hover-stack.has-hover-image .image-main,
+  .brand-product-card__image:hover .image-hover-stack.has-hover-image .image-main,
+  .recommend-image:hover .image-hover-stack.has-hover-image .image-main,
+  .url-product-card__image:hover .image-hover-stack.has-hover-image .image-main,
+  .home-product-card__media:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary),
+  .home-product-card__image:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary) {
+    opacity: 0 !important;
+  }
+
+  .product-media-link:hover .image-hover-stack.has-hover-image .image-secondary,
+  .brand-product-card__image:hover .image-hover-stack.has-hover-image .image-secondary,
+  .recommend-image:hover .image-hover-stack.has-hover-image .image-secondary,
+  .url-product-card__image:hover .image-hover-stack.has-hover-image .image-secondary,
+  .home-product-card__media:hover .home-product-card__img--secondary,
+  .home-product-card__image:hover .home-product-card__img--secondary {
+    opacity: 1 !important;
+  }
+}
+
+.filter-accordion > .filter-options {
+  overflow: hidden;
+  transition:
+    max-height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease;
+}
+
+.filter-accordion:not([open]) > .filter-options {
+  max-height: 0;
+  opacity: 0;
+}
+
+.filter-accordion[open] > .filter-options {
+  max-height: 720px;
+  opacity: 1;
+}
+
+.filter-accordion > summary i {
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.filter-accordion[open] > summary i {
+  transform: rotate(45deg);
+}
+
+.filter-accordion[open] > summary i::after {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-accordion > .filter-options,
+  .filter-accordion > summary i {
+    transition: none !important;
+  }
+}

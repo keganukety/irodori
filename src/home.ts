@@ -1,5 +1,6 @@
 import './home.css';
 import { mountBackToTop } from './back-to-top';
+import { applyFadeUpAnimations } from './shared-ui';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
 import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
@@ -428,6 +429,7 @@ function renderShell(state: HomeState): void {
     colorsByProductId: homeColorsByProductId,
     brandsById: homeBrandsById,
   });
+  applyFadeUpAnimations(app);
 }
 
 function renderHomeMainHeroAssets(assets: HomeMainHeroAsset[]): string {

@@ -6,6 +6,7 @@ export const MIN_COMPARE_PRODUCTS = 1;
 type HeaderPage = 'products' | 'compare' | 'guide' | 'other';
 
 const sharedStyleId = 'irodori-shared-ui-style';
+const fadeUpStyleId = 'irodori-fade-up-style';
 const headerId = 'site-header';
 const compareTrayId = 'compare-tray';
 const compareMessageId = 'compare-tray-message';
@@ -116,6 +117,100 @@ export function clearCompareIds(): string[] {
 
 export function clearCompareProductIds(): string[] {
   return updateCompareState([]);
+}
+
+export function applyFadeUpAnimations(root: ParentNode = document): void {
+  injectFadeUpStyles();
+  const targets = Array.from(
+    root.querySelectorAll<HTMLElement>([
+      '.hero-panel',
+      '.content-shell',
+      '.catalog-layout',
+      '.catalog-main',
+      '.product-card',
+      '.url-filter-products__header',
+      '.url-product-card',
+      '.brand-overview',
+      '.brand-visual',
+      '.brand-products',
+      '.brand-video',
+      '.brand-product-card',
+      '.detail-layout',
+      '.detail-gallery',
+      '.detail-info',
+      '.detail-story',
+      '.specification-section',
+      '.recommend-section',
+      '.recommend-card',
+      '.home-main-banner',
+      '.home-category-section',
+      '.home-scene-section',
+      '.home-section',
+      '.home-guide-strip',
+      '.home-product-card',
+      '.home-category-card',
+      '.home-action-card',
+      '.compare-hero',
+      '.compare-notice',
+      '.compare-table-section',
+      '.stroller-guide section',
+    ].join(', ')),
+  ).filter((element) => !element.dataset.fadeUp);
+
+  if (targets.length === 0) return;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  targets.forEach((element) => {
+    element.dataset.fadeUp = '';
+    if (reducedMotion) element.classList.add('is-visible');
+  });
+
+  if (reducedMotion || !('IntersectionObserver' in window)) {
+    targets.forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries, entryObserver) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        entryObserver.unobserve(entry.target);
+      });
+    },
+    { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+  );
+
+  targets.forEach((element) => observer.observe(element));
+}
+
+function injectFadeUpStyles(): void {
+  if (document.getElementById(fadeUpStyleId)) return;
+  const style = document.createElement('style');
+  style.id = fadeUpStyleId;
+  style.textContent = `
+    [data-fade-up] {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1), transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: opacity, transform;
+    }
+
+    [data-fade-up].is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-fade-up] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+        will-change: auto;
+      }
+    }
+  `;
+  document.head.append(style);
 }
 
 export function mountCommonHeader(page: HeaderPage = 'other'): void {

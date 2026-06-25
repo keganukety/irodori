@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { setupCompareTrayNavigation, syncCompareUI, loadCompareProductIds } from './shared-ui';
+import { applyFadeUpAnimations, setupCompareTrayNavigation, syncCompareUI, loadCompareProductIds } from './shared-ui';
 import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
@@ -81,6 +81,7 @@ async function initializeUrlFilteredProducts(): Promise<void> {
     syncCompareUI(loadCompareProductIds());
     window.setTimeout(() => syncCompareUI(loadCompareProductIds()), 100);
     setupProductQuickView({ products: filteredProducts as SharedProduct[], imageByProductId: toPrimaryImageMap(imageMap), colorsByProductId: colors, brandsById: brands });
+    applyFadeUpAnimations(app);
   } catch (error) {
     console.error('URL条件の商品一覧取得に失敗しました。', error);
     app.innerHTML = renderError();
@@ -100,6 +101,7 @@ function keepUrlFilteredPageVisible(app: HTMLElement, pageHtml: string): void {
     app.innerHTML = pageHtml;
     setupCompareTrayNavigation();
     syncCompareUI(loadCompareProductIds());
+    applyFadeUpAnimations(app);
   });
 
   observer.observe(app, { childList: true });

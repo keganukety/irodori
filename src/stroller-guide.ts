@@ -1,4 +1,5 @@
 import './styles.css';
-import { mountCommonHeader } from './shared-ui';
+import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
 
 mountCommonHeader('guide');
+applyFadeUpAnimations(document);

@@ -1,6 +1,6 @@
 import './styles.css';
 import './brand.css';
-import { mountCommonHeader } from './shared-ui';
+import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
 import { supabase } from './lib/supabase';
 import type { Brand, Product, ProductColor } from './types';
 
@@ -83,6 +83,7 @@ async function renderBrandPage(): Promise<void> {
       ${renderVideo(brand.youtube_url)}
     </main>
   `;
+  applyFadeUpAnimations(app);
 }
 
 async function loadBrandAsset(brand: Brand, kind: 'logo' | 'hero'): Promise<BrandAsset | null> {

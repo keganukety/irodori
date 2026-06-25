@@ -1,6 +1,6 @@
 import './styles.css';
 import { mountBackToTop } from './back-to-top';
-import { loadCompareProductIds, mountCommonHeader, saveCompareIds, setupCompareTrayNavigation, syncCompareUI } from './shared-ui';
+import { applyFadeUpAnimations, loadCompareProductIds, mountCommonHeader, saveCompareIds, setupCompareTrayNavigation, syncCompareUI } from './shared-ui';
 import { supabase } from './lib/supabase';
 import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
@@ -262,7 +262,7 @@ function renderStorefront() {
       <section class="hero-panel">
         <div class="hero-inner">
           <p class="section-title-en">COLLECTION</p>
-          <h1 class="product-list-title">${escapeText(activeCategory)}一覧</h1>
+          <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
           <p class="hero-copy">${escapeText(activeCategory)}を、暮らしに合う条件から探せます。</p>
           <nav class="guide-links" aria-label="ベビーカー選びの導線">
             <a href="#">人気ランキング</a>
@@ -320,6 +320,7 @@ function renderStorefront() {
     colorsByProductId: productColors,
     brandsById,
   });
+  applyFadeUpAnimations(app);
   observeLoadMore(hasMore);
 }
 
@@ -573,6 +574,7 @@ function renderPurchaseLink(label: string, url: string) {
 
 function bindEvents() {
   bindResponsiveSidebar();
+  bindFilterAccordionAnimations();
   document.querySelectorAll<HTMLButtonElement>('[data-quick-filter]').forEach((button) => {
     button.addEventListener('click', () => {
       activeQuickFilter = button.dataset.quickFilter as QuickFilter;
@@ -629,6 +631,52 @@ function bindEvents() {
     activeSidebarFilters.clear();
     renderedCount = pageSize;
     renderStorefront();
+  });
+}
+
+function bindFilterAccordionAnimations() {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLDetailsElement>('.filter-accordion').forEach((details) => {
+    const summary = details.querySelector<HTMLElement>(':scope > summary');
+    const content = details.querySelector<HTMLElement>(':scope > .filter-options');
+    if (!summary || !content || reducedMotion) return;
+
+    summary.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (details.classList.contains('is-animating')) return;
+
+      const isOpening = !details.open;
+      details.classList.add('is-animating');
+      if (isOpening) {
+        details.open = true;
+        content.style.maxHeight = '0px';
+        content.style.opacity = '0';
+        requestAnimationFrame(() => {
+          content.style.maxHeight = `${content.scrollHeight}px`;
+          content.style.opacity = '1';
+        });
+      } else {
+        content.style.maxHeight = `${content.scrollHeight}px`;
+        content.style.opacity = '1';
+        requestAnimationFrame(() => {
+          content.style.maxHeight = '0px';
+          content.style.opacity = '0';
+        });
+      }
+
+      let isFinished = false;
+      const finish = () => {
+        if (isFinished) return;
+        isFinished = true;
+        content.removeEventListener('transitionend', finish);
+        details.classList.remove('is-animating');
+        if (!isOpening) details.open = false;
+        content.style.maxHeight = '';
+        content.style.opacity = '';
+      };
+      content.addEventListener('transitionend', finish);
+      window.setTimeout(finish, 280);
+    });
   });
 }
 

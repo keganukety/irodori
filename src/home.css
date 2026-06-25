@@ -2246,3 +2246,58 @@ body,
   background: #fff !important;
   box-shadow: none !important;
 }
+
+/* Keep TOP product cards as quiet as the shared storefront cards. */
+.home-product-card__rank,
+.home-color-swatches {
+  display: none !important;
+}
+
+.home-product-card__brand {
+  display: inline !important;
+  margin: 0 !important;
+  color: #777 !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  line-height: 1.8 !important;
+}
+
+.home-product-card__brand::after {
+  content: "　";
+}
+
+.home-product-card__name,
+.home-product-card__name a {
+  display: inline !important;
+  margin: 0 !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.8 !important;
+}
+
+.home-product-card__price {
+  display: block !important;
+  margin: 6px 0 0 !important;
+}
+
+.home-product-card:hover .home-product-card__img--secondary {
+  opacity: 0 !important;
+}
+
+.home-product-card:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary) {
+  opacity: 1 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-product-card__media:hover .home-product-card__img--secondary,
+  .home-product-card__image:hover .home-product-card__img--secondary {
+    opacity: 1 !important;
+  }
+
+  .home-product-card__media:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary),
+  .home-product-card__image:hover .home-product-card__img--primary:has(+ .home-product-card__img--secondary) {
+    opacity: 0 !important;
+  }
+}

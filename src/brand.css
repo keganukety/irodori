@@ -893,3 +893,55 @@
 .brand-product-card dl {
   display: none !important;
 }
+
+/* Brand cards follow the same quiet product-card information rhythm. */
+.brand-product-card__colors {
+  display: none !important;
+}
+
+.brand-product-card__category {
+  display: inline !important;
+  margin: 0 !important;
+  color: #777 !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  line-height: 1.8 !important;
+}
+
+.brand-product-card__category::after {
+  content: "　";
+}
+
+.brand-product-card h3,
+.brand-product-card h3 a {
+  display: inline !important;
+  margin: 0 !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.8 !important;
+}
+
+.brand-product-card__price {
+  display: block !important;
+  margin: 6px 0 0 !important;
+}
+
+.brand-product-card:hover .image-hover-stack.has-hover-image .image-main {
+  opacity: 1 !important;
+}
+
+.brand-product-card:hover .image-hover-stack.has-hover-image .image-secondary {
+  opacity: 0 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .brand-product-card__image:hover .image-hover-stack.has-hover-image .image-main {
+    opacity: 0 !important;
+  }
+
+  .brand-product-card__image:hover .image-hover-stack.has-hover-image .image-secondary {
+    opacity: 1 !important;
+  }
+}

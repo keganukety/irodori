@@ -1,5 +1,5 @@
 import './styles.css';
-import { mountCommonHeader } from './shared-ui';
+import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
 import { supabase } from './lib/supabase';
 import type { Brand, ProductColor, ProductUploadedImage } from './types';
 import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl, isValidYouTubeVideoId } from './youtube';
@@ -283,6 +283,7 @@ async function renderProductDetail() {
   `;
 
   bindThumbnailEvents();
+  applyFadeUpAnimations(app);
 }
 
 function updateProductMetadata(product: Product): void {

@@ -5,6 +5,7 @@ import {
   extractImageSrc,
   formatPrice,
   loadCompareProductIds,
+  applyFadeUpAnimations,
   mountCommonHeader,
   normalizeProductId,
   removeCompareId,
@@ -186,6 +187,8 @@ function renderComparePage(products: Product[], imageMap: Map<string, string>): 
 
     window.location.assign('/products.html');
   });
+
+  applyFadeUpAnimations(app);
 }
 
 function renderCompareNotice(count: number): string {
