@@ -5,14 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta name="googlebot" content="noindex, nofollow, noarchive" />
-    <meta name="description" content="IRODORIはただいま公開準備中です。" />
-    <meta name="theme-color" content="#fffafc" />
-    <title>IRODORI | Coming soon</title>
+    <meta name="description" content="iLy.はただいま公開準備中です。" />
+    <meta property="og:title" content="iLy. | Coming soon" />
+    <meta property="og:description" content="iLy.はただいま公開準備中です。" />
+    <meta property="og:site_name" content="iLy." />
+    <meta name="twitter:title" content="iLy. | Coming soon" />
+    <meta name="twitter:description" content="iLy.はただいま公開準備中です。" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>iLy. | Coming soon</title>
     <style>
       :root {
-        font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-        color: #302a31;
-        background: #fffafc;
+        --ily-bg: #ffffff;
+        --ily-bg-soft: #faf7f1;
+        --ily-text: #242424;
+        --ily-muted: #6c6c6c;
+        --ily-border-light: rgba(0, 0, 0, 0.12);
+        font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+        color: var(--ily-text);
+        background: var(--ily-bg);
         font-synthesis: none;
       }
 
@@ -31,39 +41,34 @@
         place-items: center;
         padding: 32px 20px;
         overflow: hidden;
-        background:
-          radial-gradient(circle at 15% 18%, rgba(255, 210, 225, 0.65), transparent 30%),
-          radial-gradient(circle at 86% 24%, rgba(220, 211, 255, 0.65), transparent 29%),
-          radial-gradient(circle at 72% 84%, rgba(205, 242, 226, 0.65), transparent 31%),
-          #fffafc;
+        background: linear-gradient(to bottom, var(--ily-bg), var(--ily-bg-soft));
       }
 
       .coming-soon {
         width: min(100%, 640px);
         padding: clamp(48px, 9vw, 88px) clamp(28px, 8vw, 72px);
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.9);
-        border-radius: 36px;
-        background: rgba(255, 255, 255, 0.78);
-        box-shadow: 0 24px 70px rgba(101, 76, 99, 0.12);
-        backdrop-filter: blur(14px);
+        border: 1px solid var(--ily-border-light);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: none;
       }
 
       .brand {
         display: block;
         margin-bottom: 28px;
-        font-family: Georgia, "Times New Roman", serif;
-        font-size: clamp(2.4rem, 9vw, 4.6rem);
-        font-weight: 400;
-        letter-spacing: 0.16em;
+        font-family: "Segoe UI", Inter, sans-serif;
+        font-size: clamp(2.2rem, 8vw, 4rem);
+        font-weight: 500;
+        letter-spacing: 0.02em;
         line-height: 1;
       }
 
       .eyebrow {
         margin: 0 0 14px;
-        color: #9b718d;
+        color: var(--ily-muted);
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: 500;
         letter-spacing: 0.22em;
         text-transform: uppercase;
       }
@@ -71,13 +76,13 @@
       h1 {
         margin: 0;
         font-size: clamp(1.35rem, 4.5vw, 2rem);
-        font-weight: 600;
+        font-weight: 500;
         letter-spacing: 0.08em;
       }
 
       p:last-child {
         margin: 20px 0 0;
-        color: #746b73;
+        color: var(--ily-muted);
         font-size: 0.95rem;
         line-height: 1.9;
       }
@@ -86,7 +91,7 @@
   <body>
     <main>
       <section class="coming-soon" aria-labelledby="coming-soon-title">
-        <span class="brand">IRODORI</span>
+        <span class="brand">iLy.</span>
         <p class="eyebrow">Coming soon</p>
         <h1 id="coming-soon-title">ただいま準備中です</h1>
         <p>公開まで、もうしばらくお待ちください。</p>

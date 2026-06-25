@@ -27,8 +27,8 @@ export function setupProductQuickView(nextOptions: QuickViewOptions): void {
   });
 }
 
-export function renderQuickViewButton(productId: string | number, label = 'クイックビュー'): string {
-  return `<button class="quick-view-trigger" type="button" data-quick-view-id="${escapeAttr(productId)}" aria-haspopup="dialog">${escapeHtml(label)}</button>`;
+export function renderQuickViewButton(productId: string | number, label = '+'): string {
+  return `<button class="quick-view-trigger" type="button" data-quick-view-id="${escapeAttr(productId)}" aria-haspopup="dialog" aria-label="クイックビューを開く">${escapeHtml(label)}</button>`;
 }
 
 function handleDocumentClick(event: MouseEvent): void {
@@ -107,7 +107,6 @@ function renderQuickView(product: Product): string {
     : escapeHtml(brand);
   const image = options.imageByProductId?.get(productId) || firstText(product, ['image_url']);
   const colors = options.colorsByProductId?.get(productId) ?? [];
-  const rating = getRating(product);
 
   return `
     <button class="quick-view-close" type="button" data-quick-view-close aria-label="クイックビューを閉じる">×</button>
@@ -118,7 +117,6 @@ function renderQuickView(product: Product): string {
       <section class="quick-view-info">
         <p class="quick-view-brand">${brandMarkup}</p>
         <h2 id="quick-view-title">${escapeHtml(name)}</h2>
-        <p class="quick-view-rating" aria-label="評価">${rating}</p>
         <p class="quick-view-price">${escapeHtml(formatPrice(product.price_yen))}</p>
         <dl class="quick-view-specs">
           ${renderSpec('重量', formatWeight(product.weight_kg ?? product.weight))}
@@ -131,7 +129,7 @@ function renderQuickView(product: Product): string {
           ${renderShopLink('Amazon', firstText(product, ['amazon_url', 'amazon_link']))}
           ${renderShopLink('Yahoo!', firstText(product, ['yahoo_url', 'yahoo_link']))}
         </div>
-        <a class="quick-view-detail-link" href="/product.html?id=${encodeURIComponent(productId)}">商品詳細を見る</a>
+        <a class="quick-view-detail-link" href="/product.html?id=${encodeURIComponent(productId)}">CHECK</a>
       </section>
     </div>
   `;
@@ -163,13 +161,6 @@ function getBrandRecord(product: Product): Brand | undefined {
 
 function getBrand(product: Product): string {
   return firstText(product, ['brand', 'maker', 'manufacturer']) || 'ブランド未登録';
-}
-
-function getRating(product: Product): string {
-  const value = Number(product.rating ?? product.rating_score ?? product.review_score);
-  if (!Number.isFinite(value) || value <= 0) return '未評価';
-  const normalized = Math.min(5, Math.max(0, value));
-  return `★ ${normalized.toFixed(1)}`;
 }
 
 function renderSpec(label: string, value: string): string {
@@ -212,4 +203,3 @@ function escapeHtml(value: unknown): string {
 function escapeAttr(value: unknown): string {
   return escapeHtml(value).replace(/`/g, '&#096;');
 }
-

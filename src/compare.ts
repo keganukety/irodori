@@ -211,7 +211,7 @@ function renderEmptyState(): string {
   return `
     <section class="compare-empty">
       <h2>比較する商品がありません</h2>
-      <p>商品一覧で「比較に追加」を選ぶと、このページに比較表が表示されます。</p>
+      <p>商品一覧で「比較する」を選ぶと、このページに比較表が表示されます。</p>
       <a href="/products.html">商品一覧へ戻る</a>
     </section>
   `;
@@ -251,7 +251,7 @@ function renderCompareTable(products: Product[], imageMap: Map<string, string>):
                     <td>
                       <a class="compare-detail-link" href="/product.html?id=${encodeURIComponent(
                         normalizeProductId(product.id),
-                      )}">詳細を見る</a>
+                      )}">CHECK</a>
                     </td>
                   `,
                 )

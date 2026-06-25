@@ -1,4 +1,4 @@
-export const SITE_NAME = 'IRODORI';
+export const SITE_NAME = 'iLy.';
 export const COMPARE_STORAGE_KEY = 'irodori_compare_product_ids';
 export const MAX_COMPARE_PRODUCTS = 4;
 export const MIN_COMPARE_PRODUCTS = 1;
@@ -140,10 +140,10 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
           メニュー
         </button>
         <nav class="site-header__nav" id="site-nav" aria-label="サイト内メニュー">
-          <a class="${page === 'products' ? 'is-current' : ''}" href="/">商品を探す</a>
+          <a class="${page === 'products' ? 'is-current' : ''}" href="/products.html">商品を探す</a>
           <a class="${page === 'compare' ? 'is-current' : ''}" href="/compare.html">比較</a>
           <a class="${page === 'guide' ? 'is-current' : ''}" href="/stroller-guide.html">ベビーカーの選び方</a>
-          <a href="/#ranking">ランキング</a>
+          <a href="/products.html#ranking">ランキング</a>
         </nav>
       </div>
     `;
@@ -557,7 +557,7 @@ export function syncCompareUI(compareIds?: string[]): void {
 
     const label = control.querySelector<HTMLElement>('[data-compare-label]');
     if (label) {
-      label.textContent = isSelected ? '比較から外す' : '比較に追加';
+      label.textContent = isSelected ? '比較から外す' : '比較する';
     }
   });
 
@@ -796,7 +796,7 @@ function syncCompareControls(): void {
 
     const label = control.querySelector<HTMLElement>('[data-compare-label]');
     if (label) {
-      label.textContent = isSelected ? '比較から外す' : '比較に追加';
+      label.textContent = isSelected ? '比較から外す' : '比較する';
     }
   });
 
@@ -822,7 +822,7 @@ function enhanceProductCardsForCompare(): void {
     compareWrapper.className = 'compare-inline-control';
     compareWrapper.innerHTML = `
       <input type="checkbox" data-compare-id="${escapeAttr(productId)}">
-      <span data-compare-label>比較に追加</span>
+      <span data-compare-label>比較する</span>
     `;
 
     const mountTarget =
@@ -871,14 +871,17 @@ function injectSharedStyles(): void {
   style.id = sharedStyleId;
   style.textContent = `
     .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
       background: #fff;
-      color: #252522;
-      border-bottom: 1px solid #e7e1d7;
+      color: #333;
+      border-bottom: 1px solid #e5e5e5;
     }
 
     .site-header__inner {
-      width: min(1280px, calc(100% - 40px));
-      min-height: 72px;
+      width: min(1440px, calc(100% - 80px));
+      min-height: 64px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -889,9 +892,9 @@ function injectSharedStyles(): void {
     .site-header__brand {
       color: inherit;
       text-decoration: none;
-      letter-spacing: .08em;
-      font-size: 22px;
-      font-weight: 700;
+      letter-spacing: .02em;
+      font-size: 21px;
+      font-weight: 500;
     }
 
     .site-header__nav {
@@ -902,25 +905,50 @@ function injectSharedStyles(): void {
     }
 
     .site-header__nav a {
-      color: #36342f;
+      position: relative;
+      color: #333;
       text-decoration: none;
       text-underline-offset: 5px;
     }
 
-    .site-header__nav a:hover,
-    .site-header__nav a:focus-visible,
-    .site-header__nav a.is-current {
-      text-decoration: underline;
+    .site-header__nav a::after {
+      position: absolute;
+      left: 0;
+      bottom: -3px;
+      width: 0;
+      height: 1px;
+      background: currentColor;
+      content: '';
+      transition: width .35s cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    .site-header__nav a:hover::after,
+    .site-header__nav a:focus-visible::after,
+    .site-header__nav a.is-current::after {
+      width: 100%;
     }
 
     .site-header__menu {
       display: none;
-      border: 1px solid #cfc6b7;
+      width: 44px;
+      height: 44px;
+      justify-content: center;
+      border: 1px solid rgba(77, 77, 77, .2);
+      border-radius: 0;
       background: #fff;
-      color: #252522;
-      min-height: 40px;
-      padding: 0 14px;
+      color: #333;
+      padding: 0;
       font: inherit;
+      font-size: 0;
+    }
+
+    .site-header__menu::before {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 1px;
+      background: currentColor;
+      box-shadow: 0 6px 0 currentColor, 0 -6px 0 currentColor;
     }
 
     .compare-tray {
@@ -948,11 +976,12 @@ function injectSharedStyles(): void {
       justify-content: space-between;
       gap: 16px;
       padding: 12px 16px;
-      border: 1px solid rgba(43, 83, 70, .22);
-      border-radius: 8px;
-      background: rgba(128, 189, 158, .94);
+      border: none;
+      border-radius: 0;
+      background: rgba(51, 51, 51, .7);
       color: #fff;
-      box-shadow: 0 12px 32px rgba(32, 40, 36, .14);
+      box-shadow: none;
+      backdrop-filter: blur(10px);
       pointer-events: auto;
       opacity: .88;
     }
@@ -967,7 +996,7 @@ function injectSharedStyles(): void {
     }
 
     .compare-tray__count {
-      font-weight: 700;
+      font-weight: 500;
       white-space: nowrap;
     }
 
@@ -975,7 +1004,7 @@ function injectSharedStyles(): void {
       flex: 1;
       min-width: 0;
       font-size: 13px;
-      color: #fff4dd;
+      color: rgba(255, 255, 255, .86);
     }
 
     .compare-tray__actions {
@@ -986,7 +1015,8 @@ function injectSharedStyles(): void {
 
     .compare-tray button {
       min-height: 38px;
-      border: 1px solid rgba(255, 255, 255, .55);
+      border: 1px solid rgba(255, 255, 255, .62);
+      border-radius: 0;
       background: transparent;
       color: inherit;
       padding: 0 14px;
@@ -1005,17 +1035,17 @@ function injectSharedStyles(): void {
     }
 
     .compare-tray__primary {
-      background: #fff !important;
-      color: #244f42 !important;
-      border-color: #fff !important;
-      font-weight: 700 !important;
+      background: #333 !important;
+      color: #fff !important;
+      border-color: #333 !important;
+      font-weight: 500 !important;
     }
 
     .compare-inline-control {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: #4a4740;
+      color: #242424;
       font-size: 13px;
       cursor: pointer;
       user-select: none;
@@ -1025,7 +1055,7 @@ function injectSharedStyles(): void {
       width: 16px;
       height: 16px;
       margin: 0;
-      accent-color: #2f6758;
+      accent-color: #333;
     }
 
     [data-compare-id]:focus-visible,
@@ -1033,14 +1063,14 @@ function injectSharedStyles(): void {
     .site-header a:focus-visible,
     .site-header button:focus-visible,
     .compare-tray button:focus-visible {
-      outline: 2px solid #2f6758;
+      outline: 2px solid #333;
       outline-offset: 3px;
     }
 
     .product-card,
     .recommend-card,
     .recent-card {
-      background: #fff;
+      background: transparent;
     }
 
     .product-media,
@@ -1055,7 +1085,7 @@ function injectSharedStyles(): void {
     .recommend-image:hover,
     .recent-image,
     .recent-image:hover {
-      background: #fff;
+      background: transparent;
       background-image: none;
     }
 
@@ -1119,15 +1149,18 @@ function injectSharedStyles(): void {
     @media (max-width: 760px) {
       .site-header__inner {
         width: min(100% - 28px, 1280px);
-        min-height: 64px;
+        min-height: 60px;
         flex-wrap: wrap;
         gap: 10px;
-        padding: 10px 0;
+        padding: 6px 0;
       }
 
       .site-header__menu {
         display: inline-flex;
         align-items: center;
+        width: 31px;
+        height: 31px;
+        border-radius: 0;
       }
 
       .site-header__nav {

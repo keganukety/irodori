@@ -77,6 +77,9 @@ type ProductAffiliateImage = {
   id: string;
   product_id: string | number;
   role?: string | null;
+  alt_text?: string | null;
+  caption?: string | null;
+  title?: string | null;
   rakuten_image_html: string | null;
   is_primary: boolean;
   display_order: number;
@@ -111,8 +114,15 @@ type SpecificationRow = {
   sourceKeys: string[];
 };
 
+type FeatureBlock = {
+  title: string;
+  value: string;
+  note?: string;
+};
+
 const appElement = document.querySelector<HTMLDivElement>('#product-app');
 const recentlyViewedKey = 'recentlyViewedProductIds';
+const strollerProductsUrl = '/products.html';
 
 if (!appElement) {
   throw new Error('#product-app was not found.');
@@ -171,7 +181,7 @@ async function renderProductDetail() {
   if (!product) {
     app.innerHTML = `
       <main class="detail-shell">
-        <a class="back-link" href="/">ベビーカー一覧へ戻る</a>
+        <a class="back-link" href="${strollerProductsUrl}">ベビーカー一覧へ戻る</a>
         <p class="detail-error">商品が見つかりませんでした。</p>
       </main>
     `;
@@ -215,12 +225,16 @@ async function renderProductDetail() {
 
   saveRecentlyViewedProduct(String(product.id));
   const recentlyViewedProducts = getRecentlyViewedProducts(allProducts, String(product.id)).slice(0, 6);
+  updateProductMetadata(product);
 
   app.innerHTML = `
     <main class="detail-shell">
       <nav class="detail-breadcrumb" aria-label="パンくず">
-        <a href="/">ベビーカー一覧へ戻る</a>
-        <span>ベビーカー一覧 / ${escapeText(getProductName(product))}</span>
+        <a class="detail-back-link" href="${strollerProductsUrl}">ベビーカー一覧へ戻る</a>
+        <span aria-hidden="true">/</span>
+        <a href="${strollerProductsUrl}">ベビーカー一覧</a>
+        <span aria-hidden="true">/</span>
+        <span>${escapeText(getProductName(product))}</span>
       </nav>
 
       <article class="detail-layout">
@@ -230,7 +244,13 @@ async function renderProductDetail() {
           </div>
           ${
             galleryMedia.length > 1
-              ? `<div class="detail-thumbnails" aria-label="商品画像と動画">${galleryMedia.map((media, index) => renderThumbnail(media, mainMedia, product, index)).join('')}</div>`
+              ? `
+                <div class="detail-thumbnails-wrap">
+                  <button class="detail-thumbnail-scroll is-up" type="button" data-thumbnail-scroll="up" aria-label="サムネイルを上へ">△</button>
+                  <div class="detail-thumbnails" aria-label="商品画像と動画">${galleryMedia.map((media, index) => renderThumbnail(media, mainMedia, product, index)).join('')}</div>
+                  <button class="detail-thumbnail-scroll is-down" type="button" data-thumbnail-scroll="down" aria-label="サムネイルを下へ">▽</button>
+                </div>
+              `
               : ''
           }
         </section>
@@ -256,13 +276,30 @@ async function renderProductDetail() {
         </section>
       </article>
 
-      ${renderImageStorySections(images, product)}
+      ${renderImageStorySections(images, product, colors, specificationRows)}
       ${renderRecommendedProducts('あなたへのおすすめ', recommendedProducts, imagePairs)}
       ${renderRecommendedProducts('最近チェックした商品', recentlyViewedProducts, imagePairs)}
     </main>
   `;
 
   bindThumbnailEvents();
+}
+
+function updateProductMetadata(product: Product): void {
+  const title = `${getProductName(product)} | iLy.`;
+  const description = `${getBrand(product)} ${getProductName(product)}の写真、仕様、価格リンクをiLy.で確認できます。`;
+  document.title = title;
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+  if (meta) meta.content = description;
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:site_name"]').forEach((element) => {
+    element.content = 'iLy.';
+  });
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:title"], meta[name="twitter:title"]').forEach((element) => {
+    element.content = title;
+  });
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:description"], meta[name="twitter:description"]').forEach((element) => {
+    element.content = description;
+  });
 }
 
 function renderProductColors(colors: ProductColor[], uploadedImages: ProductUploadedImage[], product: Product): string {
@@ -317,35 +354,119 @@ function renderThumbnail(media: ProductGalleryMedia, mainMedia: ProductGalleryMe
   `;
 }
 
-function renderImageStorySections(images: ProductImage[], product: Product) {
+function renderImageStorySections(images: ProductImage[], product: Product, colors: ProductColor[], specificationRows: SpecificationRow[]) {
   const storyImages = images.filter((image) => ['detail', 'usage', 'folded', 'color'].includes(String(image.role ?? '')));
-  if (storyImages.length === 0) return '';
+  const featureBlocks = getFeatureBlocks(product, colors, specificationRows).slice(0, 4);
+  if (storyImages.length === 0 && featureBlocks.length === 0) return '';
+
+  const visibleImages = storyImages.slice(0, 4);
+  const hiddenImages = storyImages.slice(4);
 
   return `
     <section class="detail-story">
-      <h2>商品の特徴</h2>
-      ${storyImages.map((image, index) => renderStoryImage(image, product, index)).join('')}
+      <div class="section-heading-pair">
+        <p>FEATURE</p>
+        <h2>商品の特徴</h2>
+      </div>
+      ${featureBlocks.length > 0 ? `<div class="detail-feature-grid">${featureBlocks.map(renderFeatureBlock).join('')}</div>` : ''}
+      ${visibleImages.map((image, index) => renderStoryImage(image, product, index)).join('')}
+      ${
+        hiddenImages.length > 0
+          ? `
+            <details class="detail-story-more">
+              <summary>画像をさらに表示</summary>
+              ${hiddenImages.map((image, index) => renderStoryImage(image, product, index + visibleImages.length)).join('')}
+            </details>
+          `
+          : ''
+      }
     </section>
   `;
 }
 
+function getFeatureBlocks(product: Product, colors: ProductColor[], specificationRows: SpecificationRow[]): FeatureBlock[] {
+  const blocks: FeatureBlock[] = [];
+  const rowMap = new Map(specificationRows.map((row) => [row.label, specValueToText(row.value)]));
+  const tags = getDisplayTags(product);
+
+  addFeatureBlock(blocks, 'タイプ', getFirstText(product, ['type', 'product_type']), '使い方に合う分類を確認できます。');
+  addFeatureBlock(blocks, '対象月齢', rowMap.get('対象月齢') || getFirstText(product, ['target_age', 'age_range', 'age']), '使い始めの目安です。');
+  addFeatureBlock(blocks, '重量', rowMap.get('重量') || weightLabel(product.weight_kg ?? product.weight), '持ち運びや階段移動の目安です。');
+  addFeatureBlock(blocks, '収納サイズ', rowMap.get('収納サイズ') || getFirstText(product, ['folded_size', 'folding_size', 'storage_position']), '玄関や車載時の確認に使えます。');
+  addFeatureBlock(blocks, '製品サイズ', rowMap.get('製品サイズ') || getFirstText(product, ['product_size', 'size', 'dimensions', 'product_dimensions']), '使用時のサイズ感を確認できます。');
+  addFeatureBlock(blocks, '適応体重', rowMap.get('適応体重') || getFirstText(product, ['applicable_weight', 'weight_capacity', 'age_weight_limit']), '使用できる体重の目安です。');
+
+  const lifestyleTag = tags.find((tag) => /新生児|軽量|コンパクト|折りたたみ|電車|車|マンション|ワンオペ/.test(tag));
+  addFeatureBlock(blocks, '注目ポイント', lifestyleTag ?? '', '登録済みタグから表示しています。');
+
+  if (colors.length > 0) {
+    addFeatureBlock(blocks, 'カラー展開', `${colors.length}色`, colors.slice(0, 4).map((color) => color.name).join(' / '));
+  }
+
+  addFeatureBlock(blocks, 'ブランド', getBrand(product), 'ブランド・メーカー情報です。');
+  addFeatureBlock(blocks, '価格', formatPrice(product.price_yen), '登録済み価格です。');
+
+  return blocks;
+}
+
+function addFeatureBlock(blocks: FeatureBlock[], title: string, value: string, note?: string): void {
+  if (blocks.some((block) => block.title === title)) return;
+  if (!isPresentSpecValue(value)) return;
+  blocks.push({ title, value, note });
+}
+
+function specValueToText(value: string | string[]): string {
+  return Array.isArray(value) ? value.join(' / ') : value;
+}
+
+function renderFeatureBlock(block: FeatureBlock): string {
+  return `
+    <article class="detail-feature-card">
+      <p>${escapeText(block.title)}</p>
+      <strong>${escapeText(block.value)}</strong>
+      ${block.note ? `<span>${escapeText(block.note)}</span>` : ''}
+    </article>
+  `;
+}
+
 function renderStoryImage(image: ProductImage, product: Product, index: number) {
+  const storyText = getStoryImageText(image);
   return `
     <article class="story-block ${index % 2 === 1 ? 'is-reversed' : ''}">
       <div class="story-image">
-        <img src="${escapeAttr(image.src)}" alt="${escapeAttr(getRoleLabel(image.role))}" loading="lazy" />
+        <img src="${escapeAttr(image.src)}" alt="${escapeAttr(storyText.title || getProductName(product))}" loading="lazy" />
       </div>
-      <div class="story-copy">
-        <h3>${escapeText(getRoleLabel(image.role))}</h3>
-        <p>${escapeText(getRoleDescription(image.role))}</p>
-        <dl>
-          ${renderSpec('タイプ', getFirstText(product, ['type']))}
-          ${renderSpec('対象年齢', getFirstText(product, ['target_age', 'age_range', 'age']))}
-          ${renderSpec('重量', weightLabel(product.weight_kg ?? product.weight))}
-        </dl>
-      </div>
+      ${
+        storyText.title || storyText.description
+          ? `<div class="story-copy">
+              ${storyText.title ? `<h3>${escapeText(storyText.title)}</h3>` : ''}
+              ${storyText.description ? `<p>${escapeText(storyText.description)}</p>` : ''}
+            </div>`
+          : ''
+      }
     </article>
   `;
+}
+
+function getStoryImageText(image: ProductImage): { title: string; description: string } {
+  const title = getCleanImageText(image.title) || getCleanImageText(image.caption);
+  const description = title && image.caption && image.caption !== title ? getCleanImageText(image.caption) : '';
+
+  if (title || description) {
+    return { title, description };
+  }
+
+  if (image.role === 'color') return { title: 'カラー展開', description: '' };
+  if (image.role === 'folded') return { title: '折りたたみ時', description: '' };
+  if (image.role === 'usage') return { title: '使用イメージ', description: '' };
+  return { title: '', description: '' };
+}
+
+function getCleanImageText(value: unknown): string {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) return '';
+  if (/商品画像|商品詳細|ディテール|画像準備/i.test(text)) return '';
+  return text;
 }
 
 function getProductSpecificationRows(product: Product): SpecificationRow[] {
@@ -410,7 +531,10 @@ function renderProductSpecifications(rows: SpecificationRow[]) {
 
   return `
     <section class="specification-section">
-      <h2>商品仕様</h2>
+      <div class="section-heading-pair">
+        <p>SPECIFICATION</p>
+        <h2>商品仕様</h2>
+      </div>
       <dl class="specification-table">
         ${rows
           .map(
@@ -429,9 +553,13 @@ function renderProductSpecifications(rows: SpecificationRow[]) {
 
 function renderRecommendedProducts(title: string, products: Product[], imagePairs: Map<string, ProductImagePair>) {
   if (products.length === 0) return '';
+  const titleEn = title.includes('最近') ? 'CHECKED ITEM' : 'RECOMMEND';
   return `
     <section class="recommend-section">
-      <h2>${escapeText(title)}</h2>
+      <div class="section-heading-pair">
+        <p>${titleEn}</p>
+        <h2>${escapeText(title)}</h2>
+      </div>
       <div class="recommend-grid">${products.map((product) => renderRecommendedCard(product, imagePairs)).join('')}</div>
     </section>
   `;
@@ -510,6 +638,20 @@ function getRankNumber(product: Product) {
 }
 
 function bindThumbnailEvents() {
+  document.querySelectorAll<HTMLButtonElement>('[data-thumbnail-scroll]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const list = document.querySelector<HTMLElement>('.detail-thumbnails');
+      if (!list) return;
+      const direction = button.dataset.thumbnailScroll === 'up' ? -1 : 1;
+      const isHorizontal = window.matchMedia('(max-width: 820px)').matches;
+      list.scrollBy({
+        top: isHorizontal ? 0 : direction * 168,
+        left: isHorizontal ? direction * 168 : 0,
+        behavior: 'smooth',
+      });
+    });
+  });
+
   document.querySelectorAll<HTMLButtonElement>('.detail-thumbnails button').forEach((button) => {
     button.addEventListener('click', () => {
       const mainMedia = document.querySelector<HTMLElement>('#mainProductMedia');
@@ -592,7 +734,8 @@ function appendUnitIfNeeded(value: string, unit: string) {
 function isPresentSpecValue(value: string) {
   const normalized = value.trim();
   if (!normalized) return false;
-  return !['-', '不明', '未登録', 'undefined', 'null'].includes(normalized);
+  if (['-', 'undefined', 'null'].includes(normalized)) return false;
+  return !/不明|未登録/.test(normalized);
 }
 
 function isManagementMemo(value: string) {

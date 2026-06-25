@@ -24,6 +24,11 @@ type ProductImage = {
   display_order?: number | null;
 };
 
+type ProductImagePair = {
+  primary: string;
+  secondary: string;
+};
+
 const params = new URLSearchParams(window.location.search);
 const selectedCategory = params.get('category')?.trim() ?? '';
 const selectedScene = params.get('scene')?.trim() ?? '';
@@ -32,7 +37,7 @@ const isCanonicalStrollerPage = selectedCategory === 'ベビーカー' && !selec
 
 if (isCanonicalStrollerPage) {
   window.history.replaceState({}, '', '/products.html');
-} else if (selectedCategory || selectedScene || selectedBrand) {
+} else if ((selectedCategory && (selectedScene || selectedBrand)) || selectedScene || selectedBrand) {
   injectUrlFilterStyles();
   void initializeUrlFilteredProducts();
 }
@@ -75,7 +80,7 @@ async function initializeUrlFilteredProducts(): Promise<void> {
     setupCompareTrayNavigation();
     syncCompareUI(loadCompareProductIds());
     window.setTimeout(() => syncCompareUI(loadCompareProductIds()), 100);
-    setupProductQuickView({ products: filteredProducts as SharedProduct[], imageByProductId: imageMap, colorsByProductId: colors, brandsById: brands });
+    setupProductQuickView({ products: filteredProducts as SharedProduct[], imageByProductId: toPrimaryImageMap(imageMap), colorsByProductId: colors, brandsById: brands });
   } catch (error) {
     console.error('URL条件の商品一覧取得に失敗しました。', error);
     app.innerHTML = renderError();
@@ -100,8 +105,8 @@ function keepUrlFilteredPageVisible(app: HTMLElement, pageHtml: string): void {
   observer.observe(app, { childList: true });
 }
 
-async function loadImages(products: Product[]): Promise<Map<string, string>> {
-  const imageMap = new Map<string, string>();
+async function loadImages(products: Product[]): Promise<Map<string, ProductImagePair>> {
+  const imageMap = new Map<string, ProductImagePair>();
   const productIds = products.map((product) => product.id);
 
   if (productIds.length === 0) {
@@ -132,11 +137,14 @@ async function loadImages(products: Product[]): Promise<Map<string, string>> {
 
     grouped.forEach((list, productId) => {
       const sorted = [...list].sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999));
-      const image = sorted.find((item) => item.is_primary) ?? sorted[0];
-      const imageSrc = extractImageSrc(image?.rakuten_image_html);
+      const primaryImage = sorted.find((item) => item.is_primary) ?? sorted[0];
+      const primary = extractImageSrc(primaryImage?.rakuten_image_html);
+      const secondary = sorted
+        .map((item) => extractImageSrc(item.rakuten_image_html))
+        .find((src) => src && src !== primary) ?? '';
 
-      if (imageSrc) {
-        imageMap.set(productId, imageSrc);
+      if (primary) {
+        imageMap.set(productId, { primary, secondary });
       }
     });
   } catch (error) {
@@ -144,6 +152,10 @@ async function loadImages(products: Product[]): Promise<Map<string, string>> {
   }
 
   return imageMap;
+}
+
+function toPrimaryImageMap(imageMap: Map<string, ProductImagePair>): Map<string, string> {
+  return new Map(Array.from(imageMap, ([productId, image]) => [productId, image.primary]));
 }
 
 function renderLoading(): string {
@@ -164,13 +176,13 @@ function renderError(): string {
   `;
 }
 
-function renderPage(products: Product[], imageMap: Map<string, string>, colors: Map<string, ProductColor[]>, brands: Map<string, Brand>): string {
+function renderPage(products: Product[], imageMap: Map<string, ProductImagePair>, colors: Map<string, ProductColor[]>, brands: Map<string, Brand>): string {
   const title = selectedCategory || selectedScene || selectedBrand || '商品一覧';
 
   return `
     <main class="url-filter-products">
       <header class="url-filter-products__header">
-        <p>products</p>
+        <p>COLLECTION</p>
         <h1>${escapeHtml(title)}の商品一覧</h1>
         <div class="url-filter-products__actions">
           <span>${products.length}件の商品</span>
@@ -196,29 +208,40 @@ function renderEmpty(): string {
   `;
 }
 
-function renderProductCard(product: Product, imageMap: Map<string, string>, colors: Map<string, ProductColor[]>, brands: Map<string, Brand>): string {
+function renderProductCard(product: Product, imageMap: Map<string, ProductImagePair>, colors: Map<string, ProductColor[]>, brands: Map<string, Brand>): string {
   const productId = String(product.id);
   const name = getText(product.name, `商品ID ${productId}`);
   const brand = getText(product.brand, 'ブランド未登録');
-  const imageSrc = imageMap.get(productId);
+  const image = imageMap.get(productId);
   const tags = getTags(product).slice(0, 3);
   const productColors = colors.get(productId) ?? [];
   const brandRecord = product.brand_id ? brands.get(String(product.brand_id)) : undefined;
 
   return `
     <article class="url-product-card">
-      <a class="url-product-card__image" href="/product.html?id=${encodeURIComponent(productId)}">
-        ${imageSrc ? `<img src="${escapeAttr(imageSrc)}" alt="${escapeAttr(name)}" loading="lazy">` : '<span>画像準備中</span>'}
-      </a>
+      <div class="url-product-card__media">
+        <a class="url-product-card__image" href="/product.html?id=${encodeURIComponent(productId)}">
+          ${
+            image?.primary
+              ? `
+                <span class="image-hover-stack ${image.secondary ? 'has-hover-image' : ''}">
+                  <img class="image-main" src="${escapeAttr(image.primary)}" alt="${escapeAttr(name)}" loading="lazy">
+                  ${image.secondary ? `<img class="image-secondary" src="${escapeAttr(image.secondary)}" alt="" loading="lazy" aria-hidden="true">` : ''}
+                </span>
+              `
+              : '<span>画像準備中</span>'
+          }
+        </a>
+        ${renderQuickViewButton(productId)}
+      </div>
       <p class="url-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(brandRecord.display_name)}</a>` : escapeHtml(brand)}</p>
       <a class="url-product-card__name" href="/product.html?id=${encodeURIComponent(productId)}">${escapeHtml(name)}</a>
       <p class="url-product-card__price">${escapeHtml(formatPrice(product.price_yen))}</p>
       ${tags.length > 0 ? `<div class="url-product-card__tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
       ${productColors.length > 0 ? `<div class="color-swatches" aria-label="カラー">${productColors.slice(0, 6).map((color) => `<span style="--swatch:${escapeAttr(color.swatch_hex)}" title="${escapeAttr(color.name)}"></span>`).join('')}</div>` : ''}
-      ${renderQuickViewButton(productId)}
       <label class="url-product-card__compare">
         <input type="checkbox" data-compare-product-id="${escapeAttr(productId)}">
-        <span>比較に追加</span>
+        <span>比較する</span>
       </label>
     </article>
   `;
@@ -401,8 +424,9 @@ function injectUrlFilterStyles(): void {
       align-items: center;
       justify-content: center;
       aspect-ratio: 1 / 1;
-      border-radius: 22px;
-      background: #fff;
+      border: none;
+      border-radius: 0;
+      background: transparent;
       color: #8a8378;
       text-decoration: none;
       overflow: hidden;
@@ -420,22 +444,52 @@ function injectUrlFilterStyles(): void {
       font-size: 13px;
     }
 
+    .url-product-card__brand a {
+      position: relative;
+      display: inline-flex;
+      width: fit-content;
+      color: inherit;
+      text-decoration: none;
+    }
+
     .url-product-card__name {
-      display: -webkit-box;
+      position: relative;
+      display: inline-flex;
+      width: fit-content;
       overflow: hidden;
       color: #28241f;
       text-decoration: none;
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 500;
       line-height: 1.6;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
+    }
+
+    .url-product-card__name::after,
+    .url-product-card__brand a::after {
+      position: absolute;
+      left: 50%;
+      bottom: -3px;
+      width: 0;
+      height: 1px;
+      background: currentColor;
+      content: '';
+      transform: translateX(-50%);
+      transition: width .25s ease;
+    }
+
+    .url-product-card__name:hover::after,
+    .url-product-card__brand a:hover::after {
+      width: 100%;
     }
 
     .url-product-card__price {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
       margin: 12px 0 0;
-      color: #9f3328;
-      font-weight: 600;
+      color: #584f46;
+      font-weight: 500;
     }
 
     .url-product-card__tags {
@@ -447,10 +501,11 @@ function injectUrlFilterStyles(): void {
 
     .url-product-card__tags span {
       padding: 5px 10px;
-      border-radius: 999px;
-      background: #eef5ef;
-      color: #2d5d4f;
-      font-size: 12px;
+      border: 1px solid #ff420e;
+      border-radius: 2px;
+      background: #fff;
+      color: #ff420e;
+      font-size: 9px;
     }
 
     .url-product-card .color-swatches {
@@ -468,7 +523,15 @@ function injectUrlFilterStyles(): void {
     }
 
     .url-product-card > .quick-view-trigger {
-      margin-top: 14px;
+      display: none;
+    }
+
+    .product-check-link {
+      display: none;
+    }
+
+    .product-check-link:hover {
+      display: none;
     }
 
     .url-product-card__compare {
@@ -483,7 +546,7 @@ function injectUrlFilterStyles(): void {
     .url-product-card__compare input {
       width: 16px;
       height: 16px;
-      accent-color: #2f6758;
+      accent-color: #333;
     }
 
     .url-filter-products__empty {

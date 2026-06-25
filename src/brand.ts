@@ -24,6 +24,11 @@ type ProductImage = {
   display_order: number | null;
 };
 
+type ProductImagePair = {
+  primary: string;
+  secondary: string;
+};
+
 const appElement = document.querySelector<HTMLDivElement>('#brand-app');
 if (!appElement) throw new Error('#brand-app was not found.');
 const app: HTMLDivElement = appElement;
@@ -72,8 +77,8 @@ async function renderBrandPage(): Promise<void> {
       ${renderBrandVisual(brand, hero)}
 
       <section class="brand-products" aria-labelledby="brand-products-title">
-        <div class="brand-section-heading"><p class="brand-eyebrow">COLLECTION</p><h2 id="brand-products-title">商品ラインナップ</h2></div>
-        ${products.length > 0 ? `<div class="brand-product-grid iro-product-grid">${products.map((product) => renderProductCard(product, imageMap, colorMap)).join('')}</div>` : '<div class="brand-empty">このブランドの商品は現在準備中です。</div>'}
+        <div class="brand-section-heading section-heading-pair"><p class="brand-eyebrow">COLLECTION</p><h2 id="brand-products-title">商品ラインナップ</h2></div>
+        ${products.length > 0 ? `<div class="brand-product-grid iro-product-grid">${products.map((product) => renderProductCard(product, brand.display_name, imageMap, colorMap)).join('')}</div>` : '<div class="brand-empty">このブランドの商品は現在準備中です。</div>'}
       </section>
       ${renderVideo(brand.youtube_url)}
     </main>
@@ -129,8 +134,8 @@ function renderBrandVisual(brand: Brand, hero: BrandAsset | null): string {
     </section>`;
 }
 
-async function loadProductImages(products: Product[]): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
+async function loadProductImages(products: Product[]): Promise<Map<string, ProductImagePair>> {
+  const map = new Map<string, ProductImagePair>();
   if (products.length === 0) return map;
   const { data, error } = await supabase
     .from('product_affiliate_images')
@@ -149,8 +154,12 @@ async function loadProductImages(products: Product[]): Promise<Map<string, strin
   }
   grouped.forEach((images, productId) => {
     const sorted = [...images].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || Number(a.display_order) - Number(b.display_order));
-    const src = extractImageSrc(sorted[0]?.rakuten_image_html ?? '');
-    if (src) map.set(productId, src);
+    const primary = extractImageSrc(sorted[0]?.rakuten_image_html ?? '');
+    const secondary = sorted
+      .slice(1)
+      .map((image) => extractImageSrc(image.rakuten_image_html ?? ''))
+      .find((src) => src && src !== primary) ?? '';
+    if (primary) map.set(productId, { primary, secondary });
   });
   return map;
 }
@@ -174,29 +183,34 @@ async function loadProductColors(products: Product[]): Promise<Map<string, Produ
   return map;
 }
 
-function renderProductCard(product: Product, imageMap: Map<string, string>, colorMap: Map<string, ProductColor[]>): string {
+function renderProductCard(product: Product, brandDisplayName: string, imageMap: Map<string, ProductImagePair>, colorMap: Map<string, ProductColor[]>): string {
   const id = String(product.id);
   const name = getText(product.name, `商品ID ${id}`);
-  const image = imageMap.get(id) || getText(product.image_url, '');
+  const imagePair = imageMap.get(id);
+  const fallbackImage = getText(product.image_url, '');
   const colors = colorMap.get(id) ?? [];
-  const category = getText(product.category, '');
-  const productType = getText(product.product_type ?? product.type, '');
+  const brandName = getText(product.brand, brandDisplayName);
   return `
     <article class="brand-product-card iro-product-item">
       <a class="brand-product-card__image iro-product-media" href="/product.html?id=${encodeURIComponent(id)}">
-        ${image ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(name)}" loading="lazy">` : '<span>画像準備中</span>'}
+        ${
+          imagePair?.primary
+            ? `
+              <span class="image-hover-stack ${imagePair.secondary ? 'has-hover-image' : ''}">
+                <img class="image-main" src="${escapeAttr(imagePair.primary)}" alt="${escapeAttr(name)}" loading="lazy">
+                ${imagePair.secondary ? `<img class="image-secondary" src="${escapeAttr(imagePair.secondary)}" alt="" loading="lazy" aria-hidden="true">` : ''}
+              </span>
+            `
+            : fallbackImage
+              ? `<img src="${escapeAttr(fallbackImage)}" alt="${escapeAttr(name)}" loading="lazy">`
+              : '<span>画像準備中</span>'
+        }
       </a>
       <div class="brand-product-card__body iro-product-content">
-        ${category ? `<p class="brand-product-card__category">${escapeHtml(category)}</p>` : ''}
+        ${brandName ? `<p class="brand-product-card__category">${escapeHtml(brandName)}</p>` : ''}
         <h3><a href="/product.html?id=${encodeURIComponent(id)}">${escapeHtml(name)}</a></h3>
         <p class="brand-product-card__price">${escapeHtml(formatPrice(product.price_yen))}</p>
-        <dl>
-          ${renderSpec('タイプ', productType)}
-          ${renderSpec('重量', formatWeight(product.weight_kg ?? product.weight))}
-          ${renderSpec('対象年齢', getText(product.target_age ?? product.age_range ?? product.age, ''))}
-        </dl>
         ${colors.length > 0 ? `<div class="brand-product-card__colors color-swatches" aria-label="カラー">${colors.slice(0, 6).map((color) => `<span style="--swatch:${escapeAttr(color.swatch_hex)}" title="${escapeAttr(color.name)}"></span>`).join('')}</div>` : ''}
-        <a class="brand-product-card__link" href="/product.html?id=${encodeURIComponent(id)}">商品詳細を見る <span aria-hidden="true">→</span></a>
       </div>
     </article>
   `;
@@ -205,7 +219,7 @@ function renderProductCard(product: Product, imageMap: Map<string, string>, colo
 function renderVideo(value: string | null): string {
   const embedUrl = getYouTubeEmbedUrl(value);
   if (!embedUrl) return '';
-  return `<section class="brand-video"><p class="brand-eyebrow">MOVIE</p><h2>ブランドムービー</h2><div class="brand-video__frame"><iframe src="${escapeAttr(embedUrl)}" title="ブランドムービー" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></section>`;
+  return `<section class="brand-video"><div class="section-heading-pair"><p class="brand-eyebrow">MOVIE</p><h2>ブランドムービー</h2></div><div class="brand-video__frame"><iframe src="${escapeAttr(embedUrl)}" title="ブランドムービー" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></section>`;
 }
 
 function getYouTubeEmbedUrl(value: string | null): string {
@@ -226,14 +240,21 @@ function renderEmpty(message: string): void {
 }
 
 function updateMetadata(brand: Brand): void {
-  document.title = brand.seo_title || `${brand.display_name} | IRODORI`;
+  document.title = replacePublicSiteName(brand.seo_title || `${brand.display_name} | iLy.`);
   const description = brand.seo_description || brand.short_description;
   const meta = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-  if (meta && description) meta.content = description;
+  if (meta && description) meta.content = replacePublicSiteName(description);
+
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:site_name"]').forEach((element) => {
+    element.content = 'iLy.';
+  });
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:title"], meta[name="twitter:title"]').forEach((element) => {
+    element.content = document.title;
+  });
 }
 
-function renderSpec(label: string, value: string): string {
-  return value ? `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>` : '';
+function replacePublicSiteName(value: string): string {
+  return value.replace(/IRODORI/g, 'iLy.');
 }
 
 function extractImageSrc(html: string): string {
@@ -245,11 +266,6 @@ function extractImageSrc(html: string): string {
 function formatPrice(value: unknown): string {
   const number = Number(String(value ?? '').replace(/[^\d.-]/g, ''));
   return Number.isFinite(number) && number > 0 ? `¥${Math.round(number).toLocaleString('ja-JP')}（税込）` : '価格未登録';
-}
-
-function formatWeight(value: unknown): string {
-  const text = getText(value, '');
-  return text && !/kg/i.test(text) ? `${text}kg` : text;
 }
 
 function getText(value: unknown, fallback: string): string {

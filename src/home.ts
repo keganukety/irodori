@@ -325,7 +325,7 @@ function renderShell(state: HomeState): void {
   app.innerHTML = `
     <main class="home-page">
       <header class="home-header">
-        <a class="home-brand" href="/">IRODORI</a>
+        <a class="home-brand" href="/">iLy.</a>
         <button class="home-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false">
           メニュー
         </button>
@@ -413,7 +413,7 @@ function renderShell(state: HomeState): void {
       </section>
 
       <footer class="home-footer">
-        <a class="home-brand" href="/">IRODORI</a>
+        <a class="home-brand" href="/">iLy.</a>
         <p>育児用品選びを、暮らしに合わせてやさしく。</p>
       </footer>
     </main>
@@ -696,27 +696,29 @@ function renderProductCard(product: HomeProduct, index: number): string {
 
   return `
     <article class="home-product-card">
-      <a class="home-product-card__image" href="/product.html?id=${productId}" aria-label="${escapeAttr(name)}の詳細を見る">
-        ${rank ? `<span class="home-product-card__rank">${escapeHtml(rank)}</span>` : ''}
-        ${
-          product.imageSrc
-            ? `
-              <img class="home-product-card__img home-product-card__img--primary" src="${escapeAttr(product.imageSrc)}" alt="${escapeAttr(name)}" ${getImageLoadingAttributes(index)}>
-              ${
-                product.hoverImageSrc
-                  ? `<img class="home-product-card__img home-product-card__img--secondary" src="${escapeAttr(product.hoverImageSrc)}" alt="" loading="lazy" aria-hidden="true">`
-                  : ''
-              }
-            `
-            : '<span class="home-product-card__placeholder">画像準備中</span>'
-        }
-      </a>
+      <div class="home-product-card__media">
+        <a class="home-product-card__image" href="/product.html?id=${productId}" aria-label="${escapeAttr(name)}の詳細を見る">
+          ${rank ? `<span class="home-product-card__rank">${escapeHtml(rank)}</span>` : ''}
+          ${
+            product.imageSrc
+              ? `
+                <img class="home-product-card__img home-product-card__img--primary" src="${escapeAttr(product.imageSrc)}" alt="${escapeAttr(name)}" ${getImageLoadingAttributes(index)}>
+                ${
+                  product.hoverImageSrc
+                    ? `<img class="home-product-card__img home-product-card__img--secondary" src="${escapeAttr(product.hoverImageSrc)}" alt="" loading="lazy" aria-hidden="true">`
+                    : ''
+                }
+              `
+              : '<span class="home-product-card__placeholder">画像準備中</span>'
+          }
+        </a>
+        ${renderQuickViewButton(product.id)}
+      </div>
       <span class="home-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(brandRecord.display_name)}</a>` : escapeHtml(brand)}</span>
       <strong class="home-product-card__name"><a href="/product.html?id=${productId}">${escapeHtml(name)}</a></strong>
       <span class="home-product-card__price">${escapeHtml(formatPrice(product.price_yen))}<small>税込</small></span>
       ${tags.length > 0 ? `<span class="home-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</span>` : ''}
       ${colors.length > 0 ? `<span class="home-color-swatches color-swatches" aria-label="カラー">${colors.slice(0, 6).map((color) => `<span style="--swatch:${escapeAttr(color.swatch_hex)}" title="${escapeAttr(color.name)}"></span>`).join('')}</span>` : ''}
-      ${renderQuickViewButton(product.id)}
     </article>
   `;
 }
