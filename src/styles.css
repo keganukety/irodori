@@ -4756,3 +4756,103 @@ body {
     transition: none !important;
   }
 }
+
+/* Product list filters: stock-button-like controls and quieter sidebar checks. */
+.quick-filters {
+  justify-content: center !important;
+  gap: 10px !important;
+  border-bottom-color: #e5e5e5 !important;
+}
+
+.quick-filters button {
+  min-height: 32px !important;
+  padding: 8px 20px !important;
+  border: 1px solid #dadada !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: 1px !important;
+  transition: border-color .2s ease, background .2s ease, color .2s ease !important;
+}
+
+.quick-filters button:hover,
+.quick-filters button:focus-visible {
+  border-color: #333 !important;
+}
+
+.quick-filters button.is-active,
+.quick-filters button[aria-pressed="true"],
+.quick-filters button[aria-selected="true"] {
+  border-color: #333 !important;
+  background: #333 !important;
+  color: #fff !important;
+}
+
+.category-tab {
+  font-size: 12px !important;
+}
+
+.filter-check {
+  min-height: 28px;
+  padding: 2px 4px;
+  border-radius: 0;
+  transition: background .18s ease, color .18s ease;
+}
+
+.filter-check:hover {
+  background: rgba(51, 51, 51, .04);
+}
+
+.filter-check:has(input:checked) {
+  background: rgba(51, 51, 51, .08);
+  color: #333 !important;
+}
+
+.filter-check input {
+  accent-color: #333 !important;
+}
+
+@media (max-width: 760px) {
+  .category-tab {
+    font-size: 10px !important;
+  }
+
+  .quick-filters {
+    justify-content: flex-start !important;
+  }
+}
+
+/* Product list filter binding: target the actual quick-filter DOM. */
+.quick-filters > button[data-quick-filter] {
+  flex: 0 0 auto !important;
+  min-height: 32px !important;
+  padding: 8px 20px !important;
+  border: 1px solid #dadada !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  background-image: none !important;
+  color: #333 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: 1px !important;
+  cursor: pointer !important;
+  transition: border-color .2s ease, background .2s ease, color .2s ease !important;
+}
+
+.quick-filters > button[data-quick-filter]:hover,
+.quick-filters > button[data-quick-filter]:focus-visible {
+  border-color: #333 !important;
+  background: #fff !important;
+  color: #333 !important;
+}
+
+.quick-filters > button[data-quick-filter].is-active,
+.quick-filters > button[data-quick-filter][aria-pressed="true"],
+.quick-filters > button[data-quick-filter][aria-current="true"] {
+  border-color: #333 !important;
+  background: #333 !important;
+  color: #fff !important;
+  font-weight: 400 !important;
+}

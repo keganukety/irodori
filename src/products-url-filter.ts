@@ -1,3 +1,3 @@
-// URL filter handling now lives in main.ts so product filters can update only
-// the catalog result area without replacing the whole products page.
+// Product filtering is now handled inside main.ts with partial `.catalog-main` rendering.
+// This file is intentionally kept as a no-op to avoid legacy full #app replacement behavior.
 export {};
