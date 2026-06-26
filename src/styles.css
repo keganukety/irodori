@@ -4636,3 +4636,123 @@ body {
     transition: none !important;
   }
 }
+
+/* Products page category navigation and partial filter updates. */
+.category-tabs {
+  display: flex;
+  width: min(100% - 48px, 1280px);
+  justify-content: center;
+  gap: clamp(18px, 4vw, 54px);
+  margin: 0 auto;
+  padding: 30px 0 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e5e5e5;
+  background: #fff;
+  scrollbar-width: none;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab {
+  position: relative;
+  display: inline-flex;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: .06em;
+  text-decoration: none;
+}
+
+.category-tab::after {
+  position: absolute;
+  right: 50%;
+  bottom: 2px;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  content: "";
+  transform: translateX(50%);
+  transition: width .28s ease;
+}
+
+.category-tab:hover::after,
+.category-tab:focus-visible::after,
+.category-tab.is-current::after {
+  width: 100%;
+}
+
+.category-tab small {
+  color: #999;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.category-tab.is-current {
+  color: #000;
+}
+
+.active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 22px;
+}
+
+.active-filter-chips button {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #dadada;
+  border-radius: 0;
+  background: #fff;
+  color: #333;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+.active-filter-chips button:hover,
+.active-filter-chips button:focus-visible {
+  border-color: #333;
+}
+
+.catalog-main {
+  transition: opacity 160ms ease;
+}
+
+.catalog-main.is-filter-updating {
+  opacity: .72;
+}
+
+.filter-clear[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .category-tabs {
+    width: calc(100% - 28px);
+    justify-content: flex-start;
+    gap: 18px;
+    padding: 22px 0 16px;
+  }
+
+  .category-tab {
+    min-height: 40px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-tab::after,
+  .catalog-main {
+    transition: none !important;
+  }
+}

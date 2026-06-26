@@ -181,23 +181,25 @@ let activeCategory = getInitialCategory();
 let productImages = new Map<string, ProductImagePair>();
 let productColors = new Map<string, ProductColor[]>();
 let brandsById = new Map<string, Brand>();
-let activeQuickFilter: QuickFilter = 'all';
-let activeSidebarFilters = new Set<string>();
-let sortKey: SortKey = 'recommended';
+let activeQuickFilter: QuickFilter = getInitialQuickFilter(activeCategory);
+let activeSidebarFilters = getInitialSidebarFilters();
+let sortKey: SortKey = getInitialSortKey();
 let comparedProducts = new Set<string>(loadCompareProductIds());
 let renderedCount = pageSize;
 let loadObserver: IntersectionObserver | null = null;
 let mobileSidebarOpen = false;
 
 window.addEventListener('popstate', () => {
-  const nextCategory = getInitialCategory();
-  if (nextCategory === activeCategory) return;
-  activeCategory = nextCategory;
-  strollerProducts = getProductsForCategory(activeCategory);
-  activeQuickFilter = 'all';
-  activeSidebarFilters.clear();
+  const previousCategory = activeCategory;
+  restoreFilterStateFromUrl();
   renderedCount = pageSize;
-  renderStorefront();
+  if (previousCategory !== activeCategory) {
+    strollerProducts = getProductsForCategory(activeCategory);
+    renderStorefront();
+    return;
+  }
+  syncFilterControls();
+  renderProductResults({ updateUrl: false, animate: false });
 });
 
 renderPublicPage().catch((error) => {
@@ -253,10 +255,6 @@ async function renderPublicPage() {
 }
 
 function renderStorefront() {
-  const visibleProducts = getVisibleProducts();
-  const renderedProducts = visibleProducts.slice(0, renderedCount);
-  const hasMore = renderedProducts.length < visibleProducts.length;
-
   app.innerHTML = `
     <main class="storefront-shell">
       <section class="hero-panel">
@@ -273,6 +271,8 @@ function renderStorefront() {
         </div>
       </section>
 
+      ${renderCategoryTabs()}
+
       <div class="content-shell">
         <div class="quick-filters" aria-label="クイックフィルター">
           ${getQuickFiltersForCategory(activeCategory).map((filter) => renderQuickFilter(filter.value, filter.label)).join('')}
@@ -280,29 +280,7 @@ function renderStorefront() {
 
         <section class="catalog-layout">
           ${renderSidebar()}
-          <section class="catalog-main">
-            <div class="catalog-toolbar">
-              <p>${visibleProducts.length}件の商品</p>
-              <label>
-                並び替え
-                <select id="sortSelect">
-                  <option value="recommended" ${sortKey === 'recommended' ? 'selected' : ''}>おすすめ順</option>
-                  <option value="popular" ${sortKey === 'popular' ? 'selected' : ''}>人気順</option>
-                  <option value="priceAsc" ${sortKey === 'priceAsc' ? 'selected' : ''}>価格が安い順</option>
-                  <option value="priceDesc" ${sortKey === 'priceDesc' ? 'selected' : ''}>価格が高い順</option>
-                  <option value="weightAsc" ${sortKey === 'weightAsc' ? 'selected' : ''}>軽い順</option>
-                </select>
-              </label>
-            </div>
-            <div class="product-grid">
-              ${renderedProducts.map((product, index) => renderProductCard(product, index)).join('')}
-            </div>
-            ${
-              hasMore
-                ? `<div id="loadMoreSentinel" class="load-sentinel">商品を読み込んでいます…</div>`
-                : `<p class="load-complete">すべての商品を表示しました。</p>`
-            }
-          </section>
+          <section class="catalog-main">${renderCatalogMain()}</section>
         </section>
       </div>
     </main>
@@ -314,6 +292,7 @@ function renderStorefront() {
   `;
 
   bindEvents();
+  bindProductResultControls();
   setupProductQuickView({
     products: allProducts as SharedProduct[],
     imageByProductId: new Map(Array.from(productImages, ([id, pair]) => [id, pair.primary])),
@@ -321,11 +300,134 @@ function renderStorefront() {
     brandsById,
   });
   applyFadeUpAnimations(app);
-  observeLoadMore(hasMore);
+  observeLoadMore(getVisibleProducts().slice(0, renderedCount).length < getVisibleProducts().length);
+}
+
+function renderCatalogMain(): string {
+  const visibleProducts = getVisibleProducts();
+  const renderedProducts = visibleProducts.slice(0, renderedCount);
+  const hasMore = renderedProducts.length < visibleProducts.length;
+  return `
+    <div class="catalog-toolbar">
+      <p>${visibleProducts.length}件の商品</p>
+      <label>
+        並び替え
+        <select id="sortSelect">
+          <option value="recommended" ${sortKey === 'recommended' ? 'selected' : ''}>おすすめ順</option>
+          <option value="popular" ${sortKey === 'popular' ? 'selected' : ''}>人気順</option>
+          <option value="priceAsc" ${sortKey === 'priceAsc' ? 'selected' : ''}>価格が安い順</option>
+          <option value="priceDesc" ${sortKey === 'priceDesc' ? 'selected' : ''}>価格が高い順</option>
+          <option value="weightAsc" ${sortKey === 'weightAsc' ? 'selected' : ''}>軽い順</option>
+        </select>
+      </label>
+    </div>
+    ${renderActiveFilterChips()}
+    <div class="product-grid">
+      ${renderedProducts.map((product, index) => renderProductCard(product, index)).join('')}
+    </div>
+    ${
+      hasMore
+        ? `<div id="loadMoreSentinel" class="load-sentinel">商品を読み込んでいます…</div>`
+        : `<p class="load-complete">すべての商品を表示しました。</p>`
+    }
+  `;
+}
+
+function renderProductResults(options: { updateUrl?: boolean; replaceUrl?: boolean; animate?: boolean } = {}): void {
+  const catalogMain = document.querySelector<HTMLElement>('.catalog-main');
+  if (!catalogMain) {
+    renderStorefront();
+    return;
+  }
+  if (options.updateUrl !== false) updateProductsUrl(options.replaceUrl ? 'replace' : 'push');
+  loadObserver?.disconnect();
+  loadObserver = null;
+  if (options.animate !== false) catalogMain.classList.add('is-filter-updating');
+  catalogMain.innerHTML = renderCatalogMain();
+  bindProductResultControls();
+  syncCompareUI(Array.from(comparedProducts));
+  const visibleProducts = getVisibleProducts();
+  observeLoadMore(Math.min(renderedCount, visibleProducts.length) < visibleProducts.length);
+  if (options.animate !== false) {
+    window.setTimeout(() => catalogMain.classList.remove('is-filter-updating'), 180);
+  }
+}
+
+function renderActiveFilterChips(): string {
+  const chips: string[] = [];
+  if (activeQuickFilter !== 'all') {
+    chips.push(`<button type="button" data-clear-quick-filter>${escapeText(getQuickFilterLabel(activeQuickFilter))}<span aria-hidden="true">×</span></button>`);
+  }
+  for (const filter of activeSidebarFilters) {
+    chips.push(`<button type="button" data-remove-sidebar-filter="${escapeAttr(filter)}">${escapeText(getSidebarFilterLabel(filter))}<span aria-hidden="true">×</span></button>`);
+  }
+  if (chips.length === 0) return '';
+  return `<div class="active-filter-chips" aria-label="選択中の条件">${chips.join('')}</div>`;
+}
+
+function syncFilterControls(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-quick-filter]').forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.quickFilter === activeQuickFilter);
+  });
+  document.querySelectorAll<HTMLInputElement>('.filter-check input').forEach((input) => {
+    input.checked = activeSidebarFilters.has(input.value);
+  });
+  const clearButton = document.querySelector<HTMLButtonElement>('[data-clear-sidebar-filters]');
+  if (clearButton) clearButton.hidden = activeSidebarFilters.size === 0;
+}
+
+function getQuickFilterLabel(value: QuickFilter): string {
+  return getQuickFiltersForCategory(activeCategory).find((filter) => filter.value === value)?.label ?? value;
+}
+
+function getSidebarFilterLabel(value: string): string {
+  const [group, ...rest] = value.split(':');
+  const rawValue = rest.join(':');
+  const allFilters = [
+    ...getTypeFiltersForCategory(activeCategory),
+    ...getSceneFiltersForCategory(activeCategory),
+    ...getBrandFilters(),
+    ['price:under30000', '〜3万円'],
+    ['price:30000to50000', '3〜5万円'],
+    ['price:50000to80000', '5〜8万円'],
+    ['price:over80000', '8万円〜'],
+    ['weight:under5', '5kg未満'],
+    ['weight:5to6', '5〜6kg'],
+    ['weight:6to8', '6〜8kg'],
+    ['weight:over8', '8kg以上'],
+    ['color:black', 'ブラック'],
+    ['color:beige', 'ベージュ'],
+    ['color:gray', 'グレー'],
+    ['color:navy', 'ネイビー'],
+  ];
+  return allFilters.find(([filterValue]) => filterValue === value)?.[1] ?? (rawValue || group || value);
 }
 
 function renderQuickFilter(value: QuickFilter, label: string) {
   return `<button class="${activeQuickFilter === value ? 'is-active' : ''}" data-quick-filter="${value}" type="button">${escapeText(label)}</button>`;
+}
+
+function renderCategoryTabs() {
+  const categories = getMainCategories();
+  return `
+    <nav class="category-tabs" aria-label="商品カテゴリ">
+      ${categories.map((category) => {
+        const count = getProductsForCategory(category).length;
+        const isCurrent = category === activeCategory;
+        const href = buildCategoryUrl(category);
+        return `
+          <a class="category-tab${isCurrent ? ' is-current' : ''}" href="${escapeAttr(href)}" data-category-nav="${escapeAttr(category)}" ${isCurrent ? 'aria-current="page"' : ''}>
+            <span>${escapeText(category)}</span>
+            <small>${count}</small>
+          </a>
+        `;
+      }).join('')}
+    </nav>
+  `;
+}
+
+function getMainCategories(): string[] {
+  return ['ベビーカー', '抱っこ紐', 'チャイルドシート', 'ヒップシート'];
 }
 
 function getQuickFiltersForCategory(category: string): QuickFilterConfig[] {
@@ -413,31 +515,16 @@ function renderSidebar() {
     <details class="filter-sidebar">
       <summary>絞り込み</summary>
       <div class="filter-panel">
-        ${renderCategoryNavigation()}
         ${renderFilterGroup('タイプ', getTypeFiltersForCategory(activeCategory))}
         ${renderFilterGroup('シーンで探す', getSceneFiltersForCategory(activeCategory))}
         ${renderFilterGroup('ブランド', brandFilters)}
         ${renderFilterGroup('価格', [['price:under30000', '〜3万円'], ['price:30000to50000', '3〜5万円'], ['price:50000to80000', '5〜8万円'], ['price:over80000', '8万円〜']])}
         ${renderFilterGroup('重さ', [['weight:under5', '5kg未満'], ['weight:5to6', '5〜6kg'], ['weight:6to8', '6〜8kg'], ['weight:over8', '8kg以上']])}
         ${renderColorFilterGroup()}
-        ${activeSidebarFilters.size > 0 ? '<button class="filter-clear" type="button" data-clear-sidebar-filters>条件をクリア</button>' : ''}
+        <button class="filter-clear" type="button" data-clear-sidebar-filters ${activeSidebarFilters.size === 0 ? 'hidden' : ''}>条件をクリア</button>
       </div>
     </details>
   `;
-}
-
-function renderCategoryNavigation() {
-  const categories = ['ベビーカー', '抱っこ紐', 'チャイルドシート', 'ヒップシート'];
-  return `
-    <details class="filter-group filter-accordion category-navigation" open>
-      <summary><span>カテゴリ</span><i aria-hidden="true"></i></summary>
-      <nav class="filter-options" aria-label="商品カテゴリ">${categories.map((category) => {
-        const count = getProductsForCategory(category).length;
-        const isCurrent = category === activeCategory;
-        const href = category === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(category)}`;
-        return `<a class="${isCurrent ? 'is-current' : ''}" href="${escapeAttr(href)}" data-category-nav="${escapeAttr(category)}" ${isCurrent ? 'aria-current="page"' : ''}><span>${escapeText(category)}</span><small>${count}</small></a>`;
-      }).join('')}</nav>
-    </details>`;
 }
 
 function getBrandFilters(): Array<[string, string]> {
@@ -576,10 +663,12 @@ function bindEvents() {
   bindResponsiveSidebar();
   bindFilterAccordionAnimations();
   document.querySelectorAll<HTMLButtonElement>('[data-quick-filter]').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
       activeQuickFilter = button.dataset.quickFilter as QuickFilter;
       renderedCount = pageSize;
-      renderStorefront();
+      syncFilterControls();
+      renderProductResults({ updateUrl: true });
     });
   });
 
@@ -592,9 +681,9 @@ function bindEvents() {
       strollerProducts = getProductsForCategory(activeCategory);
       activeQuickFilter = 'all';
       activeSidebarFilters.clear();
+      sortKey = 'recommended';
       renderedCount = pageSize;
-      const nextUrl = activeCategory === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(activeCategory)}`;
-      window.history.pushState({ category: activeCategory }, '', nextUrl);
+      window.history.pushState({ category: activeCategory }, '', buildCategoryUrl(activeCategory));
       renderStorefront();
     });
   });
@@ -604,33 +693,47 @@ function bindEvents() {
       if (input.checked) activeSidebarFilters.add(input.value);
       else activeSidebarFilters.delete(input.value);
       renderedCount = pageSize;
-      renderStorefront();
+      syncFilterControls();
+      renderProductResults({ updateUrl: true });
     });
   });
 
+  document.querySelector<HTMLButtonElement>('[data-clear-sidebar-filters]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    activeSidebarFilters.clear();
+    renderedCount = pageSize;
+    syncFilterControls();
+    renderProductResults({ updateUrl: true });
+  });
+}
+
+function bindProductResultControls() {
   document.querySelector<HTMLSelectElement>('#sortSelect')?.addEventListener('change', (event: Event) => {
     const select = event.currentTarget;
     if (!(select instanceof HTMLSelectElement)) return;
 
     sortKey = select.value as SortKey;
     renderedCount = pageSize;
-    renderStorefront();
+    renderProductResults({ updateUrl: true });
   });
 
-  document.querySelectorAll<HTMLInputElement>('[data-compare-id]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const id = input.dataset.compareId;
-      if (!id) return;
-      if (input.checked) comparedProducts.add(id);
-      else comparedProducts.delete(id);
-      renderStorefront();
-    });
-  });
-
-  document.querySelector<HTMLButtonElement>('[data-clear-sidebar-filters]')?.addEventListener('click', () => {
-    activeSidebarFilters.clear();
+  document.querySelector<HTMLButtonElement>('[data-clear-quick-filter]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    activeQuickFilter = 'all';
     renderedCount = pageSize;
-    renderStorefront();
+    syncFilterControls();
+    renderProductResults({ updateUrl: true });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-remove-sidebar-filter]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      const filter = button.dataset.removeSidebarFilter;
+      if (filter) activeSidebarFilters.delete(filter);
+      renderedCount = pageSize;
+      syncFilterControls();
+      renderProductResults({ updateUrl: true });
+    });
   });
 }
 
@@ -704,7 +807,7 @@ function observeLoadMore(hasMore: boolean) {
       const total = getVisibleProducts().length;
       renderedCount = Math.min(renderedCount + pageSize, total);
       if (renderedCount >= total) loadObserver?.disconnect();
-      renderStorefront();
+      renderProductResults({ updateUrl: false, animate: false });
     },
     { rootMargin: '360px 0px' },
   );
@@ -722,12 +825,87 @@ function getInitialCategory(): string {
   return normalizeRequestedCategory(category || 'ベビーカー');
 }
 
+function getInitialQuickFilter(category: string): QuickFilter {
+  const value = new URLSearchParams(window.location.search).get('filter')?.trim()
+    || new URLSearchParams(window.location.search).get('quick')?.trim()
+    || 'all';
+  return getQuickFiltersForCategory(category).some((filter) => filter.value === value) ? value : 'all';
+}
+
+function getInitialSortKey(): SortKey {
+  const value = new URLSearchParams(window.location.search).get('sort')?.trim() as SortKey | null;
+  return value && ['recommended', 'popular', 'priceAsc', 'priceDesc', 'weightAsc'].includes(value) ? value : 'recommended';
+}
+
+function getInitialSidebarFilters(): Set<string> {
+  const params = new URLSearchParams(window.location.search);
+  const filters = new Set<string>();
+  getQueryValues(params, 'type').forEach((value) => filters.add(`type:${value}`));
+  getQueryValues(params, 'scene').forEach((value) => filters.add(`scene:${value}`));
+  getQueryValues(params, 'brand').forEach((value) => filters.add(`brand:${getCanonicalBrand(value) || value}`));
+  getQueryValues(params, 'price').forEach((value) => filters.add(`price:${value}`));
+  getQueryValues(params, 'weight').forEach((value) => filters.add(`weight:${value}`));
+  getQueryValues(params, 'color').forEach((value) => filters.add(`color:${value}`));
+  return filters;
+}
+
+function restoreFilterStateFromUrl(): void {
+  activeCategory = getInitialCategory();
+  activeQuickFilter = getInitialQuickFilter(activeCategory);
+  activeSidebarFilters = getInitialSidebarFilters();
+  sortKey = getInitialSortKey();
+}
+
+function getQueryValues(params: URLSearchParams, key: string): string[] {
+  return params
+    .getAll(key)
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function normalizeRequestedCategory(category: string) {
   if (/stroller|babycar|ベビーカー/i.test(category)) return 'ベビーカー';
   if (/carrier|抱っこ/i.test(category)) return '抱っこ紐';
   if (/car\s*seat|carseat|チャイルド/i.test(category)) return 'チャイルドシート';
   if (/hip\s*seat|hipseat|ヒップ/i.test(category)) return 'ヒップシート';
   return category;
+}
+
+function categoryToQuery(category: string): string {
+  if (category === '抱っこ紐') return 'carrier';
+  if (category === 'チャイルドシート') return 'car-seat';
+  if (category === 'ヒップシート') return 'hip-seat';
+  return 'stroller';
+}
+
+function buildCategoryUrl(category: string): string {
+  return category === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(categoryToQuery(category))}`;
+}
+
+function updateProductsUrl(mode: 'push' | 'replace' = 'push'): void {
+  const url = buildProductsUrl();
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (url === current) return;
+  window.history[mode === 'replace' ? 'replaceState' : 'pushState']({ category: activeCategory }, '', url);
+}
+
+function buildProductsUrl(): string {
+  const params = new URLSearchParams();
+  if (activeCategory !== 'ベビーカー') params.set('category', categoryToQuery(activeCategory));
+  if (activeQuickFilter !== 'all') params.set('filter', activeQuickFilter);
+  if (sortKey !== 'recommended') params.set('sort', sortKey);
+  const grouped = [...activeSidebarFilters].sort().reduce((map, filter) => {
+    const [key, ...rest] = filter.split(':');
+    if (!key || rest.length === 0) return map;
+    map.set(key, [...(map.get(key) ?? []), rest.join(':')]);
+    return map;
+  }, new Map<string, string[]>());
+  ['type', 'scene', 'brand', 'price', 'weight', 'color'].forEach((key) => {
+    grouped.get(key)?.forEach((value) => params.append(key, value));
+  });
+  const query = params.toString();
+  return query ? `/products.html?${query}` : '/products.html';
 }
 
 function matchesQuickFilter(product: Product) {
