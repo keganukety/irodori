@@ -258,6 +258,19 @@
   }
 }
 
+/* Shared price tone for the brand showcase. */
+.brand-product-card__price,
+.brand-product-price {
+  color: #333 !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  letter-spacing: 2px !important;
+}
+
+.brand-product-card__price {
+  font-size: 13px !important;
+}
+
 .brand-overview__copy,
 .brand-overview__copy h1,
 .brand-overview__copy p,
