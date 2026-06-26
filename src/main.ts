@@ -1,6 +1,14 @@
 import './styles.css';
 import { mountBackToTop } from './back-to-top';
-import { applyFadeUpAnimations, loadCompareProductIds, mountCommonHeader, saveCompareIds, setupCompareTrayNavigation, syncCompareUI } from './shared-ui';
+import {
+  MAX_COMPARE_PRODUCTS,
+  applyFadeUpAnimations,
+  loadCompareProductIds,
+  mountCommonHeader,
+  setupCompareTrayNavigation,
+  syncCompareUI,
+  updateCompareState,
+} from './shared-ui';
 import { supabase } from './lib/supabase';
 import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
@@ -85,24 +93,7 @@ function bindProductCompareState(): void {
       }
 
       event.stopPropagation();
-
-      comparedProducts = new Set<string>(loadCompareProductIds());
-
-      const productId = getCompareProductIdFromInput(target);
-      if (!productId) {
-        syncCompareUI(Array.from(comparedProducts));
-        return;
-      }
-
-      if (target.checked) {
-        comparedProducts.add(productId);
-      } else {
-        comparedProducts.delete(productId);
-      }
-
-      const selectedIds = saveCompareIds(Array.from(comparedProducts));
-      comparedProducts = new Set<string>(selectedIds);
-      syncCompareUI(selectedIds);
+      setCompareInputState(target, target.checked);
     },
     true,
   );
@@ -116,8 +107,19 @@ function bindProductCompareState(): void {
         return;
       }
 
+      const compareLabel = target.closest<HTMLLabelElement>('label.compare-check');
+      if (compareLabel && !target.matches('input')) {
+        const input = compareLabel.querySelector<HTMLInputElement>('[data-compare-product-id], [data-compare-id]');
+        if (input) {
+          event.preventDefault();
+          event.stopPropagation();
+          setCompareInputState(input, !input.checked);
+          return;
+        }
+      }
+
       const compareButton = target.closest<HTMLElement>(
-        '[data-compare-submit], [data-compare-action="open"], .compare-tray__primary',
+        '[data-compare-submit], [data-compare-action="open"], .compare-tray__primary, .compare-bar button',
       );
 
       if (!compareButton) {
@@ -127,9 +129,8 @@ function bindProductCompareState(): void {
       event.preventDefault();
       event.stopPropagation();
 
-      const selectedIds = saveCompareIds(Array.from(comparedProducts));
+      const selectedIds = updateCompareState(loadCompareProductIds());
       comparedProducts = new Set<string>(selectedIds);
-      syncCompareUI(selectedIds);
 
       if (selectedIds.length < 1) {
         showCompareMessage('比較する商品を選択してください');
@@ -140,6 +141,38 @@ function bindProductCompareState(): void {
     },
     true,
   );
+}
+
+function setCompareInputState(input: HTMLInputElement, shouldSelect: boolean): void {
+  const productId = getCompareProductIdFromInput(input);
+  if (!productId) {
+    comparedProducts = new Set<string>(loadCompareProductIds());
+    syncCompareUI(Array.from(comparedProducts));
+    return;
+  }
+
+  const currentIds = loadCompareProductIds();
+  let nextIds = currentIds;
+
+  if (shouldSelect) {
+    if (!currentIds.includes(productId)) {
+      if (currentIds.length >= MAX_COMPARE_PRODUCTS) {
+        showCompareMessage('比較できる商品は最大4件までです。不要な商品を解除してください。');
+        input.checked = false;
+        syncCompareUI(currentIds);
+        return;
+      }
+
+      nextIds = [...currentIds, productId];
+    }
+  } else {
+    nextIds = currentIds.filter((id) => id !== productId);
+  }
+
+  const selectedIds = updateCompareState(nextIds);
+  comparedProducts = new Set<string>(selectedIds);
+  input.checked = selectedIds.includes(productId);
+  syncCompareUI(selectedIds);
 }
 
 function getCompareProductIdFromInput(input: HTMLInputElement): string {
@@ -255,6 +288,7 @@ async function renderPublicPage() {
 }
 
 function renderStorefront() {
+  comparedProducts = new Set<string>(loadCompareProductIds());
   app.innerHTML = `
     <main class="storefront-shell">
       <section class="hero-panel">
@@ -299,6 +333,7 @@ function renderStorefront() {
     colorsByProductId: productColors,
     brandsById,
   });
+  syncCompareUI(Array.from(comparedProducts));
   applyFadeUpAnimations(app);
   observeLoadMore(getVisibleProducts().slice(0, renderedCount).length < getVisibleProducts().length);
 }
@@ -345,6 +380,7 @@ function renderProductResults(options: { updateUrl?: boolean; replaceUrl?: boole
   if (options.animate !== false) catalogMain.classList.add('is-filter-updating');
   catalogMain.innerHTML = renderCatalogMain();
   bindProductResultControls();
+  comparedProducts = new Set<string>(loadCompareProductIds());
   syncCompareUI(Array.from(comparedProducts));
   const visibleProducts = getVisibleProducts();
   observeLoadMore(Math.min(renderedCount, visibleProducts.length) < visibleProducts.length);

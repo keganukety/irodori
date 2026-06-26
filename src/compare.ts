@@ -254,7 +254,7 @@ function renderCompareTable(products: Product[], imageMap: Map<string, string>):
                     <td>
                       <a class="compare-detail-link" href="/product.html?id=${encodeURIComponent(
                         normalizeProductId(product.id),
-                      )}">CHECK</a>
+                      )}">商品詳細を見る →</a>
                     </td>
                   `,
                 )
@@ -461,9 +461,10 @@ function injectCompareStyles(): void {
 
     .compare-hero__eyebrow {
       margin: 0 0 8px;
-      color: #8a8377;
-      font-size: 12px;
-      letter-spacing: .12em;
+      color: #333;
+      font-size: clamp(28px, 3vw, 36px);
+      font-weight: 400;
+      letter-spacing: .08em;
     }
 
     .compare-hero h1 {
@@ -477,6 +478,29 @@ function injectCompareStyles(): void {
       max-width: 620px;
       color: #6d675f;
       line-height: 1.8;
+    }
+
+    .compare-hero__guide-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      margin-top: 18px;
+      padding: 8px 20px;
+      border: 1px solid #dadada;
+      background: #fff;
+      color: #333;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-decoration: none;
+      transition: border-color .2s ease, opacity .2s ease;
+    }
+
+    .compare-hero__guide-link:hover,
+    .compare-hero__guide-link:focus-visible {
+      border-color: #333;
+      opacity: .82;
     }
 
     .compare-notice {
@@ -625,8 +649,18 @@ function injectCompareStyles(): void {
     }
 
     .compare-detail-link {
-      color: #26231f;
+      color: #333;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: .04em;
+      text-decoration: none;
       text-underline-offset: 5px;
+    }
+
+    .compare-detail-link:hover,
+    .compare-detail-link:focus-visible {
+      opacity: .72;
+      text-decoration: underline;
     }
 
     .compare-mall-links {
@@ -670,6 +704,10 @@ function injectCompareStyles(): void {
       .compare-table th,
       .compare-table td {
         padding: 14px;
+      }
+
+      .compare-hero__eyebrow {
+        font-size: clamp(24px, 8vw, 28px);
       }
     }
   `;
