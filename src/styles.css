@@ -4899,3 +4899,269 @@ body {
 .quick-view-price {
   font-size: 20px !important;
 }
+
+/* Product detail thumbnail rail: horizontal thumbnails under the main media. */
+.detail-gallery:has(.detail-thumbnails-wrap) {
+  display: block !important;
+}
+
+.detail-thumbnails-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  margin-top: 14px !important;
+  padding: 0 30px !important;
+}
+
+.detail-thumbnails {
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 10px !important;
+  max-height: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 0 !important;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.detail-thumbnails::-webkit-scrollbar {
+  display: none !important;
+}
+
+.detail-thumbnails button {
+  display: block !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  height: 68px !important;
+  padding: 0 0 4px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  opacity: .55;
+  cursor: pointer;
+  transition: opacity .2s ease, border-color .2s ease !important;
+}
+
+.detail-thumbnails button:hover,
+.detail-thumbnails button:focus-visible,
+.detail-thumbnails button.is-active {
+  border-bottom-color: #333 !important;
+  opacity: 1;
+}
+
+.detail-thumbnails img {
+  display: block !important;
+  width: 100% !important;
+  height: 62px !important;
+  border-radius: 0 !important;
+  object-fit: cover !important;
+}
+
+.detail-thumbnails .video-thumbnail {
+  position: relative;
+}
+
+.detail-thumbnails .video-thumbnail span {
+  position: absolute;
+  inset: auto 6px 10px auto;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  background: rgba(255, 255, 255, .82);
+  color: #333;
+  font-size: 10px;
+}
+
+.detail-thumbnail-scroll {
+  position: absolute !important;
+  top: 50% !important;
+  z-index: 10 !important;
+  display: flex !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  transform: translateY(-50%) !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #333 !important;
+  opacity: .6;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  transition: opacity .2s ease !important;
+}
+
+.detail-thumbnail-scroll:hover,
+.detail-thumbnail-scroll:focus-visible {
+  opacity: 1;
+}
+
+.detail-thumbnail-scroll.is-prev {
+  left: 0 !important;
+}
+
+.detail-thumbnail-scroll.is-next {
+  right: 0 !important;
+}
+
+@media (max-width: 820px) {
+  .detail-thumbnails-wrap {
+    padding: 0 28px !important;
+  }
+
+  .detail-thumbnails button {
+    width: 19vw !important;
+    min-width: 19vw !important;
+    height: calc(10vw + 8px) !important;
+  }
+
+  .detail-thumbnails img {
+    height: 10vw !important;
+    min-height: 44px !important;
+  }
+}
+
+/* Product detail layout guard: keep gallery thumbs horizontal without breaking the two-column view. */
+.detail-shell {
+  overflow-x: hidden;
+}
+
+.detail-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 58%) minmax(0, 42%) !important;
+  gap: 40px !important;
+  width: min(100%, 1200px) !important;
+  max-width: 1200px !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+  box-sizing: border-box !important;
+}
+
+.detail-gallery,
+.detail-info {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.detail-gallery,
+.detail-gallery:has(.detail-thumbnails),
+.detail-gallery:has(.detail-thumbnails-wrap) {
+  position: static !important;
+  display: block !important;
+  grid-template-columns: none !important;
+  grid-template-areas: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.detail-main-image {
+  grid-area: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.detail-thumbnails-wrap {
+  grid-area: auto !important;
+  position: relative !important;
+  display: block !important;
+  align-self: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-top: 12px !important;
+  padding: 0 30px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.detail-thumbnails {
+  display: flex !important;
+  flex-direction: row !important;
+  grid-template-columns: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 0 !important;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.detail-thumbnails button {
+  flex: 0 0 72px !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  height: 72px !important;
+  max-height: 72px !important;
+  aspect-ratio: auto !important;
+  padding: 0 0 8px !important;
+}
+
+.detail-thumbnails img {
+  height: 62px !important;
+  object-fit: cover !important;
+}
+
+.detail-thumbnails .video-thumbnail {
+  background: transparent !important;
+}
+
+.detail-thumbnails .video-thumbnail img {
+  opacity: .9 !important;
+}
+
+.detail-thumbnails .video-thumbnail span {
+  width: 18px !important;
+  height: 18px !important;
+  background: rgba(255, 255, 255, .86) !important;
+  color: #333 !important;
+  font-size: 10px !important;
+}
+
+.detail-thumbnail-scroll {
+  width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  background: transparent !important;
+  color: var(--color-text, #333) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  .detail-layout {
+    display: block !important;
+    width: min(100%, 1200px) !important;
+  }
+
+  .detail-gallery {
+    overflow: visible !important;
+  }
+
+  .detail-info {
+    margin-top: 32px !important;
+  }
+
+  .detail-thumbnails-wrap {
+    padding: 0 28px !important;
+  }
+
+  .detail-thumbnails button {
+    flex-basis: 64px !important;
+    width: 64px !important;
+    min-width: 64px !important;
+    height: 64px !important;
+  }
+
+  .detail-thumbnails img {
+    height: 56px !important;
+  }
+}

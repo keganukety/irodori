@@ -246,9 +246,9 @@ async function renderProductDetail() {
             galleryMedia.length > 1
               ? `
                 <div class="detail-thumbnails-wrap">
-                  <button class="detail-thumbnail-scroll is-up" type="button" data-thumbnail-scroll="up" aria-label="サムネイルを上へ">△</button>
+                  <button class="detail-thumbnail-scroll is-prev" type="button" data-thumbnail-scroll="prev" aria-label="前のサムネイルへ">‹</button>
                   <div class="detail-thumbnails" aria-label="商品画像と動画">${galleryMedia.map((media, index) => renderThumbnail(media, mainMedia, product, index)).join('')}</div>
-                  <button class="detail-thumbnail-scroll is-down" type="button" data-thumbnail-scroll="down" aria-label="サムネイルを下へ">▽</button>
+                  <button class="detail-thumbnail-scroll is-next" type="button" data-thumbnail-scroll="next" aria-label="次のサムネイルへ">›</button>
                 </div>
               `
               : ''
@@ -643,11 +643,10 @@ function bindThumbnailEvents() {
     button.addEventListener('click', () => {
       const list = document.querySelector<HTMLElement>('.detail-thumbnails');
       if (!list) return;
-      const direction = button.dataset.thumbnailScroll === 'up' ? -1 : 1;
-      const isHorizontal = window.matchMedia('(max-width: 820px)').matches;
+      const direction = button.dataset.thumbnailScroll === 'prev' ? -1 : 1;
       list.scrollBy({
-        top: isHorizontal ? 0 : direction * 168,
-        left: isHorizontal ? direction * 168 : 0,
+        top: 0,
+        left: direction * 168,
         behavior: 'smooth',
       });
     });
