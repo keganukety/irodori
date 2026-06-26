@@ -974,9 +974,10 @@ function injectSharedStyles(): void {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: #fff;
+      background: rgba(255, 255, 255, .72);
       color: #333;
       border-bottom: 1px solid #e5e5e5;
+      backdrop-filter: blur(14px);
     }
 
     .site-header__inner {
@@ -995,6 +996,7 @@ function injectSharedStyles(): void {
       letter-spacing: .02em;
       font-size: 21px;
       font-weight: 500;
+      opacity: .6;
     }
 
     .site-header__nav {

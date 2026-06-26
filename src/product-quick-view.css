@@ -479,3 +479,21 @@ body.has-quick-view-open {
     font-size: 16px;
   }
 }
+
+/* EC links are intentionally hidden until mall icon assets are available. */
+.quick-view-shop-links {
+  display: none !important;
+}
+
+.quick-view-price {
+  color: #333 !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  letter-spacing: 2px !important;
+}
+
+@media (max-width: 720px) {
+  .quick-view-price {
+    font-size: 16px !important;
+  }
+}

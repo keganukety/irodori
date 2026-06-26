@@ -4856,3 +4856,46 @@ body {
   color: #fff !important;
   font-weight: 400 !important;
 }
+
+/* Storefront finishing: lighter header and quieter price rhythm. */
+.site-header__brand {
+  opacity: .6;
+}
+
+.site-header {
+  background: rgba(255, 255, 255, .72) !important;
+  backdrop-filter: blur(14px);
+}
+
+.product-price,
+.url-product-card__price,
+.brand-product-card__price,
+.brand-product-price,
+.home-product-card__price,
+.detail-price,
+.quick-view-price,
+.compare-product__price {
+  color: #333 !important;
+  font-weight: 400 !important;
+  letter-spacing: 2px !important;
+}
+
+.product-price,
+.url-product-card__price,
+.brand-product-card__price,
+.home-product-card__price,
+.compare-product__price {
+  font-size: 13px !important;
+}
+
+.compare-table__price {
+  color: #333 !important;
+  font-weight: 400 !important;
+  letter-spacing: 2px !important;
+}
+
+.brand-product-price,
+.detail-price,
+.quick-view-price {
+  font-size: 20px !important;
+}

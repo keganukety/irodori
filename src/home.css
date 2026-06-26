@@ -105,6 +105,14 @@ body {
   }
 }
 
+/* Shared price tone borrowed from the product reference. */
+.home-product-card__price {
+  color: #333 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  letter-spacing: 2px !important;
+}
+
 a {
   color: inherit;
 }

@@ -237,10 +237,10 @@ function renderCompareTable(products: Product[], imageMap: Map<string, string>):
             ${rows
               .map(
                 (row) => `
-                  <tr>
+                  <tr class="${row.label === '価格' ? 'compare-table__price-row' : ''}">
                     <th class="compare-table__label">${escapeHtml(row.label)}</th>
                     ${products
-                      .map((product) => `<td>${escapeHtml(row.getValue(product) || '—')}</td>`)
+                      .map((product) => `<td class="${row.label === '価格' ? 'compare-table__price' : ''}">${escapeHtml(row.getValue(product) || '—')}</td>`)
                       .join('')}
                   </tr>
                 `,
