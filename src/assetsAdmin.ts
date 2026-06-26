@@ -20,6 +20,9 @@ if (!appElement) {
 const app: HTMLDivElement = appElement;
 const storageBucket = 'site-assets';
 const maxFileSize = 5 * 1024 * 1024;
+const maxOptimizableSourceSize = 20 * 1024 * 1024;
+const maxFileSizeLabel = '5MB';
+const maxOptimizableSourceSizeLabel = '20MB';
 const maxIconZipEntries = 100;
 const allowedMimeTypes: SiteAssetMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml'];
 const uploadAccept = 'image/avif,image/webp,image/png,image/jpeg,image/svg+xml,.avif,.webp,.png,.jpg,.jpeg,.svg';
@@ -220,7 +223,7 @@ function renderAssetForm() {
   return `
     <form id="create-asset-form" class="asset-form">
       <div class="field-grid identity-grid">
-        <label>asset_key<input name="asset_key" required placeholder="home_main_hero" /></label>
+        <label class="asset-key-field">asset_key<input name="asset_key" required placeholder="home_main_hero" /><small data-asset-key-suggestion>候補: home_main_hero</small></label>
         <label>用途<select name="asset_type">${renderTypeOptions('hero')}</select></label>
         ${renderBrandField()}
         <label>並び順<input name="display_order" type="number" min="1" value="1" required /></label>
@@ -261,7 +264,7 @@ function renderOptimizationControls() {
           <option value="high">高</option>
         </select>
       </label>
-      <p data-optimization-summary>JPG / PNG / WebPはアップロード前にWebP軽量化を試します。</p>
+      <p data-optimization-summary>JPG / PNG / WebPは元画像${maxOptimizableSourceSizeLabel}までWebP軽量化を試します。最終アップロードは${maxFileSizeLabel}以下です。</p>
     </section>
   `;
 }
@@ -349,7 +352,7 @@ function renderUploadField(name: string, label: string, required: boolean, varia
     <label class="upload-field">
       <span>${label}</span>
       <input name="${name}" type="file" accept="${uploadAccept}" ${required ? 'required' : ''} />
-      <span class="file-note">JPEG・PNG・WebP・AVIF・SVG / 最大5MB</span>
+      <span class="file-note">JPEG・PNG・WebP・AVIF・SVG / 最終${maxFileSizeLabel}以下（最適化ONのJPEG・PNG・WebPは元画像${maxOptimizableSourceSizeLabel}まで）</span>
       <span class="image-preview" data-preview="${variant}"><span>プレビュー未選択</span></span>
     </label>
   `;
@@ -635,12 +638,23 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
   if (!(select instanceof HTMLSelectElement) || !recommendation) return;
   select.addEventListener('change', () => {
     recommendation.textContent = sizeRecommendations[select.value as SiteAssetType];
+    syncAssetKeySuggestion(form, true);
     syncBrandControls(form, true);
     syncIconControls(form);
   });
   const brandSelect = form.elements.namedItem('brand_id');
   if (brandSelect instanceof HTMLSelectElement) {
-    brandSelect.addEventListener('change', () => syncBrandControls(form, true));
+    brandSelect.addEventListener('change', () => {
+      syncAssetKeySuggestion(form, true);
+      syncBrandControls(form, true);
+    });
+  }
+  const assetKeyInput = form.elements.namedItem('asset_key');
+  if (assetKeyInput instanceof HTMLInputElement) {
+    assetKeyInput.addEventListener('input', () => {
+      if (assetKeyInput.value !== assetKeyInput.dataset.generatedAssetKey) delete assetKeyInput.dataset.generatedAssetKey;
+      if (assetKeyInput.value !== assetKeyInput.dataset.generatedIcon) delete assetKeyInput.dataset.generatedIcon;
+    });
   }
   const titleInput = form.elements.namedItem('title');
   if (titleInput instanceof HTMLInputElement) {
@@ -655,6 +669,7 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
     });
   }
   syncBrandControls(form, false);
+  syncAssetKeySuggestion(form, false);
   bindIconFileInputs(form);
   syncIconControls(form);
 }
@@ -738,11 +753,64 @@ function syncBrandControls(form: HTMLFormElement, generateAssetKey: boolean) {
     }
 
     const brand = brands.find((item) => item.id === brandSelect.value);
-    if (generateAssetKey && brand) {
-      assetKeyInput.value = assetType === 'brand_logo' ? `brand_logo_${brand.slug}` : `brand_hero_${brand.slug}`;
-    }
+    if (generateAssetKey && brand) syncAssetKeySuggestion(form, true);
   }
   syncAutomaticAlt(form);
+}
+
+function syncAssetKeySuggestion(form: HTMLFormElement, applySuggestion: boolean) {
+  const input = form.elements.namedItem('asset_key');
+  const element = form.querySelector<HTMLElement>('[data-asset-key-suggestion]');
+  if (!(input instanceof HTMLInputElement)) return;
+
+  const suggestion = getSuggestedAssetKey(form);
+  const examples = getAssetKeyExamples(form);
+  if (element) {
+    element.textContent = suggestion
+      ? `候補: ${examples.join(' / ')}`
+      : '候補: 用途やブランドを選ぶと表示されます';
+  }
+  if (!applySuggestion || !suggestion) return;
+
+  const currentValue = input.value.trim();
+  const previousGenerated = input.dataset.generatedAssetKey ?? '';
+  const generatedIcon = input.dataset.generatedIcon === 'true';
+  if (currentValue && currentValue !== previousGenerated && !generatedIcon) return;
+
+  input.value = suggestion;
+  input.dataset.generatedAssetKey = suggestion;
+  delete input.dataset.generatedIcon;
+}
+
+function getSuggestedAssetKey(form: HTMLFormElement) {
+  const examples = getAssetKeyExamples(form);
+  return examples[0] ?? '';
+}
+
+function getAssetKeyExamples(form: HTMLFormElement) {
+  const typeSelect = form.elements.namedItem('asset_type');
+  const brandSelect = form.elements.namedItem('brand_id');
+  if (!(typeSelect instanceof HTMLSelectElement)) return ['home_main_hero'];
+
+  const assetType = typeSelect.value as SiteAssetType;
+  const brand = brandSelect instanceof HTMLSelectElement
+    ? brands.find((item) => item.id === brandSelect.value)
+    : undefined;
+  const brandSlug = brand?.slug || 'cybex';
+
+  const examples: Record<SiteAssetType, string[]> = {
+    hero: ['home_main_hero', 'home_main_hero2', 'home_main_hero3'],
+    campaign: ['campaign_stroller', 'campaign_carrier'],
+    feature: ['feature_stroller_train', 'feature_stroller_car', 'feature_one_operation', 'feature_newborn'],
+    diagnosis: ['diagnosis_stroller', 'diagnosis_carrier', 'diagnosis_child_seat', 'diagnosis_hipseat'],
+    category: ['category_stroller', 'category_carrier', 'category_child_seat', 'category_hipseat'],
+    article: ['article_stroller_guide', 'article_carrier_guide'],
+    brand_logo: [`brand_logo_${brandSlug}`, `brand_${brandSlug}_logo`],
+    brand_hero: [`brand_hero_${brandSlug}`, `brand_${brandSlug}_hero`],
+    icon: ['icon_stroller', 'icon_carrier', 'icon_child_seat', 'icon_hipseat', 'icon_rakuten', 'icon_amazon', 'icon_yahoo'],
+  };
+
+  return examples[assetType] ?? ['home_main_hero'];
 }
 
 function syncAutomaticAlt(form: HTMLFormElement) {
@@ -853,7 +921,7 @@ function bindFilePreview(form: HTMLFormElement, inputName: string, variant: 'des
     const file = input.files?.[0];
     if (!file) return;
     try {
-      const metadata = await readImageMetadata(file);
+      const metadata = await readImageMetadata(file, getPreviewMetadataOptions(form, file));
       const url = URL.createObjectURL(file);
       previewUrls.add(url);
       preview.innerHTML = `<img src="${escapeAttr(url)}" alt="" /><small>${metadata.width}×${metadata.height} / ${escapeText(formatBytes(file.size))}</small>`;
@@ -862,6 +930,21 @@ function bindFilePreview(form: HTMLFormElement, inputName: string, variant: 'des
       setFormMessage(form, getErrorMessage(error), 'error');
     }
   });
+}
+
+function getPreviewMetadataOptions(form: HTMLFormElement, file: File) {
+  const optimizationControls = form.querySelector<HTMLElement>('[data-optimization-controls]');
+  const settings = optimizationControls && !optimizationControls.hidden
+    ? readOptimizationSettings(form)
+    : { enabled: false, level: 'medium' as OptimizationLevel };
+  const mimeType = getSupportedMimeType(file);
+  const canOptimize = Boolean(settings.enabled && mimeType && isOptimizableMimeType(mimeType));
+  return {
+    maxSizeBytes: canOptimize ? maxOptimizableSourceSize : maxFileSize,
+    sizeErrorMessage: canOptimize
+      ? `画像最適化ONの場合でも、元画像は${maxOptimizableSourceSizeLabel}以下にしてください。`
+      : `画像サイズは${maxFileSizeLabel}以下にしてください。`,
+  };
 }
 
 async function handleCreate(event: SubmitEvent) {
@@ -1106,6 +1189,7 @@ function applyIconMetadataFromFileName(form: HTMLFormElement, fileName: string) 
   if (assetKeyInput instanceof HTMLInputElement && (!assetKeyInput.value.trim() || assetKeyInput.dataset.generatedIcon === 'true')) {
     assetKeyInput.value = assetKey;
     assetKeyInput.dataset.generatedIcon = 'true';
+    assetKeyInput.dataset.generatedAssetKey = assetKey;
   }
   if (titleInput instanceof HTMLInputElement && (!titleInput.value.trim() || titleInput.dataset.generatedIcon === 'true')) {
     titleInput.value = title;
@@ -1391,11 +1475,34 @@ async function prepareImageForUpload(
   settings: ImageOptimizationSettings,
   label: string,
 ): Promise<{ metadata: ImageMetadata; summary: ImageOptimizationSummary }> {
-  const originalMetadata = await readImageMetadata(file);
+  const mimeType = getSupportedMimeType(file);
+  const canOptimize = Boolean(mimeType && isOptimizableMimeType(mimeType));
+  const sourceMaxSize = settings.enabled && canOptimize ? maxOptimizableSourceSize : maxFileSize;
+  const originalMetadata = await readImageMetadata(file, {
+    maxSizeBytes: sourceMaxSize,
+    sizeErrorMessage: settings.enabled && canOptimize
+      ? `画像最適化ONの場合でも、元画像は${maxOptimizableSourceSizeLabel}以下にしてください。`
+      : `画像サイズは${maxFileSizeLabel}以下にしてください。`,
+  });
   const optimized = settings.enabled
     ? await optimizeImageForUpload(file, settings.level)
     : { file, applied: false, reason: '最適化OFF' };
-  const finalMetadata = optimized.file === file ? originalMetadata : await readImageMetadata(optimized.file);
+
+  if (optimized.file.size > maxFileSize) {
+    if (optimized.applied) {
+      throw new Error('最適化後も5MBを超えています。画像サイズを小さくして再アップロードしてください。');
+    }
+    if (file.size > maxFileSize) {
+      throw new Error('画像最適化に失敗しました。5MB以下の画像を選択してください。');
+    }
+  }
+
+  const finalMetadata = optimized.file === file
+    ? originalMetadata
+    : await readImageMetadata(optimized.file, {
+      maxSizeBytes: maxFileSize,
+      sizeErrorMessage: '最適化後も5MBを超えています。画像サイズを小さくして再アップロードしてください。',
+    });
 
   return {
     metadata: finalMetadata,
@@ -1507,7 +1614,7 @@ function setOptimizationSummary(form: HTMLFormElement, summaries: ImageOptimizat
   const element = form.querySelector<HTMLElement>('[data-optimization-summary]');
   if (!element) return;
   if (summaries.length === 0) {
-    element.textContent = 'JPG / PNG / WebPはアップロード前にWebP軽量化を試します。';
+    element.textContent = `JPG / PNG / WebPは元画像${maxOptimizableSourceSizeLabel}までWebP軽量化を試します。最終アップロードは${maxFileSizeLabel}以下です。`;
     return;
   }
 
@@ -1521,10 +1628,15 @@ function setOptimizationSummary(form: HTMLFormElement, summaries: ImageOptimizat
     .join('<br>');
 }
 
-async function readImageMetadata(file: File): Promise<ImageMetadata> {
+async function readImageMetadata(
+  file: File,
+  options: { maxSizeBytes?: number; sizeErrorMessage?: string } = {},
+): Promise<ImageMetadata> {
   const mimeType = getSupportedMimeType(file);
   if (!mimeType) throw new Error('JPEG・PNG・WebP・AVIF・SVG形式の画像を選択してください。');
-  if (file.size <= 0 || file.size > maxFileSize) throw new Error('画像サイズは5MB以下にしてください。');
+  const maxSizeBytes = options.maxSizeBytes ?? maxFileSize;
+  if (file.size <= 0) throw new Error('画像ファイルを選択してください。');
+  if (file.size > maxSizeBytes) throw new Error(options.sizeErrorMessage ?? '画像サイズは5MB以下にしてください。');
   if (mimeType === 'image/svg+xml') {
     return { file, ...(await readSvgMetadata(file)), mimeType };
   }
