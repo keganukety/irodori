@@ -26,6 +26,13 @@ const uploadAccept = 'image/avif,image/webp,image/png,image/jpeg,image/svg+xml,.
 const iconZipAccept = 'application/zip,application/x-zip-compressed,.zip';
 const ASSET_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 const CREATE_DRAFT_STORAGE_KEY = 'irodori_site_asset_create_draft';
+const optimizationQualityByLevel = {
+  low: 0.9,
+  medium: 0.82,
+  high: 0.72,
+} as const;
+
+type OptimizationLevel = keyof typeof optimizationQualityByLevel;
 
 type BrandOption = {
   id: string;
@@ -34,6 +41,20 @@ type BrandOption = {
   sort_order?: number | null;
   logo_asset_key: string | null;
   hero_asset_key?: string | null;
+};
+
+type ImageOptimizationSummary = {
+  label: string;
+  originalSize: number;
+  finalSize: number;
+  outputMimeType: SiteAssetMimeType;
+  applied: boolean;
+  reason: string;
+};
+
+type ImageOptimizationSettings = {
+  enabled: boolean;
+  level: OptimizationLevel;
 };
 
 const assetTypeLabels: Record<SiteAssetType, string> = {
@@ -221,9 +242,27 @@ function renderAssetForm() {
         ${renderUploadField('desktop_file', 'PC画像（必須）', true, 'desktop')}
         ${renderUploadField('mobile_file', 'スマホ画像（任意）', false, 'mobile')}
       </div>
+      ${renderOptimizationControls()}
       <div class="form-actions"><button type="submit" class="primary-action">素材を登録</button><button type="button" class="quiet-button" data-action="clear-create-form">入力をクリア</button></div>
       <p class="form-message" aria-live="polite"></p>
     </form>
+  `;
+}
+
+function renderOptimizationControls() {
+  return `
+    <section class="optimization-controls" data-optimization-controls>
+      <label class="toggle-label"><input name="optimize_images" type="checkbox" checked />画像最適化</label>
+      <label>
+        軽量化レベル
+        <select name="optimization_level">
+          <option value="low">低</option>
+          <option value="medium" selected>中</option>
+          <option value="high">高</option>
+        </select>
+      </label>
+      <p data-optimization-summary>JPG / PNG / WebPはアップロード前にWebP軽量化を試します。</p>
+    </section>
   `;
 }
 
@@ -471,6 +510,7 @@ function bindCreateForm() {
     form.querySelectorAll<HTMLElement>('.image-preview').forEach((preview) => {
       preview.innerHTML = '<span>プレビュー未選択</span>';
     });
+    setOptimizationSummary(form, []);
     setFormMessage(form, '入力内容をクリアしました。', 'normal');
     syncIconControls(form);
   });
@@ -657,6 +697,7 @@ function syncIconControls(form: HTMLFormElement) {
   const iconPanel = form.querySelector<HTMLElement>('[data-icon-fields]');
   const zipInput = getFileInput(form, 'icon_zip_file');
   const removeMobile = form.querySelector<HTMLElement>('.remove-mobile');
+  const optimizationControls = form.querySelector<HTMLElement>('[data-optimization-controls]');
   if (!(typeSelect instanceof HTMLSelectElement) || !(assetKeyInput instanceof HTMLInputElement) || !iconPanel) return;
 
   const isIcon = typeSelect.value === 'icon';
@@ -669,6 +710,7 @@ function syncIconControls(form: HTMLFormElement) {
   if (desktopInput) desktopInput.required = !isIcon;
   if (mobileInput) mobileInput.required = false;
   if (removeMobile) removeMobile.hidden = isIcon;
+  if (optimizationControls) optimizationControls.hidden = isIcon;
 
   form.querySelectorAll<HTMLElement>('[data-brand-field]').forEach((field) => {
     if (isIcon) field.hidden = true;
@@ -748,6 +790,7 @@ function saveCreateDraft(form: HTMLFormElement) {
   const fieldNames = [
     'asset_key', 'asset_type', 'brand_id', 'display_order', 'is_published',
     'title', 'alt_text', 'link_url', 'caption', 'starts_at', 'ends_at',
+    'optimize_images', 'optimization_level',
   ];
   for (const name of fieldNames) {
     const control = form.elements.namedItem(name);
@@ -865,17 +908,21 @@ async function handleCreate(event: SubmitEvent) {
   setFormBusy(form, true);
   try {
     setFormMessage(form, '画像を確認しています...', 'normal');
-    const desktopMetadata = await readImageMetadata(desktopFile);
-    const mobileMetadata = mobileFile ? await readImageMetadata(mobileFile) : null;
+    setOptimizationSummary(form, []);
+    const optimizationSettings = isIcon ? { enabled: false, level: 'medium' as OptimizationLevel } : readOptimizationSettings(form);
+    const desktopResult = await prepareImageForUpload(desktopFile, optimizationSettings, 'PC画像');
+    const mobileResult = mobileFile ? await prepareImageForUpload(mobileFile, optimizationSettings, 'スマホ画像') : null;
+    const summaries = [desktopResult.summary, mobileResult?.summary].filter((summary): summary is ImageOptimizationSummary => Boolean(summary));
+    setOptimizationSummary(form, summaries);
 
     setFormMessage(form, 'PC画像をアップロードしています...', 'normal');
-    const desktopImage = await uploadImage(desktopMetadata, fields.assetKey, 'desktop');
+    const desktopImage = await uploadImage(desktopResult.metadata, fields.assetKey, 'desktop');
     uploadedPaths.push(desktopImage.storagePath);
 
     let mobileImage: StoredImage | null = null;
-    if (mobileMetadata) {
+    if (mobileResult) {
       setFormMessage(form, 'スマホ画像をアップロードしています...', 'normal');
-      mobileImage = await uploadImage(mobileMetadata, fields.assetKey, 'mobile');
+      mobileImage = await uploadImage(mobileResult.metadata, fields.assetKey, 'mobile');
       uploadedPaths.push(mobileImage.storagePath);
     }
 
@@ -1320,6 +1367,158 @@ function buildRpcPayload(
     p_starts_at: fields.startsAt,
     p_ends_at: fields.endsAt,
   };
+}
+
+function readOptimizationSettings(form: HTMLFormElement): ImageOptimizationSettings {
+  const enabledInput = form.elements.namedItem('optimize_images');
+  const levelInput = form.elements.namedItem('optimization_level');
+  const level = levelInput instanceof HTMLSelectElement && isOptimizationLevel(levelInput.value)
+    ? levelInput.value
+    : 'medium';
+
+  return {
+    enabled: !(enabledInput instanceof HTMLInputElement) || enabledInput.checked,
+    level,
+  };
+}
+
+function isOptimizationLevel(value: string): value is OptimizationLevel {
+  return value === 'low' || value === 'medium' || value === 'high';
+}
+
+async function prepareImageForUpload(
+  file: File,
+  settings: ImageOptimizationSettings,
+  label: string,
+): Promise<{ metadata: ImageMetadata; summary: ImageOptimizationSummary }> {
+  const originalMetadata = await readImageMetadata(file);
+  const optimized = settings.enabled
+    ? await optimizeImageForUpload(file, settings.level)
+    : { file, applied: false, reason: '最適化OFF' };
+  const finalMetadata = optimized.file === file ? originalMetadata : await readImageMetadata(optimized.file);
+
+  return {
+    metadata: finalMetadata,
+    summary: {
+      label,
+      originalSize: file.size,
+      finalSize: finalMetadata.file.size,
+      outputMimeType: finalMetadata.mimeType,
+      applied: optimized.applied,
+      reason: optimized.reason,
+    },
+  };
+}
+
+async function optimizeImageForUpload(
+  file: File,
+  level: OptimizationLevel,
+): Promise<{ file: File; applied: boolean; reason: string }> {
+  const mimeType = getSupportedMimeType(file);
+  if (!mimeType || !isOptimizableMimeType(mimeType)) {
+    return { file, applied: false, reason: mimeType === 'image/svg+xml' || mimeType === 'image/avif' ? '対象外形式' : '対象外' };
+  }
+
+  try {
+    const blob = await convertImageToWebp(file, optimizationQualityByLevel[level]);
+    if (!blob || blob.size <= 0) {
+      return { file, applied: false, reason: '変換結果が空のため元ファイルを使用' };
+    }
+    if (blob.type && blob.type !== 'image/webp') {
+      return { file, applied: false, reason: 'WebP出力できないため元ファイルを使用' };
+    }
+
+    if (blob.size >= file.size) {
+      return { file, applied: false, reason: '変換後の方が重いため元ファイルを使用' };
+    }
+
+    const webpFile = new File([blob], createOptimizedFileName(file.name), {
+      type: 'image/webp',
+      lastModified: Date.now(),
+    });
+    return { file: webpFile, applied: true, reason: 'WebP最適化を適用' };
+  } catch (error) {
+    console.warn('画像最適化に失敗したため元ファイルを使用します。', error);
+    return { file, applied: false, reason: '変換失敗のため元ファイルを使用' };
+  }
+}
+
+function isOptimizableMimeType(mimeType: SiteAssetMimeType): boolean {
+  return mimeType === 'image/jpeg' || mimeType === 'image/png' || mimeType === 'image/webp';
+}
+
+async function convertImageToWebp(file: File, quality: number): Promise<Blob> {
+  const bitmap = await loadBitmapFromFile(file);
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Canvasを初期化できませんでした。');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0);
+    return await canvasToBlob(canvas, 'image/webp', quality);
+  } finally {
+    const closableBitmap = bitmap as ImageBitmap & { close?: () => void };
+    if (typeof closableBitmap.close === 'function') closableBitmap.close();
+  }
+}
+
+async function loadBitmapFromFile(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  if ('createImageBitmap' in window) {
+    return window.createImageBitmap(file);
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    return await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('画像ファイルを読み込めませんでした。'));
+      image.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('WebP変換に失敗しました。'));
+          return;
+        }
+        resolve(blob);
+      },
+      mimeType,
+      quality,
+    );
+  });
+}
+
+function createOptimizedFileName(fileName: string): string {
+  const baseName = fileName.replace(/\.[^.]+$/, '') || 'optimized-image';
+  return `${baseName}.webp`;
+}
+
+function setOptimizationSummary(form: HTMLFormElement, summaries: ImageOptimizationSummary[]) {
+  const element = form.querySelector<HTMLElement>('[data-optimization-summary]');
+  if (!element) return;
+  if (summaries.length === 0) {
+    element.textContent = 'JPG / PNG / WebPはアップロード前にWebP軽量化を試します。';
+    return;
+  }
+
+  element.innerHTML = summaries
+    .map((summary) => {
+      const reduction = summary.originalSize > 0
+        ? Math.max(0, Math.round((1 - summary.finalSize / summary.originalSize) * 100))
+        : 0;
+      return `${escapeText(summary.label)}: ${escapeText(summary.applied ? '適用' : '未適用')} / ${escapeText(formatBytes(summary.originalSize))} → ${escapeText(formatBytes(summary.finalSize))} / ${reduction}%削減 / ${escapeText(summary.outputMimeType)} / ${escapeText(summary.reason)}`;
+    })
+    .join('<br>');
 }
 
 async function readImageMetadata(file: File): Promise<ImageMetadata> {
