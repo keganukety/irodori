@@ -547,16 +547,8 @@ async function generateRakutenImagesFromUrl() {
     if (payload.image_urls.length === 0) throw new Error('楽天APIから画像URLを取得できませんでした。');
 
     const currentImages = getImagesByProductId(bulkProductId);
-    const existingImageUrls = new Set(currentImages.map(getStoredAffiliateImageUrl).filter(Boolean));
     const startOrder = getNextDisplayOrder(currentImages);
-    const generatedImageUrls = new Set(existingImageUrls);
-    bulkCandidates = payload.image_urls
-      .map((imageUrl) => createRakutenApiCandidate(payload, imageUrl))
-      .map((candidate, index) => {
-        const selected = !generatedImageUrls.has(candidate.imageUrl);
-        if (selected) generatedImageUrls.add(candidate.imageUrl);
-        return { ...candidate, selected, blocked: !selected, displayOrder: startOrder + index };
-      });
+    bulkCandidates = buildRakutenApiBulkCandidates(payload, currentImages, startOrder);
     if (bulkCandidates.length === 0) throw new Error('登録できる楽天画像候補を生成できませんでした。');
     const priceText = payload.item_price ? ` / ¥${payload.item_price.toLocaleString('ja-JP')}` : '';
     bulkMessage = `${bulkCandidates.length}件を生成しました。${payload.item_name ?? '商品名未取得'}${priceText}。画像を確認してから登録してください。`;
@@ -567,6 +559,28 @@ async function generateRakutenImagesFromUrl() {
     bulkMessageIsError = true;
   }
   renderRakutenBulkPanel();
+}
+
+function buildRakutenApiBulkCandidates(
+  payload: Extract<RakutenProductInfoResponse, { ok: true }>,
+  currentImages: ProductAffiliateImage[],
+  startOrder: number,
+): BulkAffiliateCandidate[] {
+  const seenImageUrls = new Set(currentImages.map(getComparableImageUrl).filter(Boolean));
+
+  return payload.image_urls
+    .map((imageUrl) => createRakutenApiCandidate(payload, imageUrl))
+    .map((candidate, index) => {
+      const comparableImageUrl = getComparableCandidateImageUrl(candidate);
+      const blocked = !comparableImageUrl || seenImageUrls.has(comparableImageUrl);
+      if (!blocked) seenImageUrls.add(comparableImageUrl);
+      return {
+        ...candidate,
+        selected: !blocked,
+        blocked,
+        displayOrder: startOrder + index,
+      };
+    });
 }
 
 function createRakutenApiCandidate(
@@ -748,10 +762,11 @@ async function registerRakutenAffiliateCandidates(candidates: BulkAffiliateCandi
 async function registerRakutenApiCandidates(candidates: BulkAffiliateCandidate[]): Promise<{ inserted: number; skipped: number } | null> {
   let inserted = 0;
   let skipped = 0;
-  const existingImageUrls = new Set(getImagesByProductId(bulkProductId).map(getStoredAffiliateImageUrl).filter(Boolean));
+  const existingImageUrls = new Set(getImagesByProductId(bulkProductId).map(getComparableImageUrl).filter(Boolean));
 
   for (const candidate of candidates) {
-    if (existingImageUrls.has(candidate.imageUrl)) {
+    const comparableImageUrl = getComparableCandidateImageUrl(candidate);
+    if (!comparableImageUrl || existingImageUrls.has(comparableImageUrl)) {
       skipped += 1;
       continue;
     }
@@ -782,7 +797,7 @@ async function registerRakutenApiCandidates(candidates: BulkAffiliateCandidate[]
       return null;
     }
 
-    existingImageUrls.add(candidate.imageUrl);
+    existingImageUrls.add(comparableImageUrl);
     inserted += 1;
   }
 
@@ -805,10 +820,19 @@ function createRakutenApiAffiliateHtml(candidate: RakutenAffiliateImageCandidate
 function normalizeHttpsUrl(value: string): string {
   try {
     const url = new URL(value.trim());
+    url.hash = '';
     return url.protocol === 'https:' ? url.toString() : '';
   } catch {
     return '';
   }
+}
+
+function getComparableCandidateImageUrl(candidate: RakutenAffiliateImageCandidate): string {
+  return normalizeHttpsUrl(candidate.imageUrl);
+}
+
+function getComparableImageUrl(image: ProductAffiliateImage): string {
+  return normalizeHttpsUrl(getStoredAffiliateImageUrl(image));
 }
 
 function renderProductCard(product: Product) {
