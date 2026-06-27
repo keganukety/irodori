@@ -784,7 +784,7 @@ function getCategoryCards(productsByCategory: Map<string, HomeProduct[]>): Categ
 
     return {
       label: category.label,
-      href: category.label === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(category.label)}`,
+      href: getCategoryHref(category.label),
       imageSrc: rankOneProduct?.categoryImageSrc ?? rankOneProduct?.imageSrc,
     };
   });
@@ -797,8 +797,16 @@ function getProductImageOrder(image: ProductImage): number {
 function getDefaultCategoryCards(): CategoryCard[] {
   return categories.map((category) => ({
     label: category.label,
-    href: category.label === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(category.label)}`,
+    href: getCategoryHref(category.label),
   }));
+}
+
+function getCategoryHref(category: string): string {
+  if (category === 'ベビーカー') return '/products.html';
+  if (category === '抱っこ紐') return '/products.html?category=carrier';
+  if (category === 'チャイルドシート') return '/products.html?category=car-seat';
+  if (category === 'ヒップシート') return '/products.html?category=hipseat';
+  return `/products.html?category=${encodeURIComponent(category)}`;
 }
 
 function getPopularBrands(products: Product[]): BrandCard[] {

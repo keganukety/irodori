@@ -289,13 +289,15 @@ async function renderPublicPage() {
 
 function renderStorefront() {
   comparedProducts = new Set<string>(loadCompareProductIds());
+  updateListingMetadata(activeCategory);
+  const heroCopy = getCategoryHeroCopy(activeCategory);
   app.innerHTML = `
     <main class="storefront-shell">
       <section class="hero-panel">
         <div class="hero-inner">
           <p class="section-title-en">COLLECTION</p>
           <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
-          <p class="hero-copy">${escapeText(activeCategory)}を、暮らしに合う条件から探せます。</p>
+          <p class="hero-copy">${escapeText(heroCopy)}</p>
           <nav class="guide-links" aria-label="ベビーカー選びの導線">
             <a href="#">人気ランキング</a>
             <a href="#">かんたん診断</a>
@@ -857,7 +859,8 @@ function getVisibleProducts() {
 }
 
 function getInitialCategory(): string {
-  const category = new URLSearchParams(window.location.search).get('category')?.trim();
+  const params = new URLSearchParams(window.location.search);
+  const category = params.get('category')?.trim() || params.get('product_type')?.trim();
   return normalizeRequestedCategory(category || 'ベビーカー');
 }
 
@@ -911,12 +914,38 @@ function normalizeRequestedCategory(category: string) {
 function categoryToQuery(category: string): string {
   if (category === '抱っこ紐') return 'carrier';
   if (category === 'チャイルドシート') return 'car-seat';
-  if (category === 'ヒップシート') return 'hip-seat';
+  if (category === 'ヒップシート') return 'hipseat';
   return 'stroller';
 }
 
 function buildCategoryUrl(category: string): string {
   return category === 'ベビーカー' ? '/products.html' : `/products.html?category=${encodeURIComponent(categoryToQuery(category))}`;
+}
+
+function getCategoryHeroCopy(category: string): string {
+  if (category === 'ヒップシート') {
+    return '歩いたり抱っこしたりをくり返す時期に。軽さ・安定感・収納力で選べるヒップシートをまとめました。';
+  }
+
+  return `${category}を、暮らしに合う条件から探せます。`;
+}
+
+function updateListingMetadata(category: string): void {
+  const title = category === 'ヒップシート'
+    ? 'ヒップシートおすすめ10選｜抱っこと歩くをくり返す時期に使いやすい人気モデルを比較 | iLy.'
+    : `${category}の商品一覧 | iLy.`;
+  const description = category === 'ヒップシート'
+    ? '歩いたり抱っこしたりをくり返す時期に。軽さ・安定感・収納力で選べるヒップシートをまとめました。'
+    : `${category}を、暮らしに合う条件から探せます。`;
+
+  document.title = title;
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', description);
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:title"], meta[name="twitter:title"]').forEach((element) => {
+    element.content = title;
+  });
+  document.querySelectorAll<HTMLMetaElement>('meta[property="og:description"], meta[name="twitter:description"]').forEach((element) => {
+    element.content = description;
+  });
 }
 
 function updateProductsUrl(mode: 'push' | 'replace' = 'push'): void {

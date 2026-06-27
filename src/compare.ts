@@ -16,7 +16,10 @@ type Product = {
   id: string | number;
   name?: string | null;
   brand?: string | null;
+  category?: string | null;
   price_yen?: string | number | null;
+  feature_tags?: string[] | string | null;
+  tags?: string[] | string | null;
   product_type?: string | null;
   type?: string | null;
   weight_kg?: string | number | null;
@@ -146,16 +149,17 @@ function renderLoading(): void {
 }
 
 function renderComparePage(products: Product[], imageMap: Map<string, string>): void {
+  const category = getCompareCategory(products);
   app.innerHTML = `
     <main class="compare-page">
       <section class="compare-hero">
         <p class="compare-hero__eyebrow">COMPARE</p>
         <h1>商品比較</h1>
-        <p>気になるベビーカーを横並びで比べられます。2〜4商品を選んで比較してください。</p>
-        <a class="compare-hero__guide-link" href="/stroller-guide.html">ベビーカーの選び方を見る</a>
+        <p>${escapeHtml(getCompareHeroCopy(category))}</p>
+        ${category === 'ベビーカー' ? '<a class="compare-hero__guide-link" href="/stroller-guide.html">ベビーカーの選び方を見る</a>' : ''}
       </section>
       ${renderCompareNotice(products.length)}
-      ${products.length > 0 ? renderCompareTable(products, imageMap) : renderEmptyState()}
+      ${products.length > 0 ? renderCompareTable(products, imageMap, category) : renderEmptyState()}
     </main>
   `;
 
@@ -220,8 +224,8 @@ function renderEmptyState(): string {
   `;
 }
 
-function renderCompareTable(products: Product[], imageMap: Map<string, string>): string {
-  const rows = getCompareRows();
+function renderCompareTable(products: Product[], imageMap: Map<string, string>, category: string): string {
+  const rows = getCompareRows(category);
 
   return `
     <section class="compare-table-section" aria-label="商品比較表">
@@ -303,7 +307,26 @@ function renderProductHeader(product: Product, imageMap: Map<string, string>): s
   `;
 }
 
-function getCompareRows(): CompareRow[] {
+function getCompareRows(category = ''): CompareRow[] {
+  if (category === 'ヒップシート') {
+    return [
+      { label: 'タイプ', getValue: getHipseatType },
+      { label: '対象月齢', getValue: (product) => firstValue(product.target_age) },
+      { label: '耐荷重', getValue: (product) => firstValue(product.load_capacity, product.max_load, product.max_weight) },
+      { label: '本体重量', getValue: (product) => formatWeight(firstValue(product.weight_kg, product.weight)) },
+      { label: '装着タイプ', getValue: getHipseatWearType },
+      { label: '肩掛け対応', getValue: (product) => getHipseatSupport(product, /肩掛け|ショルダー|肩ベルト/) },
+      { label: '腰ベルト対応', getValue: (product) => getHipseatSupport(product, /腰ベルト/) },
+      { label: 'バッグ型', getValue: (product) => getHipseatSupport(product, /バッグ型|バッグ/) },
+      { label: '収納ポケット', getValue: (product) => getHipseatSupport(product, /収納|ポケット/) },
+      { label: '座面すべり止め', getValue: (product) => firstValue(product.seat_non_slip, product.non_slip_seat) },
+      { label: '背あて', getValue: (product) => firstValue(product.back_support, product.backrest) },
+      { label: '洗濯可否', getValue: (product) => firstValue(product.washable, product.washing) },
+      { label: '折りたたみ', getValue: (product) => firstValue(product.foldable, product.folded_size) },
+      { label: '向いているシーン', getValue: getHipseatScenes },
+    ];
+  }
+
   return [
     { label: '商品名', getValue: getProductName },
     { label: 'ブランド', getValue: (product) => getText(product.brand) },
@@ -332,6 +355,72 @@ function getCompareRows(): CompareRow[] {
       getValue: (product) => firstValue(product.basket_capacity, product.shopping_basket, product.basket),
     },
   ];
+}
+
+function getCompareCategory(products: Product[]): string {
+  const categories = products.map(getProductCategory).filter(Boolean);
+  const firstCategory = categories[0] ?? '';
+  return categories.length > 0 && categories.every((category) => category === firstCategory) ? firstCategory : '';
+}
+
+function getProductCategory(product: Product): string {
+  const category = firstValue(product.category);
+  if (/hip\s*seat|hipseat|ヒップシート/i.test(category) || firstValue(product.product_type) === 'hipseat') return 'ヒップシート';
+  if (/抱っこ紐|抱っこひも|carrier/i.test(category)) return '抱っこ紐';
+  if (/チャイルドシート|car\s*seat|carseat/i.test(category)) return 'チャイルドシート';
+  if (/ベビーカー|stroller|babycar/i.test(category)) return 'ベビーカー';
+  return category;
+}
+
+function getCompareHeroCopy(category: string): string {
+  if (category === 'ヒップシート') {
+    return '気になるヒップシートを横並びで比べられます。軽さ・安定感・収納力などを見ながら選べます。';
+  }
+  return '気になるベビーカーを横並びで比べられます。2〜4商品を選んで比較してください。';
+}
+
+function getHipseatType(product: Product): string {
+  const explicit = firstValue(product.type);
+  if (explicit) return explicit;
+  const tags = getCompareTags(product).join(' ');
+  if (/バッグ型|バッグ/.test(tags)) return 'バッグ型';
+  if (/肩掛け|ショルダー|肩ベルト/.test(tags)) return '肩掛けタイプ';
+  if (/腰ベルト/.test(tags)) return '腰ベルト型';
+  return firstValue(product.product_type) === 'hipseat' ? 'ヒップシート' : firstValue(product.product_type);
+}
+
+function getHipseatWearType(product: Product): string {
+  const tags = getCompareTags(product).join(' ');
+  const types = [
+    /肩掛け|ショルダー|肩ベルト/.test(tags) ? '肩掛け' : '',
+    /腰ベルト/.test(tags) ? '腰ベルト' : '',
+    /バッグ型|バッグ/.test(tags) ? 'バッグ型' : '',
+  ].filter(Boolean);
+  return types.join(' / ');
+}
+
+function getHipseatSupport(product: Product, pattern: RegExp): string {
+  return pattern.test(getCompareTags(product).join(' ')) ? '対応' : '';
+}
+
+function getHipseatScenes(product: Product): string {
+  const tags = getCompareTags(product);
+  return tags.filter((tag) => /ワンオペ|保育園送迎|旅行|お出かけ|短時間抱っこ|持ち歩き|はじめて/.test(tag)).join(' / ');
+}
+
+function getCompareTags(product: Product): string[] {
+  const value = product.feature_tags ?? product.tags;
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (typeof value !== 'string') return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean);
+  } catch {
+    // Plain comma-separated strings are handled below.
+  }
+  return trimmed.split(/[,\n、]/).map((item) => item.trim()).filter(Boolean);
 }
 
 function renderMallLinks(product: Product): string {

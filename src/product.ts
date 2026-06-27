@@ -122,7 +122,7 @@ type FeatureBlock = {
 
 const appElement = document.querySelector<HTMLDivElement>('#product-app');
 const recentlyViewedKey = 'recentlyViewedProductIds';
-const strollerProductsUrl = '/products.html';
+const defaultProductsUrl = '/products.html';
 
 if (!appElement) {
   throw new Error('#product-app was not found.');
@@ -181,7 +181,7 @@ async function renderProductDetail() {
   if (!product) {
     app.innerHTML = `
       <main class="detail-shell">
-        <a class="back-link" href="${strollerProductsUrl}">ベビーカー一覧へ戻る</a>
+        <a class="back-link" href="${defaultProductsUrl}">商品一覧へ戻る</a>
         <p class="detail-error">商品が見つかりませんでした。</p>
       </main>
     `;
@@ -218,6 +218,8 @@ async function renderProductDetail() {
   const uploadedColorImages = (uploadedColorResult.data ?? []) as ProductUploadedImage[];
   const brandsById = new Map(((brandsResult.data ?? []) as Brand[]).map((brand) => [brand.id, brand]));
   const brandRecord = product.brand_id ? brandsById.get(String(product.brand_id)) : undefined;
+  const productsUrl = getProductsUrlForProduct(product);
+  const categoryLabel = getCategoryLabel(product);
 
   if (import.meta.env.DEV) {
     logSpecificationColumnStatus(specificationRows);
@@ -230,9 +232,9 @@ async function renderProductDetail() {
   app.innerHTML = `
     <main class="detail-shell">
       <nav class="detail-breadcrumb" aria-label="パンくず">
-        <a class="detail-back-link" href="${strollerProductsUrl}">ベビーカー一覧へ戻る</a>
+        <a class="detail-back-link" href="${escapeAttr(productsUrl)}">${escapeText(categoryLabel)}一覧へ戻る</a>
         <span aria-hidden="true">/</span>
-        <a href="${strollerProductsUrl}">ベビーカー一覧</a>
+        <a href="${escapeAttr(productsUrl)}">${escapeText(categoryLabel)}一覧</a>
         <span aria-hidden="true">/</span>
         <span>${escapeText(getProductName(product))}</span>
       </nav>
@@ -301,6 +303,22 @@ function updateProductMetadata(product: Product): void {
   document.querySelectorAll<HTMLMetaElement>('meta[property="og:description"], meta[name="twitter:description"]').forEach((element) => {
     element.content = description;
   });
+}
+
+function getCategoryLabel(product: Product): string {
+  const category = getFirstText(product, ['category']);
+  if (/hip\s*seat|hipseat|ヒップシート/i.test(category) || getFirstText(product, ['product_type']) === 'hipseat') return 'ヒップシート';
+  if (/抱っこ紐|抱っこひも|carrier/i.test(category)) return '抱っこ紐';
+  if (/チャイルドシート|car\s*seat|carseat/i.test(category)) return 'チャイルドシート';
+  return category || 'ベビーカー';
+}
+
+function getProductsUrlForProduct(product: Product): string {
+  const category = getCategoryLabel(product);
+  if (category === '抱っこ紐') return '/products.html?category=carrier';
+  if (category === 'チャイルドシート') return '/products.html?category=car-seat';
+  if (category === 'ヒップシート') return '/products.html?category=hipseat';
+  return defaultProductsUrl;
 }
 
 function renderProductColors(colors: ProductColor[], uploadedImages: ProductUploadedImage[], product: Product): string {
