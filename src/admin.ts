@@ -353,7 +353,7 @@ function renderRakutenBulkPanel() {
             楽天アフィリエイト発行HTML
             <textarea id="bulk-affiliate-html" rows="9" placeholder="楽天アフィリエイト画面で発行したHTMLを貼り付けてください。">${escapeText(bulkHtml)}</textarea>
           </label>
-        ` : '<p class="affiliate-mode-help">学習済み店舗の商品URLから画像候補を取得します。必ず生成結果を確認してから登録してください。</p>'}
+        ` : '<p class="affiliate-mode-help">楽天APIから代表画像を最大3枚ほど取得します。追加画像が必要な場合はHTML貼り付け登録を使ってください。</p>'}
 
         ${renderBulkShopSettingNotice()}
 
@@ -504,11 +504,39 @@ async function analyzeRakutenBulkHtml() {
     return { ...candidate, selected: !blocked, blocked, displayOrder: startOrder + index };
   });
   bulkItemUrl = normalizedInputUrl || parsed[0]?.rakutenItemUrl || bulkItemUrl;
-  bulkMessage = parsed.length > 0
-    ? `${parsed.length}件を解析しました。登録済み画像はチェックを外しています。`
-    : '登録可能な楽天アフィリエイト画像が見つかりませんでした。';
-  bulkMessageIsError = parsed.length === 0;
+  if (parsed.length === 0) {
+    bulkMessage = '登録可能な楽天アフィリエイト画像が見つかりませんでした。';
+    bulkMessageIsError = true;
+    renderRakutenBulkPanel();
+    return;
+  }
+
+  const learned = await rememberRakutenShopSettingFromCandidate(parsed[0]);
+  if (!learned) {
+    renderRakutenBulkPanel();
+    return;
+  }
+
+  await loadRakutenApiCandidatesAfterHtmlLearning();
   renderRakutenBulkPanel();
+}
+
+async function rememberRakutenShopSettingFromCandidate(candidate: RakutenAffiliateImageCandidate): Promise<boolean> {
+  const { error } = await supabase.rpc('remember_rakuten_affiliate_shop_setting', {
+    p_shop_key: candidate.shopKey,
+    p_me_id: candidate.meId,
+    p_affiliate_path: candidate.affiliatePath,
+    p_sample_affiliate_url: candidate.affiliateUrl,
+    p_sample_item_url: candidate.rakutenItemUrl,
+  });
+
+  if (error) {
+    bulkMessage = `HTML解析はできましたが、店舗設定の学習に失敗しました: ${error.message}`;
+    bulkMessageIsError = true;
+    return false;
+  }
+
+  return true;
 }
 
 async function generateRakutenImagesFromUrl() {
@@ -530,25 +558,8 @@ async function generateRakutenImagesFromUrl() {
   bulkMessage = '楽天APIから画像候補を取得中...';
   renderRakutenBulkPanel();
   try {
-    const product = products.find((item) => String(item.id) === bulkProductId);
-    const params = new URLSearchParams({
-      url: normalizedItemUrl,
-      productName: product ? getProductLabel(product) : '',
-      brandName: product ? getProductBrand(product) : '',
-    });
-    const response = await fetch(`/api/rakuten-item-search?${params.toString()}`, {
-      headers: { accept: 'application/json' },
-    });
-    const payload = await readRakutenProductInfoResponse(response);
-    if (!payload.ok) {
-      throw new Error(payload.error || '楽天APIから商品情報を取得できませんでした。');
-    }
-    if (!payload.affiliate_url) throw new Error('楽天APIからaffiliateUrlを取得できませんでした。');
-    if (payload.image_urls.length === 0) throw new Error('楽天APIから画像URLを取得できませんでした。');
-
-    const currentImages = getImagesByProductId(bulkProductId);
-    const startOrder = getNextDisplayOrder(currentImages);
-    bulkCandidates = buildRakutenApiBulkCandidates(payload, currentImages, startOrder);
+    const payload = await fetchRakutenApiImagePayload(normalizedItemUrl);
+    bulkCandidates = buildRakutenApiCandidatesForCurrentProduct(payload);
     if (bulkCandidates.length === 0) throw new Error('登録できる楽天画像候補を生成できませんでした。');
     const priceText = payload.item_price ? ` / ¥${payload.item_price.toLocaleString('ja-JP')}` : '';
     bulkMessage = `${bulkCandidates.length}件を生成しました。${payload.item_name ?? '商品名未取得'}${priceText}。画像を確認してから登録してください。`;
@@ -559,6 +570,54 @@ async function generateRakutenImagesFromUrl() {
     bulkMessageIsError = true;
   }
   renderRakutenBulkPanel();
+}
+
+async function loadRakutenApiCandidatesAfterHtmlLearning(): Promise<void> {
+  try {
+    const normalizedItemUrl = normalizeRakutenItemUrl(bulkItemUrl);
+    if (!normalizedItemUrl) throw new Error('楽天商品URLを確認してください。');
+
+    const payload = await fetchRakutenApiImagePayload(normalizedItemUrl);
+    const candidates = buildRakutenApiCandidatesForCurrentProduct(payload);
+    const hasNewCandidates = candidates.some((candidate) => candidate.selected && !candidate.blocked);
+    bulkCandidates = candidates;
+    bulkMessageIsError = false;
+    bulkMessage = hasNewCandidates
+      ? 'HTML学習が完了しました。楽天APIから代表画像候補を取得しました。'
+      : 'HTML学習は完了しました。楽天APIで取得できる新規画像はありません。追加画像はHTML貼り付け登録を使ってください。';
+  } catch {
+    bulkCandidates = [];
+    bulkMessage = 'HTML学習は完了しましたが、楽天API画像候補の取得に失敗しました。必要ならHTML貼り付け登録を使ってください。';
+    bulkMessageIsError = false;
+  }
+}
+
+async function fetchRakutenApiImagePayload(
+  normalizedItemUrl: string,
+): Promise<Extract<RakutenProductInfoResponse, { ok: true }>> {
+  const product = products.find((item) => String(item.id) === bulkProductId);
+  const params = new URLSearchParams({
+    url: normalizedItemUrl,
+    productName: product ? getProductLabel(product) : '',
+    brandName: product ? getProductBrand(product) : '',
+  });
+  const response = await fetch(`/api/rakuten-item-search?${params.toString()}`, {
+    headers: { accept: 'application/json' },
+  });
+  const payload = await readRakutenProductInfoResponse(response);
+  if (!payload.ok) {
+    throw new Error(payload.error || '楽天APIから商品情報を取得できませんでした。');
+  }
+  if (!payload.affiliate_url) throw new Error('楽天APIからaffiliateUrlを取得できませんでした。');
+  if (payload.image_urls.length === 0) throw new Error('楽天APIから画像URLを取得できませんでした。');
+  return payload;
+}
+
+function buildRakutenApiCandidatesForCurrentProduct(
+  payload: Extract<RakutenProductInfoResponse, { ok: true }>,
+): BulkAffiliateCandidate[] {
+  const currentImages = getImagesByProductId(bulkProductId);
+  return buildRakutenApiBulkCandidates(payload, currentImages, getNextDisplayOrder(currentImages));
 }
 
 function buildRakutenApiBulkCandidates(
