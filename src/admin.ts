@@ -525,43 +525,41 @@ async function generateRakutenImagesFromUrl() {
   }
 
   bulkItemUrl = normalizedItemUrl;
-  bulkShopSetting = await loadRakutenShopSetting(shopKey);
-  if (!bulkShopSetting) {
-    bulkMessage = 'この店舗はまだ楽天アフィHTMLから学習されていません。初回だけ楽天アフィリエイト発行HTMLを貼り付けてください。';
-    bulkMessageIsError = true;
-    renderRakutenBulkPanel();
-    return;
-  }
+  bulkShopSetting = await loadRakutenShopSetting(shopKey).catch(() => null);
 
-  bulkMessage = '楽天商品ページから画像候補を取得中...';
+  bulkMessage = '楽天APIから画像候補を取得中...';
   renderRakutenBulkPanel();
   try {
-    const response = await fetch(`/api/rakuten-product-info?url=${encodeURIComponent(normalizedItemUrl)}`, {
+    const product = products.find((item) => String(item.id) === bulkProductId);
+    const params = new URLSearchParams({
+      url: normalizedItemUrl,
+      productName: product ? getProductLabel(product) : '',
+      brandName: product ? getProductBrand(product) : '',
+    });
+    const response = await fetch(`/api/rakuten-item-search?${params.toString()}`, {
       headers: { accept: 'application/json' },
     });
     const payload = await readRakutenProductInfoResponse(response);
     if (!payload.ok) {
-      throw new Error(payload.error || '楽天商品ページを取得できませんでした。');
+      throw new Error(payload.error || '楽天APIから商品情報を取得できませんでした。');
     }
-    const itemId = payload.detected_item_id ?? '';
-    if (!itemId) throw new Error('affiliate_url生成に必要なitem_idを商品ページから取得できませんでした。');
-    if (payload.image_urls.length === 0) throw new Error('商品ページから画像URLを取得できませんでした。');
+    if (!payload.affiliate_url) throw new Error('楽天APIからaffiliateUrlを取得できませんでした。');
+    if (payload.image_urls.length === 0) throw new Error('楽天APIから画像URLを取得できませんでした。');
 
     const currentImages = getImagesByProductId(bulkProductId);
     const existingImageUrls = new Set(currentImages.map(getStoredAffiliateImageUrl).filter(Boolean));
-    const existingAffiliateUrls = new Set(currentImages.map((image) => image.affiliate_url ?? '').filter(Boolean));
     const startOrder = getNextDisplayOrder(currentImages);
-    const generatedAffiliateUrls = new Set(existingAffiliateUrls);
+    const generatedImageUrls = new Set(existingImageUrls);
     bulkCandidates = payload.image_urls
-      .map((imageUrl) => createRakutenAffiliateCandidate(normalizedItemUrl, imageUrl, bulkShopSetting!, itemId))
-      .filter((candidate): candidate is RakutenAffiliateImageCandidate => Boolean(candidate))
+      .map((imageUrl) => createRakutenApiCandidate(payload, imageUrl))
       .map((candidate, index) => {
-        const selected = !existingImageUrls.has(candidate.imageUrl) && !generatedAffiliateUrls.has(candidate.affiliateUrl);
-        if (selected) generatedAffiliateUrls.add(candidate.affiliateUrl);
+        const selected = !generatedImageUrls.has(candidate.imageUrl);
+        if (selected) generatedImageUrls.add(candidate.imageUrl);
         return { ...candidate, selected, blocked: !selected, displayOrder: startOrder + index };
       });
     if (bulkCandidates.length === 0) throw new Error('登録できる楽天画像候補を生成できませんでした。');
-    bulkMessage = `${bulkCandidates.length}件を生成しました。URL形式と画像を確認してから登録してください。`;
+    const priceText = payload.item_price ? ` / ¥${payload.item_price.toLocaleString('ja-JP')}` : '';
+    bulkMessage = `${bulkCandidates.length}件を生成しました。${payload.item_name ?? '商品名未取得'}${priceText}。画像を確認してから登録してください。`;
     bulkMessageIsError = false;
   } catch (error) {
     bulkCandidates = [];
@@ -571,19 +569,48 @@ async function generateRakutenImagesFromUrl() {
   renderRakutenBulkPanel();
 }
 
+function createRakutenApiCandidate(
+  payload: Extract<RakutenProductInfoResponse, { ok: true }>,
+  imageUrl: string,
+): RakutenAffiliateImageCandidate {
+  return {
+    affiliateUrl: payload.affiliate_url ?? payload.normalized_item_url,
+    imageUrl,
+    itemId: payload.item_code,
+    meId: '',
+    imageSize: 'api',
+    rakutenItemUrl: payload.normalized_item_url,
+    shopKey: payload.shop_key,
+    affiliatePath: '',
+    sourceType: 'rakuten-api',
+    itemName: payload.item_name ?? payload.title ?? '',
+    itemPrice: payload.item_price ?? null,
+  };
+}
+
 async function readRakutenProductInfoResponse(
   response: Response,
 ): Promise<RakutenProductInfoResponse> {
   const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
   const responseText = await response.text();
 
-  if (!contentType.includes('application/json')) {
+  if (!response.ok || !contentType.includes('application/json')) {
+    if (import.meta.env.DEV) {
+      console.warn('URL生成APIの応答を確認してください。', {
+        status: response.status,
+        contentType,
+        bodyHead: responseText.slice(0, 300),
+      });
+    }
     const isLocalVite = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
     const looksLikeHtml = contentType.includes('text/html') || /^\s*<!doctype html|^\s*<html/i.test(responseText);
     if (isLocalVite && looksLikeHtml) {
       throw new Error('URLだけ生成APIが起動していません。Cloudflare Pages Functions環境で確認してください。');
     }
-    throw new Error(`URLだけ生成APIからJSON以外の応答が返されました${contentType ? `（${contentType}）` : ''}。`);
+    if (!contentType.includes('application/json')) {
+      throw new Error(`URLだけ生成APIからJSON以外の応答が返されました${contentType ? `（${contentType}）` : ''}。`);
+    }
+    throw new Error(`URLだけ生成APIがエラーを返しました（${response.status}）。`);
   }
 
   if (!responseText.trim()) {
@@ -625,8 +652,39 @@ async function registerRakutenBulkImages() {
   bulkMessageIsError = false;
   renderRakutenBulkPanel();
 
+  const apiCandidates = selected.filter(isRakutenApiCandidate);
+  const affiliateCandidates = selected.filter((candidate) => !isRakutenApiCandidate(candidate));
+  let inserted = 0;
+  let skipped = 0;
+
+  if (affiliateCandidates.length > 0) {
+    const result = await registerRakutenAffiliateCandidates(affiliateCandidates);
+    if (!result) return;
+    inserted += result.inserted;
+    skipped += result.skipped;
+  }
+
+  if (apiCandidates.length > 0) {
+    const result = await registerRakutenApiCandidates(apiCandidates);
+    if (!result) return;
+    inserted += result.inserted;
+    skipped += result.skipped;
+  }
+
+  await normalizeMediaOrder('affiliate', bulkProductId);
+  bulkMessage = `${inserted}件を登録しました。重複スキップ: ${skipped}件`;
+  bulkMessageIsError = false;
+  bulkCandidates = [];
+  bulkShopSetting = null;
+  await loadData();
+  openProductId = bulkProductId;
+  moveToProductPage(bulkProductId);
+  renderProductList();
+}
+
+async function registerRakutenAffiliateCandidates(candidates: BulkAffiliateCandidate[]): Promise<{ inserted: number; skipped: number } | null> {
   if (bulkUpdateSetting && bulkSettingChanged) {
-    const candidate = selected[0];
+    const candidate = candidates[0];
     const { error: settingError } = await supabase.rpc('update_rakuten_affiliate_shop_setting', {
       p_shop_key: candidate.shopKey,
       p_me_id: candidate.meId,
@@ -638,10 +696,10 @@ async function registerRakutenBulkImages() {
       bulkMessage = settingError.message;
       bulkMessageIsError = true;
       renderRakutenBulkPanel();
-      return;
+      return null;
     }
   } else {
-    const candidate = selected[0];
+    const candidate = candidates[0];
     const { error: rememberError } = await supabase.rpc('remember_rakuten_affiliate_shop_setting', {
       p_shop_key: candidate.shopKey,
       p_me_id: candidate.meId,
@@ -653,14 +711,14 @@ async function registerRakutenBulkImages() {
       bulkMessage = rememberError.message;
       bulkMessageIsError = true;
       renderRakutenBulkPanel();
-      return;
+      return null;
     }
   }
 
   const { data, error } = await supabase.rpc('create_rakuten_affiliate_images_bulk', {
     p_product_id: bulkProductId,
     p_role: 'main',
-    p_items: selected.map((candidate) => ({
+    p_items: candidates.map((candidate) => ({
       affiliate_url: candidate.affiliateUrl,
       image_url: candidate.imageUrl,
       item_id: candidate.itemId,
@@ -677,19 +735,80 @@ async function registerRakutenBulkImages() {
     bulkMessage = error.message;
     bulkMessageIsError = true;
     renderRakutenBulkPanel();
-    return;
+    return null;
   }
 
   const result = data as { inserted?: number; skipped?: number } | null;
-  await normalizeMediaOrder('affiliate', bulkProductId);
-  bulkMessage = `${result?.inserted ?? 0}件を登録しました。重複スキップ: ${result?.skipped ?? 0}件`;
-  bulkMessageIsError = false;
-  bulkCandidates = [];
-  bulkShopSetting = null;
-  await loadData();
-  openProductId = bulkProductId;
-  moveToProductPage(bulkProductId);
-  renderProductList();
+  return {
+    inserted: result?.inserted ?? 0,
+    skipped: result?.skipped ?? 0,
+  };
+}
+
+async function registerRakutenApiCandidates(candidates: BulkAffiliateCandidate[]): Promise<{ inserted: number; skipped: number } | null> {
+  let inserted = 0;
+  let skipped = 0;
+  const existingImageUrls = new Set(getImagesByProductId(bulkProductId).map(getStoredAffiliateImageUrl).filter(Boolean));
+
+  for (const candidate of candidates) {
+    if (existingImageUrls.has(candidate.imageUrl)) {
+      skipped += 1;
+      continue;
+    }
+
+    let html = '';
+    try {
+      html = createRakutenApiAffiliateHtml(candidate);
+    } catch (error) {
+      bulkMessage = getErrorMessage(error);
+      bulkMessageIsError = true;
+      renderRakutenBulkPanel();
+      return null;
+    }
+
+    const { error } = await supabase.rpc('create_product_affiliate_image', {
+      p_product_id: bulkProductId,
+      p_role: 'main',
+      p_rakuten_image_html: html,
+      p_is_primary: false,
+      p_display_order: candidate.displayOrder,
+      p_mall: 'rakuten',
+    });
+
+    if (error) {
+      bulkMessage = error.message;
+      bulkMessageIsError = true;
+      renderRakutenBulkPanel();
+      return null;
+    }
+
+    existingImageUrls.add(candidate.imageUrl);
+    inserted += 1;
+  }
+
+  return { inserted, skipped };
+}
+
+function isRakutenApiCandidate(candidate: RakutenAffiliateImageCandidate): boolean {
+  return candidate.sourceType === 'rakuten-api' || !candidate.meId || !candidate.affiliatePath;
+}
+
+function createRakutenApiAffiliateHtml(candidate: RakutenAffiliateImageCandidate): string {
+  const affiliateUrl = normalizeHttpsUrl(candidate.affiliateUrl);
+  const imageUrl = normalizeHttpsUrl(candidate.imageUrl);
+  if (!affiliateUrl || !imageUrl) {
+    throw new Error('楽天APIから取得したURLの形式を確認してください。');
+  }
+  return `<a href="${escapeAttr(affiliateUrl)}" target="_blank" rel="nofollow sponsored noopener"><img src="${escapeAttr(imageUrl)}" alt=""></a>`;
+}
+
+function normalizeHttpsUrl(value: string): string {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' ? url.toString() : '';
+  } catch {
+    return '';
+  }
 }
 
 function renderProductCard(product: Product) {

@@ -7,6 +7,9 @@ export type RakutenAffiliateImageCandidate = {
   rakutenItemUrl: string;
   shopKey: string;
   affiliatePath: string;
+  sourceType?: 'affiliate-html' | 'rakuten-api';
+  itemName?: string;
+  itemPrice?: number | null;
 };
 
 const allowedAffiliateHost = 'hb.afl.rakuten.co.jp';
@@ -28,9 +31,13 @@ export type RakutenProductInfo = {
   shop_key: string;
   item_code: string;
   title: string | null;
+  item_name?: string | null;
+  item_price?: number | null;
+  affiliate_url?: string | null;
   image_urls: string[];
   detected_item_id: string | null;
   detected_me_id: string | null;
+  search_method?: string;
 };
 
 export type RakutenProductInfoFailure = {
@@ -47,7 +54,9 @@ export function normalizeRakutenItemUrl(value: string): string {
     if (url.protocol !== 'https:' || url.hostname.toLowerCase() !== allowedItemHost) return '';
     const parts = url.pathname.split('/').filter(Boolean);
     if (parts.length < 2) return '';
-    return `https://${allowedItemHost}/${encodeURIComponent(parts[0])}/${encodeURIComponent(parts[1])}/`;
+    const [shopCode, ...itemPathParts] = parts;
+    const itemPath = itemPathParts.map((part) => encodeURIComponent(part)).join('/');
+    return `https://${allowedItemHost}/${encodeURIComponent(shopCode)}/${itemPath}/`;
   } catch {
     return '';
   }
@@ -103,6 +112,7 @@ export function createRakutenAffiliateCandidate(
     rakutenItemUrl: normalizedItemUrl,
     shopKey,
     affiliatePath,
+    sourceType: 'affiliate-html',
   };
 }
 
@@ -138,6 +148,7 @@ export function parseRakutenAffiliateHtml(html: string, itemUrlInput = ''): Raku
       rakutenItemUrl,
       shopKey,
       affiliatePath: affiliateDetails.affiliatePath,
+      sourceType: 'affiliate-html',
     });
   });
 

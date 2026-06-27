@@ -22,6 +22,7 @@ type Product = {
   tags?: string[] | string | null;
   product_type?: string | null;
   type?: string | null;
+  target_age_text?: string | null;
   weight_kg?: string | number | null;
   weight?: string | number | null;
   target_age?: string | null;
@@ -41,8 +42,13 @@ type Product = {
   folded_width_cm?: string | number | null;
   folded_height_cm?: string | number | null;
   load_capacity?: string | number | null;
+  max_weight_kg?: string | number | null;
+  load_capacity_kg?: string | number | null;
   max_load?: string | number | null;
   max_weight?: string | number | null;
+  washable?: string | null;
+  washing?: string | null;
+  features?: Record<string, unknown> | string | null;
   basket_capacity?: string | null;
   shopping_basket?: string | null;
   basket?: string | null;
@@ -311,8 +317,8 @@ function getCompareRows(category = ''): CompareRow[] {
   if (category === 'ヒップシート') {
     return [
       { label: 'タイプ', getValue: getHipseatType },
-      { label: '対象月齢', getValue: (product) => firstValue(product.target_age) },
-      { label: '耐荷重', getValue: (product) => firstValue(product.load_capacity, product.max_load, product.max_weight) },
+      { label: '対象月齢', getValue: (product) => firstValue(product.target_age, product.target_age_text) },
+      { label: '耐荷重', getValue: getHipseatLoadCapacity },
       { label: '本体重量', getValue: (product) => formatWeight(firstValue(product.weight_kg, product.weight)) },
       { label: '装着タイプ', getValue: getHipseatWearType },
       { label: '肩掛け対応', getValue: (product) => getHipseatSupport(product, /肩掛け|ショルダー|肩ベルト/) },
@@ -321,7 +327,7 @@ function getCompareRows(category = ''): CompareRow[] {
       { label: '収納ポケット', getValue: (product) => getHipseatSupport(product, /収納|ポケット/) },
       { label: '座面すべり止め', getValue: (product) => firstValue(product.seat_non_slip, product.non_slip_seat) },
       { label: '背あて', getValue: (product) => firstValue(product.back_support, product.backrest) },
-      { label: '洗濯可否', getValue: (product) => firstValue(product.washable, product.washing) },
+      { label: '洗濯可否', getValue: getHipseatWashable },
       { label: '折りたたみ', getValue: (product) => firstValue(product.foldable, product.folded_size) },
       { label: '向いているシーン', getValue: getHipseatScenes },
     ];
@@ -403,6 +409,19 @@ function getHipseatSupport(product: Product, pattern: RegExp): string {
   return pattern.test(getCompareTags(product).join(' ')) ? '対応' : '';
 }
 
+function getHipseatLoadCapacity(product: Product): string {
+  const explicit = firstValue(product.load_capacity, product.max_load, product.max_weight);
+  if (explicit) return explicit;
+  const numeric = firstValue(product.max_weight_kg, product.load_capacity_kg);
+  return numeric ? formatWeight(numeric) : '';
+}
+
+function getHipseatWashable(product: Product): string {
+  const explicit = firstValue(product.washable, product.washing);
+  if (explicit) return explicit;
+  return getCompareFeatureValue(product, ['washable', 'washing']);
+}
+
 function getHipseatScenes(product: Product): string {
   const tags = getCompareTags(product);
   return tags.filter((tag) => /ワンオペ|保育園送迎|旅行|お出かけ|短時間抱っこ|持ち歩き|はじめて/.test(tag)).join(' / ');
@@ -421,6 +440,30 @@ function getCompareTags(product: Product): string[] {
     // Plain comma-separated strings are handled below.
   }
   return trimmed.split(/[,\n、]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function getCompareFeatureValue(product: Product, keys: string[]): string {
+  const features = parseCompareFeatureObject(product.features);
+  for (const key of keys) {
+    const value = features[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'boolean') return value ? '可' : '不可';
+  }
+  return '';
+}
+
+function parseCompareFeatureObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
 }
 
 function renderMallLinks(product: Product): string {

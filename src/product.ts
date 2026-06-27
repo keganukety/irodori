@@ -14,6 +14,7 @@ type Product = {
   manufacturer?: string | null;
   category?: string | null;
   type?: string | null;
+  product_type?: string | null;
   age?: string | null;
   age_range?: string | null;
   target_age?: string | null;
@@ -61,6 +62,7 @@ type Product = {
   rank_no?: number | string | null;
   feature_tags?: string[] | string | null;
   tags?: string[] | string | null;
+  features?: Record<string, unknown> | string | null;
   rakuten_url?: string | null;
   rakuten_link?: string | null;
   amazon_url?: string | null;
@@ -491,6 +493,7 @@ function getCleanImageText(value: unknown): string {
 function getProductSpecificationRows(product: Product): SpecificationRow[] {
   const rows: SpecificationRow[] = [];
 
+  addSpecRow(rows, product, 'タイプ', [['type'], ['product_type']]);
   addSpecRow(rows, product, '製品サイズ', [
     ['product_size'],
     ['size'],
@@ -510,6 +513,8 @@ function getProductSpecificationRows(product: Product): SpecificationRow[] {
   addSpecRow(rows, product, '対象月齢', [['target_age']]);
   addSpecRow(rows, product, '適応体重', [['applicable_weight'], ['weight_capacity'], ['age_weight_limit']]);
   addSpecRow(rows, product, '耐荷重', [['load_capacity'], ['max_load'], ['max_weight']]);
+  addComputedSpecRow(rows, '収納', getStorageSpec(product));
+  addComputedSpecRow(rows, '洗濯可否', getWashableSpec(product));
   addSpecRow(rows, product, 'バスケット容量', [['basket_capacity'], ['shopping_basket'], ['basket']]);
   addSpecRow(rows, product, '付属品', [['accessories'], ['included_items']]);
   addSpecRow(rows, product, '保証', [['warranty'], ['guarantee']]);
@@ -518,6 +523,49 @@ function getProductSpecificationRows(product: Product): SpecificationRow[] {
   addSpecRow(rows, product, '品番', [['model_number'], ['sku'], ['jan_code'], ['product_code']]);
 
   return rows;
+}
+
+function addComputedSpecRow(rows: SpecificationRow[], label: string, value: string): void {
+  if (!isPresentSpecValue(value) || rows.some((row) => row.label === label)) return;
+  rows.push({ label, value, sourceKeys: [] });
+}
+
+function getStorageSpec(product: Product): string {
+  const explicit = getFirstText(product, ['storage_pockets', 'storage_pocket', 'storage', 'pocket']);
+  if (explicit) return explicit;
+  const featureValue = getFeatureValue(product, ['storage', 'storage_pockets', 'pocket']);
+  if (featureValue) return featureValue;
+  return getDisplayTags(product).some((tag) => /収納あり|収納|ポケット|バッグ型/.test(tag)) ? '収納あり' : '';
+}
+
+function getWashableSpec(product: Product): string {
+  const explicit = getFirstText(product, ['washable', 'washing', 'washable_text']);
+  if (explicit) return explicit;
+  return getFeatureValue(product, ['washable', 'washing']);
+}
+
+function getFeatureValue(product: Product, keys: string[]): string {
+  const features = parseFeatureObject(product.features);
+  for (const key of keys) {
+    const value = features[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'boolean') return value ? '可' : '不可';
+  }
+  return '';
+}
+
+function parseFeatureObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
 }
 
 function addSpecRow(
