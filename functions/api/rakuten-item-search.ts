@@ -164,7 +164,11 @@ async function fetchRakutenItems(
   Object.entries(plan.params).forEach(([key, value]) => apiUrl.searchParams.set(key, value));
 
   const response = await fetch(apiUrl, {
-    headers: { accept: 'application/json' },
+    headers: {
+      accept: 'application/json',
+      referer: 'https://irodori-cu2.pages.dev/',
+      origin: 'https://irodori-cu2.pages.dev',
+    },
   });
   const contentType = response.headers.get('content-type') ?? '';
   const bodyText = await response.text();
