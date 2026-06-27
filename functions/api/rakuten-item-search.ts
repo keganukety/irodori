@@ -23,7 +23,7 @@ type RakutenAuth = {
 };
 
 const ITEM_HOST = 'item.rakuten.co.jp';
-const API_URL = 'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601';
+const API_URL = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401';
 const ELEMENTS = [
   'itemName',
   'itemPrice',
@@ -65,7 +65,7 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
   const searchPlans = buildSearchPlans(parsedUrl, productName, brandName);
 
   try {
-    let sawNotFound = false;
+    const recoverableErrors: RakutenApiError[] = [];
     for (const plan of searchPlans) {
       let payload: unknown;
       try {
@@ -75,8 +75,8 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
           affiliateId,
         });
       } catch (error) {
-        if (error instanceof RakutenApiError && error.status === 404) {
-          sawNotFound = true;
+        if (error instanceof RakutenApiError && error.recoverable) {
+          recoverableErrors.push(error);
           continue;
         }
         throw error;
@@ -102,8 +102,11 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
       });
     }
 
-    if (sawNotFound) {
+    if (recoverableErrors.some((error) => error.status === 404)) {
       return failure(getRakutenStatusMessage(404), 404);
+    }
+    if (recoverableErrors.some((error) => error.status === 400)) {
+      return failure('楽天APIへの検索条件がすべて不正でした。商品URL、商品名、ブランド名を確認してください。', 400);
     }
     return failure('楽天APIで商品情報が見つかりませんでした。商品URLまたは商品名を確認してください。', 200);
   } catch (error) {
@@ -125,13 +128,25 @@ function buildSearchPlans(
   brandName: string,
 ) {
   const plans: Array<SearchPlan | null> = [
+    createKeywordPlan('shopCode+productName', parsedUrl.shopCode, productName),
+    createKeywordPlan('shopCode+itemPath', parsedUrl.shopCode, parsedUrl.itemPath.replace(/[/-]+/g, ' ')),
+    createKeywordPlan('shopCode+brandName', parsedUrl.shopCode, brandName),
     { label: 'itemCode', params: { itemCode: `${parsedUrl.shopCode}:${parsedUrl.itemPath}` } },
-    productName ? { label: 'shopCode+productName', params: { shopCode: parsedUrl.shopCode, keyword: productName } } : null,
-    brandName ? { label: 'shopCode+brandName', params: { shopCode: parsedUrl.shopCode, keyword: brandName } } : null,
-    { label: 'shopCode+itemPath', params: { shopCode: parsedUrl.shopCode, keyword: parsedUrl.itemPath.replace(/[/-]+/g, ' ') } },
   ];
 
   return plans.filter((plan): plan is SearchPlan => Boolean(plan));
+}
+
+function createKeywordPlan(label: string, shopCode: string, keyword: string): SearchPlan | null {
+  const normalizedKeyword = normalizeKeywordForRakuten(keyword);
+  return normalizedKeyword ? { label, params: { shopCode, keyword: normalizedKeyword } } : null;
+}
+
+function normalizeKeywordForRakuten(value: string): string {
+  const normalized = value.trim().replace(/\s+/g, ' ').slice(0, 120);
+  if (!normalized) return '';
+  if (normalized.replace(/[^\p{L}\p{N}]+/gu, '').length < 2) return '';
+  return normalized;
 }
 
 async function fetchRakutenItems(
@@ -153,6 +168,7 @@ async function fetchRakutenItems(
   });
   const contentType = response.headers.get('content-type') ?? '';
   const bodyText = await response.text();
+  const errorPayload = parseRakutenErrorPayload(bodyText, contentType);
 
   if (!response.ok || !contentType.toLowerCase().includes('application/json')) {
     console.warn('[rakuten-item-search] Rakuten API response was not usable.', {
@@ -160,8 +176,10 @@ async function fetchRakutenItems(
       contentType,
       bodyHead: bodyText.slice(0, 300),
       searchMethod: plan.label,
+      apiError: errorPayload.error,
+      apiErrorDescription: errorPayload.errorDescription,
     });
-    throw new RakutenApiError(response.status, plan.label, getRakutenStatusMessage(response.status));
+    throw new RakutenApiError(response.status, plan.label, getRakutenStatusMessage(response.status), isRecoverablePlanError(response.status));
   }
 
   try {
@@ -173,7 +191,7 @@ async function fetchRakutenItems(
       bodyHead: bodyText.slice(0, 300),
       searchMethod: plan.label,
     });
-    throw new RakutenApiError(response.status, plan.label, '楽天APIの応答を解析できませんでした。Cloudflare logsを確認してください。');
+    throw new RakutenApiError(response.status, plan.label, '楽天APIの応答を解析できませんでした。Cloudflare logsを確認してください。', false);
   }
 }
 
@@ -182,14 +200,36 @@ class RakutenApiError extends Error {
   searchMethod: string;
   userMessage: string;
   responseStatus: number;
+  recoverable: boolean;
 
-  constructor(status: number, searchMethod: string, userMessage: string) {
+  constructor(status: number, searchMethod: string, userMessage: string, recoverable: boolean) {
     super(`Rakuten API error ${status} during ${searchMethod}`);
     this.name = 'RakutenApiError';
     this.status = status;
     this.searchMethod = searchMethod;
     this.userMessage = userMessage;
     this.responseStatus = status >= 400 && status < 600 ? status : 502;
+    this.recoverable = recoverable;
+  }
+}
+
+function isRecoverablePlanError(status: number): boolean {
+  return status === 400 || status === 404;
+}
+
+function parseRakutenErrorPayload(bodyText: string, contentType: string): { error: string; errorDescription: string } {
+  if (!contentType.toLowerCase().includes('application/json') || !bodyText.trim()) {
+    return { error: '', errorDescription: '' };
+  }
+
+  try {
+    const payload = JSON.parse(bodyText) as Record<string, unknown>;
+    return {
+      error: getText(payload.error),
+      errorDescription: getText(payload.error_description ?? payload.errorDescription),
+    };
+  } catch {
+    return { error: '', errorDescription: '' };
   }
 }
 
@@ -209,7 +249,8 @@ function pickBestItem(payload: unknown, shopCode: string): RakutenSearchItem | n
 
 function getItems(payload: unknown): RakutenSearchItem[] {
   if (!payload || typeof payload !== 'object') return [];
-  const items = (payload as Record<string, unknown>).Items;
+  const record = payload as Record<string, unknown>;
+  const items = Array.isArray(record.items) ? record.items : record.Items;
   if (!Array.isArray(items)) return [];
   return items
     .map((item) => {
