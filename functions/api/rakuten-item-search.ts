@@ -16,6 +16,11 @@ type SearchPlan = {
   label: string;
   params: Record<string, string>;
 };
+type RakutenAuth = {
+  applicationId: string;
+  accessKey: string;
+  affiliateId: string;
+};
 
 const ITEM_HOST = 'item.rakuten.co.jp';
 const API_URL = 'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601';
@@ -41,14 +46,18 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
   const applicationId = readEnv(context.env, 'RAKUTEN_APPLICATION_ID', 'RAKUTEN_APP_ID');
   const accessKey = readEnv(context.env, 'RAKUTEN_ACCESS_KEY', 'RAKUTEN_APPLICATION_SECRET');
   const affiliateId = readEnv(context.env, 'RAKUTEN_AFFILIATE_ID');
+  const missingEnv = getMissingEnvNames({ applicationId, accessKey, affiliateId });
 
-  if (!applicationId || !affiliateId) {
-    console.error('[rakuten-item-search] Rakuten API environment is incomplete.', {
-      hasApplicationId: Boolean(applicationId),
-      hasAccessKey: Boolean(accessKey),
-      hasAffiliateId: Boolean(affiliateId),
+  if (missingEnv.length > 0) {
+    console.warn('[rakuten-item-search] Rakuten API environment is incomplete.', {
+      missingEnv,
     });
-    return failure('楽天APIの接続設定が不足しています。環境変数を確認してください。', 500);
+    return json({
+      ok: false,
+      error: `楽天APIの接続設定が不足しています: ${missingEnv.join(', ')}`,
+      missingEnv,
+      fallbackAvailable: true,
+    }, 500);
   }
 
   const productName = cleanKeyword(requestUrl.searchParams.get('productName') ?? '');
@@ -56,12 +65,22 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
   const searchPlans = buildSearchPlans(parsedUrl, productName, brandName);
 
   try {
+    let sawNotFound = false;
     for (const plan of searchPlans) {
-      const payload = await fetchRakutenItems(plan, {
-        applicationId,
-        accessKey,
-        affiliateId,
-      });
+      let payload: unknown;
+      try {
+        payload = await fetchRakutenItems(plan, {
+          applicationId,
+          accessKey,
+          affiliateId,
+        });
+      } catch (error) {
+        if (error instanceof RakutenApiError && error.status === 404) {
+          sawNotFound = true;
+          continue;
+        }
+        throw error;
+      }
       const item = pickBestItem(payload, parsedUrl.shopCode);
       if (!item) continue;
 
@@ -83,11 +102,19 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
       });
     }
 
+    if (sawNotFound) {
+      return failure(getRakutenStatusMessage(404), 404);
+    }
     return failure('楽天APIで商品情報が見つかりませんでした。商品URLまたは商品名を確認してください。', 200);
   } catch (error) {
-    console.error('[rakuten-item-search] Search failed.', {
+    console.warn('[rakuten-item-search] Search failed.', {
       message: error instanceof Error ? error.message : 'unknown error',
+      status: error instanceof RakutenApiError ? error.status : null,
+      searchMethod: error instanceof RakutenApiError ? error.searchMethod : null,
     });
+    if (error instanceof RakutenApiError) {
+      return failure(error.userMessage, error.responseStatus);
+    }
     return failure('楽天APIから商品情報を取得できませんでした。時間をおいて再度お試しください。', 502);
   }
 }
@@ -109,7 +136,7 @@ function buildSearchPlans(
 
 async function fetchRakutenItems(
   plan: SearchPlan,
-  auth: { applicationId: string; accessKey: string; affiliateId: string },
+  auth: RakutenAuth,
 ): Promise<unknown> {
   const apiUrl = new URL(API_URL);
   apiUrl.searchParams.set('format', 'json');
@@ -128,26 +155,51 @@ async function fetchRakutenItems(
   const bodyText = await response.text();
 
   if (!response.ok || !contentType.toLowerCase().includes('application/json')) {
-    console.error('[rakuten-item-search] Non-JSON or failed response.', {
+    console.warn('[rakuten-item-search] Rakuten API response was not usable.', {
       status: response.status,
       contentType,
       bodyHead: bodyText.slice(0, 300),
       searchMethod: plan.label,
     });
-    throw new Error(`Rakuten API response was not usable: ${response.status}`);
+    throw new RakutenApiError(response.status, plan.label, getRakutenStatusMessage(response.status));
   }
 
   try {
     return JSON.parse(bodyText) as unknown;
   } catch {
-    console.error('[rakuten-item-search] JSON parse failed.', {
+    console.warn('[rakuten-item-search] Rakuten API JSON parse failed.', {
       status: response.status,
       contentType,
       bodyHead: bodyText.slice(0, 300),
       searchMethod: plan.label,
     });
-    throw new Error('Rakuten API JSON parse failed.');
+    throw new RakutenApiError(response.status, plan.label, '楽天APIの応答を解析できませんでした。Cloudflare logsを確認してください。');
   }
+}
+
+class RakutenApiError extends Error {
+  status: number;
+  searchMethod: string;
+  userMessage: string;
+  responseStatus: number;
+
+  constructor(status: number, searchMethod: string, userMessage: string) {
+    super(`Rakuten API error ${status} during ${searchMethod}`);
+    this.name = 'RakutenApiError';
+    this.status = status;
+    this.searchMethod = searchMethod;
+    this.userMessage = userMessage;
+    this.responseStatus = status >= 400 && status < 600 ? status : 502;
+  }
+}
+
+function getRakutenStatusMessage(status: number): string {
+  if (status === 400) return '楽天APIへのリクエスト形式が正しくありません。商品URLまたは検索条件を確認してください。';
+  if (status === 401) return '楽天APIの認証に失敗しました。環境変数の設定を確認してください。';
+  if (status === 403) return '楽天APIへのアクセスが拒否されました。利用権限またはアプリ設定を確認してください。';
+  if (status === 404) return '楽天APIで商品情報が見つかりませんでした。商品URLや店舗コードを確認してください。';
+  if (status === 429) return '楽天APIの利用回数制限に達した可能性があります。時間をおいて再度お試しください。';
+  return `楽天APIから商品情報を取得できませんでした（status: ${status}）。Cloudflare logsを確認してください。`;
 }
 
 function pickBestItem(payload: unknown, shopCode: string): RakutenSearchItem | null {
@@ -222,6 +274,14 @@ function readEnv(env: RakutenItemSearchEnv, ...keys: Array<keyof RakutenItemSear
     if (typeof value === 'string' && value.trim()) return value.trim();
   }
   return '';
+}
+
+function getMissingEnvNames(auth: RakutenAuth): string[] {
+  const missing: string[] = [];
+  if (!auth.applicationId) missing.push('RAKUTEN_APPLICATION_ID');
+  if (!auth.accessKey) missing.push('RAKUTEN_ACCESS_KEY');
+  if (!auth.affiliateId) missing.push('RAKUTEN_AFFILIATE_ID');
+  return missing;
 }
 
 function cleanKeyword(value: string): string {
