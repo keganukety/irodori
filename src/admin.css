@@ -110,6 +110,27 @@ label {
   color: #687282;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.header-actions a {
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #202124;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
+.header-actions a:hover {
+  background: #f0f2f5;
+}
+
 .admin-main {
   padding: 24px 28px 48px;
 }

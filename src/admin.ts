@@ -165,7 +165,11 @@ async function renderAdmin() {
         <h1>商品画像管理</h1>
         <p>楽天HTML画像、自作画像、YouTube動画を商品ごとに管理します。</p>
       </div>
-      <button id="logout-button">ログアウト</button>
+      <div class="header-actions">
+        <a href="/affiliate-admin.html">アフィリエイトURL管理</a>
+        <a href="/assets-admin.html">素材管理</a>
+        <button id="logout-button" type="button">ログアウト</button>
+      </div>
     </header>
 
     <main class="admin-main">

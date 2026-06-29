@@ -697,7 +697,7 @@ function renderProductCard(product: Product, index: number) {
 
 function renderPurchaseLink(label: string, url: string) {
   if (!url) return '';
-  return `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeText(label)}</a>`;
+  return `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer sponsored">${escapeText(label)}</a>`;
 }
 
 function bindEvents() {

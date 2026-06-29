@@ -182,6 +182,7 @@ async function renderAdmin() {
       </div>
       <div class="header-actions">
         <a href="/admin.html">商品画像管理</a>
+        <a href="/affiliate-admin.html">アフィリエイトURL管理</a>
         <button id="logout-button" type="button">ログアウト</button>
       </div>
     </header>

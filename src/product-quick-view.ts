@@ -1,4 +1,5 @@
 import './product-quick-view.css';
+import { normalizeProductDisplayName } from './shared-ui';
 import type { Brand, Product, ProductColor } from './types';
 
 type ProductImageMap = Map<string, string>;
@@ -99,7 +100,8 @@ function restoreTriggerFocus(): void {
 
 function renderQuickView(product: Product): string {
   const productId = String(product.id);
-  const name = firstText(product, ['name', 'product_name', 'title']) || `商品ID ${productId}`;
+  const fallbackName = firstText(product, ['name', 'product_name', 'title']) || `商品ID ${productId}`;
+  const name = normalizeProductDisplayName(product, fallbackName) || fallbackName;
   const brand = getBrand(product);
   const brandRecord = getBrandRecord(product);
   const brandMarkup = brandRecord
@@ -128,6 +130,7 @@ function renderQuickView(product: Product): string {
           ${renderShopLink('楽天', firstText(product, ['rakuten_url', 'rakuten_link']))}
           ${renderShopLink('Amazon', firstText(product, ['amazon_url', 'amazon_link']))}
           ${renderShopLink('Yahoo!', firstText(product, ['yahoo_url', 'yahoo_link']))}
+          ${renderShopLink('公式', firstText(product, ['official_url', 'official_link']))}
         </div>
         <a class="quick-view-detail-link" href="/product.html?id=${encodeURIComponent(productId)}">CHECK</a>
       </section>

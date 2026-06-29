@@ -12,6 +12,7 @@ export default defineConfig({
         compare: 'compare.html',
         admin: 'admin.html',
         assetsAdmin: 'assets-admin.html',
+        affiliateAdmin: 'affiliate-admin.html',
         strollerGuide: 'stroller-guide.html',
       },
     },
