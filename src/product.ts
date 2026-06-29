@@ -1,5 +1,10 @@
 import './styles.css';
-import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
+import {
+  applyFadeUpAnimations,
+  mountCommonHeader,
+  normalizeProductDisplayBrand,
+  normalizeProductDisplayName,
+} from './shared-ui';
 import { supabase } from './lib/supabase';
 import type { Brand, ProductColor, ProductUploadedImage } from './types';
 import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl, isValidYouTubeVideoId } from './youtube';
@@ -18,9 +23,12 @@ type Product = {
   age?: string | null;
   age_range?: string | null;
   target_age?: string | null;
+  target_age_text?: string | null;
   weight?: string | number | null;
   weight_kg?: string | number | null;
+  weight_note?: string | null;
   product_size?: string | null;
+  size_text?: string | null;
   size?: string | null;
   dimensions?: string | null;
   product_dimensions?: string | null;
@@ -39,8 +47,14 @@ type Product = {
   weight_capacity?: string | null;
   age_weight_limit?: string | null;
   load_capacity?: string | null;
+  load_capacity_kg?: string | number | null;
   max_load?: string | null;
   max_weight?: string | null;
+  max_weight_kg?: string | number | null;
+  waist_size_text?: string | null;
+  washable?: string | null;
+  washing?: string | null;
+  washable_text?: string | null;
   basket_capacity?: string | null;
   shopping_basket?: string | null;
   basket?: string | null;
@@ -496,6 +510,7 @@ function getProductSpecificationRows(product: Product): SpecificationRow[] {
   addSpecRow(rows, product, 'タイプ', [['type'], ['product_type']]);
   addSpecRow(rows, product, '製品サイズ', [
     ['product_size'],
+    ['size_text'],
     ['size'],
     ['dimensions'],
     ['product_dimensions'],
@@ -510,9 +525,11 @@ function getProductSpecificationRows(product: Product): SpecificationRow[] {
     ['folded_depth_cm', 'folded_width_cm', 'folded_height_cm'],
   ]);
   addSpecRow(rows, product, '重量', [['weight_kg'], ['weight']], { appendUnit: 'kg' });
-  addSpecRow(rows, product, '対象月齢', [['target_age']]);
+  addComputedSpecRow(rows, '重量補足', getWeightNoteSpec(product));
+  addSpecRow(rows, product, '対象月齢', [['target_age'], ['target_age_text'], ['age_range'], ['age']]);
   addSpecRow(rows, product, '適応体重', [['applicable_weight'], ['weight_capacity'], ['age_weight_limit']]);
-  addSpecRow(rows, product, '耐荷重', [['load_capacity'], ['max_load'], ['max_weight']]);
+  addSpecRow(rows, product, '耐荷重', [['load_capacity'], ['max_weight_kg'], ['load_capacity_kg'], ['max_load'], ['max_weight']], { appendUnit: 'kg' });
+  addSpecRow(rows, product, 'ウエストサイズ', [['waist_size_text']]);
   addComputedSpecRow(rows, '収納', getStorageSpec(product));
   addComputedSpecRow(rows, '洗濯可否', getWashableSpec(product));
   addSpecRow(rows, product, 'バスケット容量', [['basket_capacity'], ['shopping_basket'], ['basket']]);
@@ -542,6 +559,10 @@ function getWashableSpec(product: Product): string {
   const explicit = getFirstText(product, ['washable', 'washing', 'washable_text']);
   if (explicit) return explicit;
   return getFeatureValue(product, ['washable', 'washing']);
+}
+
+function getWeightNoteSpec(product: Product): string {
+  return getFirstText(product, ['weight_note']) || getFeatureValue(product, ['weight_note']);
 }
 
 function getFeatureValue(product: Product, keys: string[]): string {
@@ -888,11 +909,13 @@ function getRoleDescription(role: ProductImage['role']) {
 }
 
 function getProductName(product: Product) {
-  return getFirstText(product, ['name', 'product_name', 'title']) || `商品ID: ${String(product.id)}`;
+  const fallback = getFirstText(product, ['name', 'product_name', 'title']) || `商品ID: ${String(product.id)}`;
+  return normalizeProductDisplayName(product, fallback) || fallback;
 }
 
 function getBrand(product: Product) {
-  return getFirstText(product, ['brand', 'maker', 'manufacturer', 'category']) || 'Baby item';
+  const fallback = getFirstText(product, ['brand', 'maker', 'manufacturer', 'category']) || 'Baby item';
+  return normalizeProductDisplayBrand(product, fallback) || fallback;
 }
 
 function getDisplayTags(product: Product) {

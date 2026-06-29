@@ -225,9 +225,9 @@ begin
       ('hugoo-hipseat', 'hugoo', jsonb_build_object(
         'slug', 'hugoo-hipseat',
         'product_slug', 'hugoo-hipseat',
-        'name', 'Hugoo Dual Hip Seat',
-        'product_name', 'Hugoo Dual Hip Seat',
-        'title', 'Hugoo Dual Hip Seat',
+        'name', 'Hugoo ヒップシート',
+        'product_name', 'Hugoo ヒップシート',
+        'title', 'Hugoo ヒップシート',
         'brand', 'Hugoo',
         'maker', 'GRIT',
         'manufacturer', 'GRIT',

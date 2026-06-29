@@ -3,7 +3,7 @@ export const COMPARE_STORAGE_KEY = 'irodori_compare_product_ids';
 export const MAX_COMPARE_PRODUCTS = 4;
 export const MIN_COMPARE_PRODUCTS = 1;
 
-type HeaderPage = 'products' | 'compare' | 'guide' | 'other';
+type HeaderPage = 'home' | 'products' | 'compare' | 'guide' | 'other';
 
 const sharedStyleId = 'irodori-shared-ui-style';
 const fadeUpStyleId = 'irodori-fade-up-style';
@@ -17,6 +17,44 @@ let compareTrayObserver: MutationObserver | null = null;
 
 export function normalizeProductId(id: unknown): string {
   return String(id ?? '').trim();
+}
+
+export function normalizeProductDisplayName(product: unknown, fallbackName = ''): string {
+  const record = getProductRecord(product);
+  const name = String(fallbackName || firstProductText(record, ['name', 'product_name', 'title', 'model_name']) || '').trim();
+  if (isCombiProduct(record) && isSugocalSeriesName(name)) {
+    return 'スゴカル エッグショック LA';
+  }
+
+  return name;
+}
+
+export function normalizeProductDisplayBrand(product: unknown, fallbackBrand = ''): string {
+  const record = getProductRecord(product);
+  const brand = String(fallbackBrand || firstProductText(record, ['brand', 'maker', 'manufacturer']) || '').trim();
+  return /combi|コンビ/i.test(brand) ? 'Combi' : brand;
+}
+
+function getProductRecord(product: unknown): Record<string, unknown> {
+  return product && typeof product === 'object' ? product as Record<string, unknown> : {};
+}
+
+function firstProductText(product: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = product[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  }
+  return '';
+}
+
+function isCombiProduct(product: Record<string, unknown>): boolean {
+  return /combi|コンビ/i.test(firstProductText(product, ['brand', 'maker', 'manufacturer']));
+}
+
+function isSugocalSeriesName(name: string): boolean {
+  const normalized = name.replace(/[　\s・･_-]+/g, '').toLowerCase();
+  return normalized === 'スゴカルシリーズ' || normalized === 'sugocalseries';
 }
 
 export function uniqueIds(ids: unknown[]): string[] {
@@ -148,12 +186,24 @@ export function applyFadeUpAnimations(root: ParentNode = document): void {
       '.recommend-section',
       '.recommend-card',
       '.home-main-banner',
+      '.home-search-section',
+      '.home-search-group',
+      '.home-search-category-list li',
+      '.home-search-scene-list li',
       '.home-category-section',
       '.home-scene-section',
+      '.home-recommended-section',
+      '.home-brand-section',
+      '.home-shopping-section',
       '.home-section',
       '.home-guide-strip',
+      '.home-category-grid',
+      '.home-scene-list',
       '.home-product-card',
       '.home-category-card',
+      '.home-brand-card',
+      '.home-shopping-card',
+      '.home-pickup-card',
       '.home-action-card',
       '.compare-hero',
       '.compare-notice',
@@ -232,7 +282,7 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
 
     const header = document.createElement('header');
     header.id = headerId;
-    header.className = 'site-header';
+    header.className = page === 'home' ? 'site-header site-header--home' : 'site-header';
     header.innerHTML = `
       <div class="site-header__inner">
         <a class="site-header__brand" href="/" aria-label="${SITE_NAME} トップへ">${SITE_NAME}</a>
@@ -258,9 +308,17 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
     });
 
     document.body.prepend(header);
+    if (page === 'home') {
+      syncHomeHeaderScrollState(header);
+      window.addEventListener('scroll', () => syncHomeHeaderScrollState(header), { passive: true });
+    }
   } catch (error) {
     console.error('共通ヘッダーの初期化に失敗しました。', error);
   }
+}
+
+function syncHomeHeaderScrollState(header: HTMLElement): void {
+  header.classList.toggle('is-scrolled', window.scrollY > 12);
 }
 
 export function setupCompareEnhancements(): void {
@@ -997,6 +1055,35 @@ function injectSharedStyles(): void {
       font-size: 21px;
       font-weight: 500;
       opacity: .6;
+    }
+
+    .site-header__brand img {
+      display: block;
+      width: auto;
+      max-width: 92px;
+      max-height: 30px;
+      object-fit: contain;
+    }
+
+    .site-header--home {
+      position: fixed;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0);
+      border-bottom-color: transparent;
+      backdrop-filter: none;
+      transition: background .28s ease, border-color .28s ease, backdrop-filter .28s ease;
+    }
+
+    .site-header--home.is-scrolled,
+    .site-header--home:focus-within {
+      background: rgba(255, 255, 255, .82);
+      border-bottom-color: rgba(49, 49, 49, .12);
+      backdrop-filter: blur(14px);
+    }
+
+    .site-header--home .site-header__brand {
+      opacity: .9;
     }
 
     .site-header__nav {

@@ -5,6 +5,8 @@ import {
   applyFadeUpAnimations,
   loadCompareProductIds,
   mountCommonHeader,
+  normalizeProductDisplayBrand,
+  normalizeProductDisplayName,
   setupCompareTrayNavigation,
   syncCompareUI,
   updateCompareState,
@@ -643,7 +645,8 @@ function renderProductCard(product: Product, index: number) {
   const rank = index + 1;
   const productId = String(product.id);
   const imagePair = productImages.get(productId);
-  const brand = getFirstText(product, ['brand', 'maker', 'manufacturer', 'category']) || 'Baby item';
+  const rawBrand = getFirstText(product, ['brand', 'maker', 'manufacturer', 'category']) || 'Baby item';
+  const brand = normalizeProductDisplayBrand(product, rawBrand) || rawBrand;
   const brandRecord = product.brand_id ? brandsById.get(String(product.brand_id)) : undefined;
   const name = getProductName(product);
   const price = formatPrice(product.price_yen);
@@ -1089,7 +1092,10 @@ function getProductsForCategory(category: string) {
   const categories = category === 'ベビーカー'
     ? getStrollerCategoryValues(categoryCounts)
     : new Set([...categoryCounts.keys()].filter((value) => matchesCategoryLabel(value, category)));
-  const categoryFilteredProducts = allProducts.filter((product) => categories.has(normalizeCategory(product.category)));
+  const categoryFilteredProducts = allProducts.filter((product) =>
+    categories.has(normalizeCategory(product.category)) ||
+    matchesCategoryLabel(normalizeCategory(product.product_type), category)
+  );
   return dedupeProductsById(categoryFilteredProducts);
 }
 
@@ -1169,13 +1175,15 @@ function searchableText(product: Product) {
     product.age,
     product.age_range,
     product.target_age,
+    product.target_age_text,
     normalizeTags(product.feature_tags ?? product.tags).join(' '),
     weightLabel(product.weight_kg ?? product.weight),
   ].filter((value) => value !== null && value !== undefined).join(' ');
 }
 
 function getProductName(product: Product) {
-  return getFirstText(product, ['name', 'product_name', 'title']) || `商品ID: ${String(product.id)}`;
+  const fallback = getFirstText(product, ['name', 'product_name', 'title']) || `商品ID: ${String(product.id)}`;
+  return normalizeProductDisplayName(product, fallback) || fallback;
 }
 
 function getDisplayTags(product: Product) {

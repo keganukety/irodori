@@ -7,6 +7,7 @@ import {
   loadCompareProductIds,
   applyFadeUpAnimations,
   mountCommonHeader,
+  normalizeProductDisplayName,
   normalizeProductId,
   removeCompareId,
   saveCompareIds,
@@ -25,11 +26,14 @@ type Product = {
   target_age_text?: string | null;
   weight_kg?: string | number | null;
   weight?: string | number | null;
+  weight_note?: string | null;
   target_age?: string | null;
   product_size?: string | null;
+  size_text?: string | null;
   size?: string | null;
   dimensions?: string | null;
   product_dimensions?: string | null;
+  waist_size_text?: string | null;
   length_cm?: string | number | null;
   depth_cm?: string | number | null;
   width_cm?: string | number | null;
@@ -48,6 +52,7 @@ type Product = {
   max_weight?: string | number | null;
   washable?: string | null;
   washing?: string | null;
+  washable_text?: string | null;
   features?: Record<string, unknown> | string | null;
   basket_capacity?: string | null;
   shopping_basket?: string | null;
@@ -320,6 +325,8 @@ function getCompareRows(category = ''): CompareRow[] {
       { label: '対象月齢', getValue: (product) => firstValue(product.target_age, product.target_age_text) },
       { label: '耐荷重', getValue: getHipseatLoadCapacity },
       { label: '本体重量', getValue: (product) => formatWeight(firstValue(product.weight_kg, product.weight)) },
+      { label: 'サイズ', getValue: getHipseatSize },
+      { label: 'ウエストサイズ', getValue: getHipseatWaistSize },
       { label: '装着タイプ', getValue: getHipseatWearType },
       { label: '肩掛け対応', getValue: (product) => getHipseatSupport(product, /肩掛け|ショルダー|肩ベルト/) },
       { label: '腰ベルト対応', getValue: (product) => getHipseatSupport(product, /腰ベルト/) },
@@ -330,6 +337,7 @@ function getCompareRows(category = ''): CompareRow[] {
       { label: '洗濯可否', getValue: getHipseatWashable },
       { label: '折りたたみ', getValue: (product) => firstValue(product.foldable, product.folded_size) },
       { label: '向いているシーン', getValue: getHipseatScenes },
+      { label: '補足メモ', getValue: getHipseatNote },
     ];
   }
 
@@ -396,7 +404,7 @@ function getHipseatType(product: Product): string {
 }
 
 function getHipseatWearType(product: Product): string {
-  const tags = getCompareTags(product).join(' ');
+  const tags = getHipseatComparableText(product);
   const types = [
     /肩掛け|ショルダー|肩ベルト/.test(tags) ? '肩掛け' : '',
     /腰ベルト/.test(tags) ? '腰ベルト' : '',
@@ -406,7 +414,7 @@ function getHipseatWearType(product: Product): string {
 }
 
 function getHipseatSupport(product: Product, pattern: RegExp): string {
-  return pattern.test(getCompareTags(product).join(' ')) ? '対応' : '';
+  return pattern.test(getHipseatComparableText(product)) ? '対応' : '';
 }
 
 function getHipseatLoadCapacity(product: Product): string {
@@ -416,15 +424,39 @@ function getHipseatLoadCapacity(product: Product): string {
   return numeric ? formatWeight(numeric) : '';
 }
 
+function getHipseatSize(product: Product): string {
+  return firstValue(product.product_size, product.size_text, product.size, product.dimensions, product.product_dimensions)
+    || formatDimensions(product.length_cm ?? product.depth_cm, product.width_cm, product.height_cm);
+}
+
+function getHipseatWaistSize(product: Product): string {
+  return firstValue(product.waist_size_text) || getCompareFeatureValue(product, ['waist_size', 'waist_size_text']);
+}
+
 function getHipseatWashable(product: Product): string {
-  const explicit = firstValue(product.washable, product.washing);
+  const explicit = firstValue(product.washable, product.washing, product.washable_text);
   if (explicit) return explicit;
-  return getCompareFeatureValue(product, ['washable', 'washing']);
+  return getCompareFeatureValue(product, ['washable', 'washing', 'washable_text']);
 }
 
 function getHipseatScenes(product: Product): string {
   const tags = getCompareTags(product);
   return tags.filter((tag) => /ワンオペ|保育園送迎|旅行|お出かけ|短時間抱っこ|持ち歩き|はじめて/.test(tag)).join(' / ');
+}
+
+function getHipseatNote(product: Product): string {
+  return firstValue(product.weight_note)
+    || getCompareFeatureValue(product, ['weight_note', 'price_note', 'note']);
+}
+
+function getHipseatComparableText(product: Product): string {
+  const features = parseCompareFeatureObject(product.features);
+  return [
+    product.type,
+    product.product_type,
+    ...getCompareTags(product),
+    ...Object.values(features).map((value) => String(value)),
+  ].filter(Boolean).join(' ');
 }
 
 function getCompareTags(product: Product): string[] {
@@ -522,7 +554,8 @@ function createImageMap(images: ProductImage[]): Map<string, string> {
 }
 
 function getProductName(product: Product): string {
-  return firstValue(product.name) || `商品ID ${normalizeProductId(product.id)}`;
+  const fallback = firstValue(product.name) || `商品ID ${normalizeProductId(product.id)}`;
+  return normalizeProductDisplayName(product, fallback) || fallback;
 }
 
 function firstValue(...values: unknown[]): string {
