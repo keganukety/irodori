@@ -59,6 +59,16 @@ type ProductImagePair = {
   secondary: string;
 };
 
+type CategoryHeroAsset = {
+  asset_key: string;
+  title?: string | null;
+  alt_text?: string | null;
+  desktop_image_url?: string | null;
+  mobile_image_url?: string | null;
+  display_order?: number | null;
+  sort_order?: number | null;
+};
+
 type SortKey = 'recommended' | 'popular' | 'priceAsc' | 'priceDesc' | 'weightAsc';
 type QuickFilter = string;
 type QuickFilterConfig = { value: QuickFilter; label: string; test: (product: Product) => boolean };
@@ -216,6 +226,7 @@ let activeCategory = getInitialCategory();
 let productImages = new Map<string, ProductImagePair>();
 let productColors = new Map<string, ProductColor[]>();
 let brandsById = new Map<string, Brand>();
+let categoryHeroAssetsByKey = new Map<string, CategoryHeroAsset>();
 let activeQuickFilter: QuickFilter = getInitialQuickFilter(activeCategory);
 let activeSidebarFilters = getInitialSidebarFilters();
 let sortKey: SortKey = getInitialSortKey();
@@ -253,7 +264,7 @@ async function renderPublicPage() {
     </main>
   `;
 
-  const [productsResult, imagesResult, colorsResult, brandsResult] = await Promise.all([
+  const [productsResult, imagesResult, colorsResult, brandsResult, siteAssetsResult] = await Promise.all([
     supabase.from('products').select('*').order('id', { ascending: true }),
     supabase
       .from('product_affiliate_images')
@@ -262,6 +273,11 @@ async function renderPublicPage() {
       .order('display_order', { ascending: true }),
     supabase.from('product_colors').select('*').order('display_order', { ascending: true }),
     supabase.from('brands').select('*').eq('is_published', true),
+    supabase.rpc('get_published_site_assets', {
+      p_asset_type: null,
+      p_asset_key: null,
+      p_limit: 200,
+    }),
   ]);
 
   if (productsResult.error) {
@@ -284,8 +300,12 @@ async function renderPublicPage() {
   productImages = buildProductImagePairs((imagesResult.data ?? []) as AffiliateImage[]);
   if (colorsResult.error) console.info('商品カラーはmigration適用後に表示されます。', colorsResult.error.message);
   if (brandsResult.error) console.info('ブランド導線はmigration適用後に有効になります。', brandsResult.error.message);
+  if (siteAssetsResult.error) console.info('カテゴリヒーロー画像はsite_assets公開RPC適用後に有効になります。', siteAssetsResult.error.message);
   productColors = groupProductColors((colorsResult.data ?? []) as ProductColor[]);
   brandsById = new Map(((brandsResult.data ?? []) as Brand[]).map((brand) => [brand.id, brand]));
+  categoryHeroAssetsByKey = new Map(((siteAssetsResult.data ?? []) as CategoryHeroAsset[])
+    .filter((asset) => asset.asset_key)
+    .map((asset) => [asset.asset_key, asset]));
   renderStorefront();
 }
 
@@ -293,19 +313,23 @@ function renderStorefront() {
   comparedProducts = new Set<string>(loadCompareProductIds());
   updateListingMetadata(activeCategory);
   const heroCopy = getCategoryHeroCopy(activeCategory);
+  const heroAsset = getCategoryHeroAsset(activeCategory);
   app.innerHTML = `
     <main class="storefront-shell">
       <section class="hero-panel">
         <div class="hero-inner">
-          <p class="section-title-en">COLLECTION</p>
-          <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
-          <p class="hero-copy">${escapeText(heroCopy)}</p>
-          <nav class="guide-links" aria-label="ベビーカー選びの導線">
-            <a href="#">人気ランキング</a>
-            <a href="#">かんたん診断</a>
-            <a href="#">比較表</a>
-            <a href="#">メーカーから探す</a>
-          </nav>
+          <div class="hero-copy-block">
+            <p class="section-title-en">COLLECTION</p>
+            <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
+            <p class="hero-copy">${escapeText(heroCopy)}</p>
+            <nav class="guide-links" aria-label="ベビーカー選びの導線">
+              <a href="#">人気ランキング</a>
+              <a href="#">かんたん診断</a>
+              <a href="#">比較表</a>
+              <a href="#">メーカーから探す</a>
+            </nav>
+          </div>
+          ${heroAsset ? renderCategoryHeroAsset(heroAsset, activeCategory) : ''}
         </div>
       </section>
 
@@ -933,6 +957,40 @@ function getCategoryHeroCopy(category: string): string {
   return `${category}を、暮らしに合う条件から探せます。`;
 }
 
+function getCategoryHeroAsset(category: string): CategoryHeroAsset | undefined {
+  const keyCandidates: Record<string, string[]> = {
+    抱っこ紐: ['category_hero_babycarrier', 'category_babycarrier'],
+    チャイルドシート: ['category_hero_carseat', 'category_carseat'],
+  };
+  const candidates = keyCandidates[category] ?? [];
+  for (const key of candidates) {
+    const asset = categoryHeroAssetsByKey.get(key);
+    if (asset && getCategoryHeroDesktopSrc(asset)) return asset;
+  }
+  return undefined;
+}
+
+function renderCategoryHeroAsset(asset: CategoryHeroAsset, category: string): string {
+  const desktop = getCategoryHeroDesktopSrc(asset);
+  if (!desktop) return '';
+  const mobile = isSafeImageUrl(asset.mobile_image_url) ? asset.mobile_image_url.trim() : desktop;
+  const alt = asset.alt_text?.trim() || `${category}カテゴリ画像`;
+
+  return `
+    <picture class="category-hero-media">
+      <source media="(max-width: 640px)" srcset="${escapeAttr(mobile)}">
+      <img src="${escapeAttr(desktop)}" alt="${escapeAttr(alt)}" loading="eager" decoding="async">
+    </picture>
+  `;
+}
+
+function getCategoryHeroDesktopSrc(asset: CategoryHeroAsset): string {
+  const desktop = asset.desktop_image_url?.trim();
+  if (isSafeImageUrl(desktop)) return desktop;
+  const mobile = asset.mobile_image_url?.trim();
+  return isSafeImageUrl(mobile) ? mobile : '';
+}
+
 function updateListingMetadata(category: string): void {
   const title = category === 'ヒップシート'
     ? 'ヒップシートおすすめ10選｜抱っこと歩くをくり返す時期に使いやすい人気モデルを比較 | iLy.'
@@ -1287,4 +1345,10 @@ function escapeText(value: string) {
 
 function escapeAttr(value: string) {
   return escapeText(value).replace(/"/g, '&quot;');
+}
+
+function isSafeImageUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) || trimmed.startsWith('/');
 }
