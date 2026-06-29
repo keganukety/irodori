@@ -146,6 +146,22 @@
   line-height: 1.45;
 }
 
+.affiliate-name-field {
+  gap: 5px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.affiliate-name-field input {
+  color: #202124;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.affiliate-name-actions {
+  margin: 6px 0;
+}
+
 .affiliate-url-cell,
 .affiliate-note-cell,
 .affiliate-save-cell {

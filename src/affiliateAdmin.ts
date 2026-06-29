@@ -20,6 +20,7 @@ type MissingFilter = 'all' | 'any' | 'official' | 'amazon' | 'rakuten' | 'yahoo'
 type UrlField = (typeof urlFields)[number];
 
 type ProductRowValues = {
+  product_name: string;
   official_url: string;
   amazon_url: string;
   rakuten_url: string;
@@ -228,7 +229,7 @@ function renderProductRow(product: Product): string {
   const imageUrl = imageByProductId.get(productId) ?? '';
   const message = rowMessages.get(productId);
   const brand = getBrand(product);
-  const name = getProductName(product);
+  const name = values.product_name || getProductName(product);
   const category = getCategory(product);
   const rank = firstText(product, ['rank_no']) || '-';
   const status = getUrlStatus(values);
@@ -240,7 +241,12 @@ function renderProductRow(product: Product): string {
         <div class="affiliate-thumb">${imageUrl ? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(name)}" loading="lazy">` : '<span>画像準備中</span>'}</div>
         <div>
           <p class="affiliate-brand">${escapeText(brand)}</p>
-          <h2>${escapeText(name)}</h2>
+          <label class="affiliate-name-field">商品名
+            <input data-field="product_name" type="text" value="${escapeAttr(name)}" />
+          </label>
+          <div class="url-actions affiliate-name-actions">
+            <button type="button" data-copy-product-name>商品名をコピー</button>
+          </div>
           <p class="affiliate-meta">${escapeText(category)} / rank ${escapeText(rank)}</p>
           <p class="affiliate-url-status">${escapeText(status)}</p>
         </div>
@@ -315,6 +321,13 @@ function bindRows(): void {
       });
     });
 
+    row.querySelector<HTMLButtonElement>('[data-copy-product-name]')?.addEventListener('click', async () => {
+      const name = getRowFieldValue(row, 'product_name');
+      if (!name) return;
+      await navigator.clipboard.writeText(name);
+      setRowMessage(row, '商品名をコピーしました。', 'success');
+    });
+
     row.querySelectorAll<HTMLButtonElement>('[data-open-url]').forEach((button) => {
       button.addEventListener('click', () => {
         const url = getRowFieldValue(row, button.dataset.openUrl ?? '');
@@ -369,6 +382,7 @@ async function saveRow(row: HTMLElement, rerender = true): Promise<boolean> {
 
   const { error } = await supabase.rpc('update_product_affiliate_urls', {
     p_product_id: productId,
+    p_product_name: values.product_name || null,
     p_official_url: values.official_url || null,
     p_amazon_url: values.amazon_url || null,
     p_rakuten_url: values.rakuten_url || null,
@@ -385,7 +399,13 @@ async function saveRow(row: HTMLElement, rerender = true): Promise<boolean> {
   }
 
   const product = products.find((item) => getProductId(item) === productId);
-  if (product) Object.assign(product, values);
+  if (product) {
+    Object.assign(product, values, {
+      name: values.product_name,
+      product_name: values.product_name,
+      title: values.product_name,
+    });
+  }
   row.classList.remove('is-dirty');
   setRowMessage(row, '保存しました。', 'success');
   if (rerender) renderList();
@@ -421,9 +441,9 @@ function getVisibleProducts(): Product[] {
     if (brandFilter !== 'all' && getBrand(product) !== brandFilter) return false;
     if (missingFilter !== 'all' && !matchesMissingFilter(values)) return false;
     if (!normalizedQuery) return true;
-    return [
+  return [
       getProductId(product),
-      getProductName(product),
+      getRowValues(product).product_name || getProductName(product),
       getBrand(product),
       getCategory(product),
     ].join(' ').toLowerCase().includes(normalizedQuery);
@@ -481,6 +501,7 @@ function getUrlStatus(values: ProductRowValues): string {
 
 function getRowValues(product: Product): ProductRowValues {
   return {
+    product_name: firstText(product, ['name', 'product_name', 'title']),
     official_url: firstText(product, ['official_url', 'official_link']),
     amazon_url: firstText(product, ['amazon_url', 'amazon_link']),
     rakuten_url: firstText(product, ['rakuten_url', 'rakuten_link']),
@@ -492,6 +513,7 @@ function getRowValues(product: Product): ProductRowValues {
 
 function getValuesFromRow(row: HTMLElement): ProductRowValues {
   return {
+    product_name: getRowFieldValue(row, 'product_name'),
     official_url: getRowFieldValue(row, 'official_url'),
     amazon_url: getRowFieldValue(row, 'amazon_url'),
     rakuten_url: getRowFieldValue(row, 'rakuten_url'),
