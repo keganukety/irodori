@@ -1,6 +1,6 @@
 import './styles.css';
 import './brand.css';
-import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
+import { applyFadeUpAnimations, mountCommonHeader, normalizeProductDisplayName } from './shared-ui';
 import { supabase } from './lib/supabase';
 import type { Brand, Product, ProductUploadedImage } from './types';
 
@@ -326,7 +326,8 @@ function getProductAnchorId(product: Product): string {
 }
 
 function getProductName(product: Product): string {
-  return getFirstText(product, ['name', 'product_name', 'title', 'model_name']) || `商品ID ${String(product.id)}`;
+  const fallback = getFirstText(product, ['name', 'product_name', 'title', 'model_name']) || `商品ID ${String(product.id)}`;
+  return normalizeProductDisplayName(product, fallback) || fallback;
 }
 
 function getProductSubtitle(product: Product, name: string): string {

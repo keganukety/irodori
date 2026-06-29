@@ -18,8 +18,8 @@ export const fallbackProducts = [
   },
   {
     "id": "3",
-    "name": "スゴカルシリーズ",
-    "brand": "コンビ",
+    "name": "スゴカル エッグショック LA",
+    "brand": "Combi",
     "category": "ベビーカー",
     "price_yen": 32000,
     "price_tax_type": "",

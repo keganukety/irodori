@@ -5228,3 +5228,43 @@ body {
     font-size: clamp(24px, 8vw, 28px) !important;
   }
 }
+
+/* Shared heading balance: English leads, Japanese stays quiet and readable. */
+:root {
+  --ily-heading-en: "Libre Baskerville", Georgia, "Times New Roman", serif;
+  --ily-heading-ja: "Libre Baskerville", Georgia, "Yu Mincho", "游明朝", "Hiragino Mincho ProN", "MS PMincho", serif;
+}
+
+.section-title-en,
+.home-eyebrow,
+.brand-eyebrow,
+.compare-hero__eyebrow,
+.stroller-guide__eyebrow,
+.url-filter-products__header > p,
+.section-heading-pair > p {
+  color: #313131 !important;
+  font-family: var(--ily-heading-en) !important;
+  font-size: clamp(26px, 3.2vw, 38px) !important;
+  font-weight: 400 !important;
+  letter-spacing: .01em !important;
+  line-height: 1.25 !important;
+  text-transform: none !important;
+}
+
+.product-list-title,
+.home-section__header h2,
+.home-scene-section h2,
+.brand-section-heading h2,
+.brand-video h2,
+.compare-hero h1,
+.stroller-guide__intro h1,
+.stroller-guide__block > h2,
+.section-heading-pair > h2,
+.url-filter-products__header h1 {
+  color: #666 !important;
+  font-family: var(--ily-heading-ja) !important;
+  font-size: clamp(12px, 1.15vw, 15px) !important;
+  font-weight: 400 !important;
+  letter-spacing: .03em !important;
+  line-height: 1.7 !important;
+}

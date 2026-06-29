@@ -1,8 +1,13 @@
 import './home.css';
 import { mountBackToTop } from './back-to-top';
-import { applyFadeUpAnimations } from './shared-ui';
+import {
+  applyFadeUpAnimations,
+  mountCommonHeader,
+  normalizeProductDisplayBrand,
+  normalizeProductDisplayName,
+} from './shared-ui';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
-import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
+import { setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
 type Product = {
@@ -50,21 +55,30 @@ type BrandCard = {
   brand: string;
   count: number;
   slug?: string;
+  logoAssetKey?: string | null;
 };
 
-type HomeMainHeroAsset = {
+type HomeSiteAsset = {
   asset_key: string;
+  asset_type?: string;
   title: string;
   alt_text: string;
   desktop_image_url: string;
   desktop_width: number;
   desktop_height: number;
-  mobile_image_url: string;
-  mobile_width: number;
-  mobile_height: number;
+  mobile_image_url?: string | null;
+  mobile_width?: number | null;
+  mobile_height?: number | null;
   link_url: string | null;
   display_order: number;
   sort_order?: number;
+  caption?: string | null;
+};
+
+type HomeMainHeroAsset = HomeSiteAsset & {
+  mobile_image_url: string;
+  mobile_width: number;
+  mobile_height: number;
 };
 
 type HomeState = {
@@ -73,6 +87,7 @@ type HomeState = {
   categoryCards: CategoryCard[];
   brands: BrandCard[];
   mainHeroes: HomeMainHeroAsset[];
+  siteAssetsByKey: Map<string, HomeSiteAsset>;
   hasLoaded: boolean;
   loadError: string | null;
 };
@@ -91,7 +106,9 @@ if (!appElement) {
 
 const app: HTMLDivElement = appElement;
 
+document.body.classList.add('home-body');
 mountBackToTop();
+mountCommonHeader('home');
 
 const categories: Category[] = [
   { label: 'ベビーカー', patterns: [/ベビーカー/, /stroller/i, /babycar/i] },
@@ -106,6 +123,7 @@ const initialState: HomeState = {
   categoryCards: getDefaultCategoryCards(),
   brands: [],
   mainHeroes: [],
+  siteAssetsByKey: new Map(),
   hasLoaded: false,
   loadError: null,
 };
@@ -117,19 +135,64 @@ let currentHomeHeroIndex = 0;
 let homeColorsByProductId = new Map<string, ProductColor[]>();
 let homeBrandsById = new Map<string, Brand>();
 
+const categoryAssetCandidates: Record<string, string[]> = {
+  ベビーカー: ['category_stroller', 'category_babycar', 'category_baby_car'],
+  抱っこ紐: ['category_carrier', 'category_baby_carrier', 'category_babycarrier'],
+  チャイルドシート: ['category_child_seat', 'category_carseat', 'category_car_seat'],
+  ヒップシート: ['category_hipseat', 'category_hip_seat'],
+};
+
+const homeLogoAssetCandidates = [
+  'site_logo',
+  'site_logo_ily',
+  'ily_logo',
+  'logo_ily',
+  'brand_logo_ily',
+  'brand_logo_ily2',
+  'brand_ily_logo',
+  'icon_ily',
+];
+
+const SHOPPING_LINKS = [
+  {
+    key: 'rakuten',
+    label: '楽天',
+    assetKey: 'icon_stroller_rakuten',
+    href: 'https://a.r10.to/hP6MNu',
+  },
+  {
+    key: 'amazon',
+    label: 'Amazon',
+    assetKey: 'icon_stroller_amazon',
+    href: 'https://amzn.to/43VvT3g',
+  },
+  {
+    key: 'yahoo',
+    label: 'Yahoo',
+    assetKey: 'icon_stroller_yahoo',
+    href: 'https://yahoo.jp/V3Bud7',
+  },
+] as const;
+
 void initializeHome();
 
 async function initializeHome(): Promise<void> {
   renderShell(initialState);
 
-  const [state, mainHeroes] = await Promise.all([loadHomeState(), loadHomeMainHeroes()]);
-  renderShell({ ...state, mainHeroes });
+  const [state, siteAssets] = await Promise.all([loadHomeState(), loadHomeSiteAssets()]);
+  const siteAssetsByKey = new Map(siteAssets.map((asset) => [asset.asset_key, asset]));
+  renderShell({
+    ...state,
+    siteAssetsByKey,
+    mainHeroes: getHomeMainHeroes(siteAssets),
+    categoryCards: getCategoryCards(state.productsByCategory, siteAssetsByKey),
+  });
 }
 
-async function loadHomeMainHeroes(): Promise<HomeMainHeroAsset[]> {
+async function loadHomeSiteAssets(): Promise<HomeSiteAsset[]> {
   if (!isSupabaseConfigured) {
     if (import.meta.env.DEV) {
-      console.warn('メインバナーを取得できません: Supabaseが設定されていません。');
+      console.warn('TOP素材を取得できません: Supabaseが設定されていません。');
     }
     return [];
   }
@@ -144,47 +207,53 @@ async function loadHomeMainHeroes(): Promise<HomeMainHeroAsset[]> {
       throw error;
     }
 
-    const publicAssets = Array.isArray(data) ? (data as HomeMainHeroAsset[]) : [];
-    const heroAssets = publicAssets
-      .filter((asset) => asset.asset_key.startsWith('home_main_hero'))
-      .filter((asset) => isSafeImageUrl(asset.desktop_image_url))
-      .map((asset) => ({
-        ...asset,
-        mobile_image_url: isSafeImageUrl(asset.mobile_image_url)
-          ? asset.mobile_image_url
-          : asset.desktop_image_url,
-        link_url: getSafeAssetLink(asset.link_url),
-      }))
-      .sort((a, b) => getHeroSortOrder(a) - getHeroSortOrder(b) || a.asset_key.localeCompare(b.asset_key));
-
-    if (heroAssets.length === 0) {
-      if (import.meta.env.DEV) {
-        console.warn(
-          'home_main_heroで始まる素材は公開RPCの結果にありません。is_published、starts_at、ends_atを確認してください。',
-          { returnedAssetKeys: publicAssets.map((item) => item.asset_key) },
-        );
-      }
-      return [];
-    }
-
-    const legacyKeys = heroAssets
-      .map((asset) => asset.asset_key)
-      .filter((assetKey) => /^home_main_hero\d+$/.test(assetKey));
-    if (import.meta.env.DEV && legacyKeys.length > 0) {
-      console.warn('メインバナーの連番キーは home_main_hero_2 の形式を推奨します。', { legacyKeys });
-    }
-
-    return heroAssets;
+    return Array.isArray(data) ? (data as HomeSiteAsset[]) : [];
   } catch (error) {
-    console.error('メインバナー素材の取得に失敗しました。', error);
+    console.error('TOP素材の取得に失敗しました。', error);
     return [];
   }
+}
+
+function getHomeMainHeroes(publicAssets: HomeSiteAsset[]): HomeMainHeroAsset[] {
+  const heroAssets = publicAssets
+    .filter((asset) => asset.asset_key.startsWith('home_main_hero'))
+    .filter((asset) => isSafeImageUrl(asset.desktop_image_url))
+    .map((asset) => ({
+      ...asset,
+      mobile_image_url: isSafeImageUrl(asset.mobile_image_url)
+        ? asset.mobile_image_url
+        : asset.desktop_image_url,
+      mobile_width: getPositiveDimension(asset.mobile_width, asset.desktop_width),
+      mobile_height: getPositiveDimension(asset.mobile_height, asset.desktop_height),
+      link_url: getSafeAssetLink(asset.link_url),
+    }))
+    .sort((a, b) => getHeroSortOrder(a) - getHeroSortOrder(b) || a.asset_key.localeCompare(b.asset_key));
+
+  if (heroAssets.length === 0) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        'home_main_heroで始まる素材は公開RPCの結果にありません。is_published、starts_at、ends_atを確認してください。',
+        { returnedAssetKeys: publicAssets.map((item) => item.asset_key) },
+      );
+    }
+    return [];
+  }
+
+  const legacyKeys = heroAssets
+    .map((asset) => asset.asset_key)
+    .filter((assetKey) => /^home_main_hero\d+$/.test(assetKey));
+  if (import.meta.env.DEV && legacyKeys.length > 0) {
+    console.warn('メインバナーの連番キーは home_main_hero_2 の形式を推奨します。', { legacyKeys });
+  }
+
+  return heroAssets;
 }
 
 async function loadHomeState(): Promise<HomeState> {
   const emptyState: HomeState = {
     ...initialState,
     productsByCategory: new Map(categories.map((category) => [category.label, []])),
+    siteAssetsByKey: new Map(),
     hasLoaded: true,
     loadError: null,
   };
@@ -218,6 +287,7 @@ async function loadHomeState(): Promise<HomeState> {
       categoryCards,
       brands,
       mainHeroes: [],
+      siteAssetsByKey: new Map(),
       hasLoaded: true,
       loadError: null,
     };
@@ -325,66 +395,19 @@ function renderShell(state: HomeState): void {
 
   app.innerHTML = `
     <main class="home-page">
-      <header class="home-header">
-        <a class="home-brand" href="/">iLy.</a>
-        <button class="home-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false">
-          メニュー
-        </button>
-        <nav class="home-nav" aria-label="メインメニュー">
-          <a href="/products.html">商品を探す</a>
-          <a href="/products.html#ranking">ランキング</a>
-          <a href="/compare.html">比較</a>
-          <a href="/stroller-guide.html">選び方</a>
-          <span aria-disabled="true">診断</span>
-        </nav>
-      </header>
-
       ${state.mainHeroes.length > 0 ? renderHomeMainHeroAssets(state.mainHeroes) : '<div class="home-hero-placeholder" aria-hidden="true"></div>'}
 
-      <section class="home-category-links home-category-section" aria-label="カテゴリから探す">
-        <div class="home-section__header home-section__header--compact">
-          <p class="home-eyebrow">CATEGORY</p>
-          <h2 class="home-section-heading section-title">カテゴリから探す</h2>
-        </div>
-        <div class="home-category-grid">
-          ${state.categoryCards.map(renderCategoryLink).join('')}
-        </div>
-      </section>
+      ${renderPickupSection(state)}
 
-      <section class="home-scene-links home-scene-section" aria-label="シーンから探す">
-        <p class="home-eyebrow">SCENE</p>
-        <h2 class="home-section-heading section-title">暮らしのシーンから探す</h2>
-        <div class="home-scene-list">
-          ${['ワンオペ', '電車移動', '軽自動車', '飛行機', 'マンション', '新生児']
-            .map((scene) => `<a href="/products.html?scene=${encodeURIComponent(scene)}">${scene}</a>`)
-            .join('')}
-        </div>
-      </section>
+      ${renderSearchSection(state)}
 
-      <section class="home-section home-pickup-section" aria-labelledby="category-products-title">
+      <section class="home-section home-recommended-section" aria-labelledby="category-products-title">
         <div class="home-section__header">
           <div>
-            <p class="home-eyebrow">PICK UP</p>
-            <h2 class="home-section-heading section-title" id="category-products-title">カテゴリ別おすすめ</h2>
+            <p class="home-eyebrow">Recommended items</p>
+            <h2 class="home-section-heading section-title" id="category-products-title">おすすめのアイテム</h2>
           </div>
           <a href="/products.html">すべて見る</a>
-        </div>
-        <div class="home-tabs" role="tablist" aria-label="カテゴリ別おすすめ">
-          ${categories
-            .map(
-              (category) => `
-                <button
-                  type="button"
-                  class="${category.label === state.activeCategory ? 'is-active' : ''}"
-                  data-home-category="${escapeAttr(category.label)}"
-                  role="tab"
-                  aria-selected="${category.label === state.activeCategory}"
-                >
-                  ${escapeHtml(category.label)}
-                </button>
-              `,
-            )
-            .join('')}
         </div>
         ${renderCategoryProducts(state)}
       </section>
@@ -392,36 +415,29 @@ function renderShell(state: HomeState): void {
       <section class="home-section home-brand-section" aria-labelledby="popular-brands-title">
         <div class="home-section__header">
           <div>
-            <p class="home-eyebrow">BRAND</p>
-            <h2 id="popular-brands-title">人気ブランドから探す</h2>
+            <p class="home-eyebrow">Brand</p>
+            <h2 id="popular-brands-title">取り扱いブランド</h2>
           </div>
         </div>
-        ${renderBrandCards(state.brands)}
+        ${renderBrandCards(state.brands, state.siteAssetsByKey)}
       </section>
 
-      <section class="home-guide-strip">
-        <div>
-          <p class="home-eyebrow">NEXT STEP</p>
-          <h2>迷ったら、条件を変えて見比べる。</h2>
-          <p>診断・比較・ガイド・ランキングから、いまの迷いに合う探し方を選べます。</p>
-        </div>
-        <div class="home-action-grid">
-          <span class="home-action-card is-disabled" aria-disabled="true">かんたん診断<span>準備中</span></span>
-          <a class="home-action-card" href="/compare.html">比較表<span>選んだ商品を比較</span></a>
-          <a class="home-action-card" href="/stroller-guide.html">選び方ガイド<span>基本を読む</span></a>
-          <a class="home-action-card" href="/products.html#ranking">ランキング<span>商品一覧へ</span></a>
-        </div>
-      </section>
+      ${renderShoppingSection(state.siteAssetsByKey)}
 
       <footer class="home-footer">
         <a class="home-brand" href="/">iLy.</a>
         <p>育児用品選びを、暮らしに合わせてやさしく。</p>
+        <div class="home-affiliate-notice">
+          <p>当サイトはアフィリエイト広告を利用しています。</p>
+          <p>掲載している商品・サービスの価格、在庫、仕様等は変更される場合があります。最新情報は各販売サイト・公式サイトにてご確認ください。</p>
+        </div>
       </footer>
     </main>
   `;
 
   bindHomeEvents();
   bindHomeHeroCarousel();
+  updateHomeHeaderLogo(state.siteAssetsByKey);
   const visibleProducts = Array.from(state.productsByCategory.values()).flat();
   setupProductQuickView({
     products: visibleProducts as SharedProduct[],
@@ -430,6 +446,154 @@ function renderShell(state: HomeState): void {
     brandsById: homeBrandsById,
   });
   applyFadeUpAnimations(app);
+}
+
+function renderHomeSectionHeading(english: string, japanese: string): string {
+  return `
+    <div class="home-section__header home-section__header--centered">
+      <p class="home-eyebrow">${escapeHtml(english)}</p>
+      <h2 class="home-section-heading section-title">${escapeHtml(japanese)}</h2>
+    </div>
+  `;
+}
+
+function renderPickupSection(state: HomeState): string {
+  const pickupItems = getPickupItems(state);
+  if (pickupItems.length === 0) return '';
+
+  return `
+    <section class="home-section home-pickup-section" aria-labelledby="home-pickup-title">
+      <div class="home-section__header home-section__header--centered">
+        <p class="home-eyebrow">Pick up contents</p>
+        <h2 class="home-section-heading section-title" id="home-pickup-title">おすすめ特集</h2>
+      </div>
+      <div class="home-pickup-grid">
+        ${pickupItems.map(renderPickupCard).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function getPickupItems(state: HomeState): Array<{ title: string; label: string; href: string; imageSrc?: string }> {
+  return Array.from(state.siteAssetsByKey.values())
+    .filter(isPickupAsset)
+    .sort((a, b) => getAssetSortOrder(a) - getAssetSortOrder(b) || a.asset_key.localeCompare(b.asset_key))
+    .map((asset) => ({
+      title: asset.title || 'おすすめ特集',
+      label: asset.caption || '詳しく見る',
+      href: getSafeAssetLink(asset.link_url) ?? '/products.html',
+      imageSrc: getAssetImage(asset),
+    }))
+    .filter((item): item is { title: string; label: string; href: string; imageSrc: string } => Boolean(item.imageSrc))
+    .sort((a, b) => a.title.localeCompare(b.title, 'ja'))
+    .slice(0, 3);
+}
+
+function isPickupAsset(asset: HomeSiteAsset): boolean {
+  if (!getAssetImage(asset)) return false;
+  if (asset.asset_type === 'category' || asset.asset_key.startsWith('category_')) return false;
+
+  return asset.asset_key.startsWith('home_pickup')
+    || asset.asset_key.startsWith('pickup_')
+    || asset.asset_type === 'campaign'
+    || asset.asset_type === 'feature'
+    || asset.asset_type === 'article';
+}
+
+function renderPickupCard(item: { title: string; label: string; href: string; imageSrc?: string }): string {
+  return `
+    <a class="home-pickup-card" href="${escapeAttr(item.href)}">
+      <span class="home-pickup-card__image">
+        ${item.imageSrc ? `<img src="${escapeAttr(item.imageSrc)}" alt="${escapeAttr(item.title)}" loading="lazy">` : '<em>画像準備中</em>'}
+      </span>
+      <strong>${escapeHtml(item.title)}</strong>
+      <span>${escapeHtml(item.label)}</span>
+    </a>
+  `;
+}
+
+function renderSearchSection(state: HomeState): string {
+  const scenes = ['ワンオペ', '電車移動', '軽自動車', '飛行機', 'マンション', '新生児'];
+
+  return `
+    <section class="home-search-section" aria-labelledby="home-search-title">
+      <div class="home-search-inner">
+        <div class="home-search-header">
+          <h2 class="home-search-title-en" id="home-search-title">Search</h2>
+        </div>
+
+        <div class="home-search-group home-search-group--category">
+          ${renderSearchGroupHeading('Item category')}
+          <ul class="home-search-category-list">
+            ${state.categoryCards.map(renderSearchCategoryItem).join('')}
+          </ul>
+        </div>
+
+        <div class="home-search-group home-search-group--scene">
+          ${renderSearchGroupHeading('Scene')}
+          <ul class="home-search-scene-list">
+            ${scenes
+              .map((scene) => `<li><a href="/products.html?scene=${encodeURIComponent(scene)}">${escapeHtml(scene)}</a></li>`)
+              .join('')}
+          </ul>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderSearchGroupHeading(title: string): string {
+  return `
+    <div class="home-search-group-heading">
+      <span aria-hidden="true"></span>
+      <h3>${escapeHtml(title)}</h3>
+      <span aria-hidden="true"></span>
+    </div>
+  `;
+}
+
+function renderSearchCategoryItem(card: CategoryCard): string {
+  return `
+    <li>
+      <a href="${escapeAttr(card.href)}">
+        ${
+          card.imageSrc
+            ? `<img src="${escapeAttr(card.imageSrc)}" alt="${escapeAttr(card.label)}" loading="lazy">`
+            : `<span class="home-search-category-fallback">${escapeHtml(card.label)}</span>`
+        }
+        <span>${escapeHtml(card.label)}</span>
+      </a>
+    </li>
+  `;
+}
+
+function renderShoppingSection(siteAssetsByKey: Map<string, HomeSiteAsset>): string {
+  return `
+    <section class="home-section home-shopping-section" aria-labelledby="home-shopping-title">
+      <div class="home-section__header home-section__header--centered">
+        <p class="home-eyebrow">SHOPPING</p>
+        <h2 class="home-section-heading section-title" id="home-shopping-title">ストアで探す</h2>
+      </div>
+      <div class="home-shopping-grid">
+        ${SHOPPING_LINKS.map((link) => renderShoppingCard(link, siteAssetsByKey)).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderShoppingCard(
+  link: (typeof SHOPPING_LINKS)[number],
+  siteAssetsByKey: Map<string, HomeSiteAsset>,
+): string {
+  const iconSrc = getAssetImage(siteAssetsByKey.get(link.assetKey));
+
+  return `
+    <a class="home-shopping-card" href="${escapeAttr(link.href)}" target="_blank" rel="nofollow sponsored noopener">
+      <span class="home-shopping-card__icon">
+        ${iconSrc ? `<img src="${escapeAttr(iconSrc)}" alt="${escapeAttr(`${link.label} アイコン`)}" loading="lazy">` : '<em>ICON</em>'}
+      </span>
+    </a>
+  `;
 }
 
 function renderHomeMainHeroAssets(assets: HomeMainHeroAsset[]): string {
@@ -684,23 +848,22 @@ function renderCategoryProducts(state: HomeState): string {
     `;
   }
 
-  return `<div class="home-product-grid">${products.slice(0, 4).map(renderProductCard).join('')}</div>`;
+  return `<div class="home-product-grid">${products.slice(0, 5).map(renderProductCard).join('')}</div>`;
 }
 
 function renderProductCard(product: HomeProduct, index: number): string {
   const productId = encodeURIComponent(String(product.id));
-  const name = getText(product.name, '商品名未登録');
-  const brand = getText(product.brand, 'ブランド未登録');
-  const tags = getTags(product).slice(0, 3);
-  const rank = getRankLabel(product, index);
+  const fallbackName = getText(product.name, '商品名未登録');
+  const name = normalizeProductDisplayName(product, fallbackName) || fallbackName;
+  const fallbackBrand = getText(product.brand, 'ブランド未登録');
+  const brand = normalizeProductDisplayBrand(product, fallbackBrand) || fallbackBrand;
   const brandRecord = product.brand_id ? homeBrandsById.get(String(product.brand_id)) : undefined;
-  const colors = homeColorsByProductId.get(String(product.id)) ?? [];
+  const displayBrand = brandRecord?.display_name ?? brand;
 
   return `
     <article class="home-product-card">
       <div class="home-product-card__media">
         <a class="home-product-card__image" href="/product.html?id=${productId}" aria-label="${escapeAttr(name)}の詳細を見る">
-          ${rank ? `<span class="home-product-card__rank">${escapeHtml(rank)}</span>` : ''}
           ${
             product.imageSrc
               ? `
@@ -714,13 +877,12 @@ function renderProductCard(product: HomeProduct, index: number): string {
               : '<span class="home-product-card__placeholder">画像準備中</span>'
           }
         </a>
-        ${renderQuickViewButton(product.id)}
       </div>
-      <span class="home-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(brandRecord.display_name)}</a>` : escapeHtml(brand)}</span>
-      <strong class="home-product-card__name"><a href="/product.html?id=${productId}">${escapeHtml(name)}</a></strong>
-      <span class="home-product-card__price">${escapeHtml(formatPrice(product.price_yen))}<small>税込</small></span>
-      ${tags.length > 0 ? `<span class="home-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</span>` : ''}
-      ${colors.length > 0 ? `<span class="home-color-swatches color-swatches" aria-label="カラー">${colors.slice(0, 6).map((color) => `<span style="--swatch:${escapeAttr(color.swatch_hex)}" title="${escapeAttr(color.name)}"></span>`).join('')}</span>` : ''}
+      <p class="home-product-card__title-line">
+        <span class="home-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(displayBrand)}</a>` : escapeHtml(displayBrand)}</span>
+        <strong class="home-product-card__name"><a href="/product.html?id=${productId}">${escapeHtml(name)}</a></strong>
+      </p>
+      <span class="home-product-card__price">${escapeHtml(formatPrice(product.price_yen))}（税込み）</span>
     </article>
   `;
 }
@@ -736,24 +898,30 @@ function renderCategoryLink(card: CategoryCard): string {
         }
       </span>
       <strong class="home-category-card__title">${escapeHtml(card.label)}</strong>
-      <small class="category-link">商品を見る</small>
     </a>
   `;
 }
 
-function renderBrandCards(brands: BrandCard[]): string {
+function renderBrandCards(brands: BrandCard[], siteAssetsByKey: Map<string, HomeSiteAsset>): string {
   if (brands.length === 0) {
     return '<p class="home-empty-message">ブランド情報は商品登録後に表示されます。</p>';
   }
 
+  const logoBrands = brands
+    .map((brand) => ({ ...brand, logoSrc: getBrandLogoSrc(brand, siteAssetsByKey) }))
+    .filter((brand): brand is BrandCard & { logoSrc: string } => Boolean(brand.logoSrc));
+
+  if (logoBrands.length === 0) {
+    return '<p class="home-empty-message">ブランドロゴは準備中です。</p>';
+  }
+
   return `
     <div class="home-brand-grid">
-      ${brands
+      ${logoBrands
         .map(
           (brand) => `
-            <a class="home-brand-card" href="${brand.slug ? `/brand.html?slug=${encodeURIComponent(brand.slug)}` : `/products.html?brand=${encodeURIComponent(brand.brand)}`}">
-              <strong>${escapeHtml(brand.brand)}</strong>
-              <span>${brand.count}件の商品</span>
+            <a class="home-brand-card has-logo" href="${brand.slug ? `/brand.html?slug=${encodeURIComponent(brand.slug)}` : `/products.html?brand=${encodeURIComponent(brand.brand)}`}">
+              <img src="${escapeAttr(brand.logoSrc)}" alt="${escapeAttr(`${brand.brand} ロゴ`)}" loading="lazy">
             </a>
           `,
         )
@@ -777,15 +945,19 @@ function groupProductsByCategory(products: Product[]): Map<string, Product[]> {
   return groupedProducts;
 }
 
-function getCategoryCards(productsByCategory: Map<string, HomeProduct[]>): CategoryCard[] {
+function getCategoryCards(
+  productsByCategory: Map<string, HomeProduct[]>,
+  siteAssetsByKey: Map<string, HomeSiteAsset> = new Map(),
+): CategoryCard[] {
   return categories.map((category) => {
     const categoryProducts = productsByCategory.get(category.label) ?? [];
     const rankOneProduct = categoryProducts.find((product) => Number(product.rank_no) === 1) ?? categoryProducts[0];
+    const assetImage = getAssetImageByCandidates(siteAssetsByKey, categoryAssetCandidates[category.label] ?? []);
 
     return {
       label: category.label,
       href: getCategoryHref(category.label),
-      imageSrc: rankOneProduct?.categoryImageSrc ?? rankOneProduct?.imageSrc,
+      imageSrc: assetImage ?? rankOneProduct?.categoryImageSrc ?? rankOneProduct?.imageSrc,
     };
   });
 }
@@ -813,7 +985,8 @@ function getPopularBrands(products: Product[]): BrandCard[] {
   const counts = new Map<string, BrandCard>();
 
   products.forEach((product) => {
-    const brand = getText(product.brand, '');
+    const rawBrand = getText(product.brand, '');
+    const brand = normalizeProductDisplayBrand(product, rawBrand);
     if (!brand) {
       return;
     }
@@ -824,6 +997,7 @@ function getPopularBrands(products: Product[]): BrandCard[] {
     counts.set(key, {
       brand: brandRecord?.display_name ?? brand,
       slug: brandRecord?.slug,
+      logoAssetKey: brandRecord?.logo_asset_key,
       count: (current?.count ?? 0) + 1,
     });
   });
@@ -831,6 +1005,62 @@ function getPopularBrands(products: Product[]): BrandCard[] {
   return Array.from(counts.values())
     .sort((a, b) => b.count - a.count || a.brand.localeCompare(b.brand, 'ja'))
     .slice(0, 8);
+}
+
+function getCategoryImage(state: HomeState, category: string): string | undefined {
+  return state.categoryCards.find((card) => card.label === category)?.imageSrc
+    ?? state.productsByCategory.get(category)?.find((product) => product.imageSrc)?.imageSrc;
+}
+
+function getBrandLogoSrc(brand: BrandCard, siteAssetsByKey: Map<string, HomeSiteAsset>): string | undefined {
+  const candidates = [
+    brand.logoAssetKey ?? '',
+    ...(brand.slug
+      ? [`brand_logo_${brand.slug}`, `brand_${brand.slug}_logo`, `${brand.slug}_logo`, `brand-${brand.slug}-logo`, `${brand.slug}-logo`, brand.slug]
+      : []),
+  ].filter(Boolean);
+
+  return getAssetImageByCandidates(siteAssetsByKey, candidates);
+}
+
+function getAssetImageByCandidates(
+  siteAssetsByKey: Map<string, HomeSiteAsset>,
+  candidates: string[],
+): string | undefined {
+  for (const candidate of candidates) {
+    const image = getAssetImage(siteAssetsByKey.get(candidate));
+    if (image) return image;
+  }
+
+  const normalizedCandidates = candidates.map((candidate) => candidate.toLowerCase());
+  for (const asset of siteAssetsByKey.values()) {
+    if (!normalizedCandidates.some((candidate) => asset.asset_key.toLowerCase().includes(candidate))) continue;
+    const image = getAssetImage(asset);
+    if (image) return image;
+  }
+
+  return undefined;
+}
+
+function getAssetImage(asset: HomeSiteAsset | undefined): string | undefined {
+  const desktop = asset?.desktop_image_url?.trim();
+  if (isSafeImageUrl(desktop)) return desktop;
+
+  const mobile = asset?.mobile_image_url?.trim();
+  return isSafeImageUrl(mobile) ? mobile : undefined;
+}
+
+function updateHomeHeaderLogo(siteAssetsByKey: Map<string, HomeSiteAsset>): void {
+  const brand = document.querySelector<HTMLAnchorElement>('#site-header .site-header__brand');
+  if (!brand) return;
+
+  const logoSrc = getAssetImageByCandidates(siteAssetsByKey, homeLogoAssetCandidates);
+  if (!logoSrc) {
+    brand.textContent = 'iLy.';
+    return;
+  }
+
+  brand.innerHTML = `<img src="${escapeAttr(logoSrc)}" alt="iLy.">`;
 }
 
 function groupColors(colors: ProductColor[]): Map<string, ProductColor[]> {
@@ -970,6 +1200,10 @@ function getPositiveDimension(value: unknown, fallback: number): number {
 }
 
 function getHeroSortOrder(asset: HomeMainHeroAsset): number {
+  return getAssetSortOrder(asset);
+}
+
+function getAssetSortOrder(asset: HomeSiteAsset): number {
   const order = Number(asset.sort_order ?? asset.display_order);
   return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
 }
