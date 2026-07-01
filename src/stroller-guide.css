@@ -1,0 +1,612 @@
+.stroller-guide-page {
+  overflow-x: clip;
+  background: #fff;
+  color: var(--ily-text);
+  padding: clamp(28px, 4vw, 48px) 0 88px;
+}
+
+.stroller-guide {
+  width: min(100% - 48px, 1120px);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0;
+  background: #fff;
+  color: var(--ily-text);
+}
+
+.stroller-guide__intro {
+  width: min(100%, 840px);
+  margin: 0 auto 44px;
+  padding: 0 0 34px;
+  border-bottom: 0;
+  border-radius: 0;
+  background: #fff;
+  text-align: center;
+}
+
+.stroller-guide__eyebrow {
+  margin: 0 0 10px;
+  color: #333 !important;
+  font-family: var(--ily-heading-en) !important;
+  font-size: clamp(24px, 3vw, 34px) !important;
+  font-weight: 400 !important;
+  letter-spacing: .01em !important;
+  line-height: 1.25 !important;
+  text-transform: none !important;
+}
+
+.stroller-guide__intro h1 {
+  margin: 0;
+  color: #666 !important;
+  font-family: var(--ily-heading-ja) !important;
+  font-size: clamp(13px, 1.1vw, 15px) !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  line-height: 1.8 !important;
+}
+
+.stroller-guide__intro p:last-child {
+  max-width: 640px;
+  margin: 18px auto 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 2;
+}
+
+.stroller-diagnosis {
+  width: min(100%, 820px);
+  margin: 0 auto 64px;
+}
+
+.stroller-diagnosis__panel {
+  width: 100%;
+  min-height: 0;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-sm);
+  background: #fff;
+  box-shadow: none;
+}
+
+.stroller-diagnosis__panel[hidden] {
+  display: none;
+}
+
+.stroller-diagnosis__panel.is-active {
+  animation: stroller-guide-panel-in 360ms var(--ily-ease-fast);
+}
+
+.stroller-diagnosis__kicker {
+  margin: 0 0 8px;
+  color: #333;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(21px, 2.8vw, 30px);
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.stroller-diagnosis h2,
+.stroller-diagnosis__panel--question h2 {
+  margin: 0;
+  color: #666;
+  font-family: var(--ily-heading-ja);
+  font-size: clamp(13px, 1.25vw, 16px);
+  font-weight: 400;
+  letter-spacing: .04em;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.stroller-diagnosis__panel--question h2 {
+  display: block;
+  min-height: 0;
+  margin-top: 28px;
+  color: #333;
+  font-size: clamp(18px, 2.2vw, 23px);
+  line-height: 1.65;
+}
+
+.stroller-diagnosis__panel > p:not(.stroller-diagnosis__kicker),
+.stroller-diagnosis__result-copy {
+  max-width: 600px;
+  margin: 18px auto 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 2;
+  text-align: center;
+}
+
+.stroller-diagnosis__primary,
+.stroller-diagnosis__secondary {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  padding: 0 22px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  text-decoration: none;
+  transition: border-color .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+}
+
+.stroller-diagnosis__primary {
+  border: 1px solid #333;
+  background: #333;
+  color: #fff;
+}
+
+.stroller-diagnosis__secondary {
+  border: 1px solid #dadada;
+  background: #fff;
+  color: #333;
+}
+
+.stroller-diagnosis__panel > .stroller-diagnosis__primary {
+  display: flex;
+  width: fit-content;
+  margin: 28px auto 0;
+}
+
+.stroller-diagnosis__primary:hover,
+.stroller-diagnosis__primary:focus-visible,
+.stroller-diagnosis__secondary:hover,
+.stroller-diagnosis__secondary:focus-visible {
+  border-color: #333;
+  opacity: .82;
+}
+
+.stroller-diagnosis a::after {
+  content: none;
+  display: none;
+}
+
+.stroller-diagnosis__progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: #777;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.stroller-diagnosis__progress-track {
+  height: 2px;
+  overflow: hidden;
+  background: #ededed;
+}
+
+.stroller-diagnosis__progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #333;
+  transition: width 280ms ease;
+}
+
+.stroller-diagnosis__options {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.stroller-diagnosis__option {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  min-height: 68px;
+  align-items: center;
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-xs);
+  background: #fff;
+  color: #333;
+  padding: 14px 16px;
+  text-align: left;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.stroller-diagnosis__option:hover,
+.stroller-diagnosis__option:focus-visible {
+  border-color: #333;
+  background: #fafafa;
+}
+
+.stroller-diagnosis__option:active {
+  transform: translateY(1px);
+}
+
+.stroller-diagnosis__option-mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #e5e5e5;
+  border-radius: 50%;
+  background: #fff;
+  color: #333;
+  font-size: 0;
+  letter-spacing: 0;
+}
+
+.stroller-diagnosis__option-mark svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.stroller-diagnosis__option b {
+  display: block;
+  color: #333;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: .03em;
+  line-height: 1.55;
+}
+
+.stroller-diagnosis__option small {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+  font-size: 12px;
+  letter-spacing: .02em;
+  line-height: 1.6;
+}
+
+.stroller-diagnosis__panel--loading {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+}
+
+.stroller-diagnosis__loader {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #ededed;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: stroller-guide-spin 900ms linear infinite;
+}
+
+.stroller-diagnosis__panel--loading p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.stroller-diagnosis__result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.stroller-diagnosis__result-box,
+.stroller-diagnosis__models {
+  min-width: 0;
+  border-top: 1px solid var(--ily-border-light);
+  padding-top: 16px;
+}
+
+.stroller-diagnosis__result-box h3,
+.stroller-diagnosis__models h3 {
+  margin: 0 0 12px;
+  color: #333;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  line-height: 1.6;
+}
+
+.stroller-diagnosis__result-box ul {
+  margin: 0;
+  padding-left: 1.2em;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.stroller-diagnosis__models {
+  margin-top: 32px;
+}
+
+.stroller-diagnosis__model-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stroller-diagnosis__model {
+  display: grid;
+  min-height: 66px;
+  align-content: center;
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-xs);
+  padding: 12px 14px;
+  text-decoration: none;
+}
+
+.stroller-diagnosis__model:hover,
+.stroller-diagnosis__model:focus-visible {
+  border-color: #333;
+}
+
+.stroller-diagnosis__model span {
+  color: #888;
+  font-size: 10px;
+  letter-spacing: .1em;
+}
+
+.stroller-diagnosis__model b {
+  margin-top: 4px;
+  color: #333;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .03em;
+  line-height: 1.5;
+}
+
+.stroller-diagnosis__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.stroller-guide__block {
+  margin-top: 52px;
+}
+
+.stroller-guide__block > h2 {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 0;
+  background: transparent;
+  color: inherit !important;
+}
+
+.stroller-guide__block > h2 span {
+  color: #333;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(22px, 2.6vw, 31px);
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.25;
+}
+
+.stroller-guide__block > h2 small {
+  color: #777;
+  font-family: var(--ily-heading-ja);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .04em;
+  line-height: 1.7;
+}
+
+.stroller-guide__type-grid,
+.stroller-guide__choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stroller-guide__facing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.stroller-guide-card,
+.stroller-guide-mini-card,
+.stroller-guide__choice-grid details {
+  min-width: 0;
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-sm);
+  background: #fff;
+  box-shadow: none;
+}
+
+.stroller-guide-card,
+.stroller-guide-mini-card {
+  padding: 20px;
+}
+
+.stroller-guide-card__image {
+  display: none;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 18px;
+  object-fit: contain;
+}
+
+.stroller-guide-card__image.is-loaded {
+  display: block;
+}
+
+.stroller-guide-card h3,
+.stroller-guide-mini-card h3 {
+  margin: 0 0 10px;
+  color: #333;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: .04em;
+  line-height: 1.6;
+}
+
+.stroller-guide-card p,
+.stroller-guide-mini-card p,
+.stroller-guide__choice-grid p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.stroller-guide-card__label {
+  margin-top: 16px !important;
+  color: #777 !important;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .08em;
+}
+
+.stroller-guide-card ul {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.stroller-guide__choice-grid details {
+  overflow: hidden;
+}
+
+.stroller-guide__choice-grid summary {
+  cursor: pointer;
+  padding: 15px 18px;
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: .04em;
+  line-height: 1.7;
+}
+
+.stroller-guide__choice-grid summary:hover,
+.stroller-guide__choice-grid summary:focus-visible {
+  background: #fafafa;
+}
+
+.stroller-guide__choice-grid details[open] summary {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--ily-border-light);
+}
+
+.stroller-guide__choice-grid details p {
+  padding: 14px 18px 18px;
+}
+
+@keyframes stroller-guide-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stroller-guide-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .stroller-guide__facing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .stroller-guide-page {
+    padding: 24px 0 72px;
+  }
+
+  .stroller-guide {
+    width: min(100% - 28px, 1120px);
+  }
+
+  .stroller-guide__intro {
+    margin-bottom: 32px;
+    padding-bottom: 26px;
+  }
+
+  .stroller-guide__intro p:last-child {
+    font-size: 13px;
+    line-height: 1.9;
+    text-align: center;
+  }
+
+  .stroller-diagnosis {
+    margin-bottom: 50px;
+  }
+
+  .stroller-diagnosis__panel {
+    padding: 22px 16px;
+  }
+
+  .stroller-diagnosis__panel > p:not(.stroller-diagnosis__kicker),
+  .stroller-diagnosis__result-copy {
+    text-align: center;
+  }
+
+  .stroller-diagnosis__panel--question h2 {
+    margin-top: 24px;
+    font-size: 18px;
+  }
+
+  .stroller-diagnosis__option {
+    grid-template-columns: 32px minmax(0, 1fr);
+    min-height: 74px;
+    padding: 13px 12px;
+  }
+
+  .stroller-diagnosis__result-grid,
+  .stroller-diagnosis__model-list,
+  .stroller-guide__type-grid,
+  .stroller-guide__choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stroller-diagnosis__actions {
+    display: grid;
+  }
+
+  .stroller-diagnosis__primary,
+  .stroller-diagnosis__secondary {
+    width: 100%;
+  }
+
+  .stroller-guide__block {
+    margin-top: 42px;
+  }
+
+  .stroller-guide-card,
+  .stroller-guide-mini-card {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stroller-diagnosis__panel.is-active,
+  .stroller-diagnosis__loader {
+    animation: none;
+  }
+
+  .stroller-diagnosis__progress-track span,
+  .stroller-diagnosis__option,
+  .stroller-diagnosis__primary,
+  .stroller-diagnosis__secondary {
+    transition: none;
+  }
+}
