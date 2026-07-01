@@ -7,7 +7,7 @@ import {
   normalizeProductDisplayName,
 } from './shared-ui';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
-import { setupProductQuickView } from './product-quick-view';
+import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
 type Product = {
@@ -134,6 +134,7 @@ let homeHeroTimer: number | null = null;
 let currentHomeHeroIndex = 0;
 let homeColorsByProductId = new Map<string, ProductColor[]>();
 let homeBrandsById = new Map<string, Brand>();
+let selectedHomeHeroAssetKey: string | null = null;
 
 const categoryAssetCandidates: Record<string, string[]> = {
   ベビーカー: ['category_stroller', 'category_babycar', 'category_baby_car'],
@@ -173,6 +174,24 @@ const SHOPPING_LINKS = [
     href: 'https://yahoo.jp/V3Bud7',
   },
 ] as const;
+
+const defaultHomeHeroCopies = [
+  {
+    title: '愛ある ひ',
+    lines: ['「あなたがいてうれしい」', 'その笑顔のために、', '私たちのガイドはある。'],
+  },
+  {
+    title: '選ぶ時間も、',
+    lines: ['家族の記憶になる。', '迷いをほどいて、', '暮らしに合うひとつへ。'],
+  },
+  {
+    title: '小さくて、',
+    lines: ['おおきな毎日に、', '楽しくなるたからもの', '見つけよう。'],
+  },
+] as const;
+const defaultHomeHeroCopy = defaultHomeHeroCopies[0];
+const homeHeroLastAssetKeyStorageKey = 'ily_last_home_hero_asset_key';
+const homeHeroLastCopyStorageKey = 'ily_last_home_hero_copy_key';
 
 void initializeHome();
 
@@ -216,7 +235,7 @@ async function loadHomeSiteAssets(): Promise<HomeSiteAsset[]> {
 
 function getHomeMainHeroes(publicAssets: HomeSiteAsset[]): HomeMainHeroAsset[] {
   const heroAssets = publicAssets
-    .filter((asset) => asset.asset_key.startsWith('home_main_hero'))
+    .filter(isHomeMainHeroAsset)
     .filter((asset) => isSafeImageUrl(asset.desktop_image_url))
     .map((asset) => ({
       ...asset,
@@ -247,6 +266,17 @@ function getHomeMainHeroes(publicAssets: HomeSiteAsset[]): HomeMainHeroAsset[] {
   }
 
   return heroAssets;
+}
+
+function isHomeMainHeroAsset(asset: HomeSiteAsset): boolean {
+  const assetKey = asset.asset_key.toLowerCase();
+  const assetType = String(asset.asset_type ?? '').toLowerCase();
+  return assetKey.startsWith('home_main_hero')
+    || assetKey.startsWith('home_hero')
+    || assetKey.startsWith('top_hero')
+    || assetKey.startsWith('main_hero')
+    || assetType === 'home_hero'
+    || assetType === 'top_hero';
 }
 
 async function loadHomeState(): Promise<HomeState> {
@@ -395,43 +425,40 @@ function renderShell(state: HomeState): void {
 
   app.innerHTML = `
     <main class="home-page">
-      ${state.mainHeroes.length > 0 ? renderHomeMainHeroAssets(state.mainHeroes) : '<div class="home-hero-placeholder" aria-hidden="true"></div>'}
+      ${renderHomeFixedHero(state)}
+      <div class="home-hero-spacer" aria-hidden="true"></div>
 
-      ${renderPickupSection(state)}
+      <div class="home-content-surface">
+        ${renderPickupSection(state)}
 
-      ${renderSearchSection(state)}
+        ${renderSearchSection(state)}
 
-      <section class="home-section home-recommended-section" aria-labelledby="category-products-title">
-        <div class="home-section__header">
+        <section class="home-section home-recommended-section" aria-labelledby="category-products-title">
+          <div class="home-section__header">
           <div>
             <p class="home-eyebrow">Recommended items</p>
             <h2 class="home-section-heading section-title" id="category-products-title">おすすめのアイテム</h2>
           </div>
-          <a href="/products.html">すべて見る</a>
-        </div>
-        ${renderCategoryProducts(state)}
-      </section>
-
-      <section class="home-section home-brand-section" aria-labelledby="popular-brands-title">
-        <div class="home-section__header">
-          <div>
-            <p class="home-eyebrow">Brand</p>
-            <h2 id="popular-brands-title">取り扱いブランド</h2>
           </div>
-        </div>
-        ${renderBrandCards(state.brands, state.siteAssetsByKey)}
-      </section>
+          ${renderCategoryProducts(state)}
+        </section>
 
-      ${renderShoppingSection(state.siteAssetsByKey)}
+        ${renderHomeMessageSection(state)}
 
-      <footer class="home-footer">
-        <a class="home-brand" href="/">iLy.</a>
-        <p>育児用品選びを、暮らしに合わせてやさしく。</p>
-        <div class="home-affiliate-notice">
-          <p>当サイトはアフィリエイト広告を利用しています。</p>
-          <p>掲載している商品・サービスの価格、在庫、仕様等は変更される場合があります。最新情報は各販売サイト・公式サイトにてご確認ください。</p>
-        </div>
-      </footer>
+        <section class="home-section home-brand-section" aria-labelledby="popular-brands-title">
+          <div class="home-section__header">
+            <div>
+              <p class="home-eyebrow">Brand</p>
+              <h2 id="popular-brands-title">取り扱いブランド</h2>
+            </div>
+          </div>
+          ${renderBrandCards(state.brands, state.siteAssetsByKey)}
+        </section>
+
+        ${renderShoppingSection(state.siteAssetsByKey)}
+
+        ${renderHomeFooter()}
+      </div>
     </main>
   `;
 
@@ -454,6 +481,66 @@ function renderHomeSectionHeading(english: string, japanese: string): string {
       <p class="home-eyebrow">${escapeHtml(english)}</p>
       <h2 class="home-section-heading section-title">${escapeHtml(japanese)}</h2>
     </div>
+  `;
+}
+
+function renderHomeFixedHero(state: HomeState): string {
+  const heroMedia = getHomeFixedHeroMedia(state);
+  const heroCopy = heroMedia?.copy ?? defaultHomeHeroCopy;
+  const image = heroMedia
+    ? `
+      <picture class="home-fixed-hero__media">
+        <source media="(max-width: 640px)" srcset="${escapeAttr(heroMedia.mobileSrc)}">
+        <img
+          src="${escapeAttr(heroMedia.desktopSrc)}"
+          alt="${escapeAttr(heroMedia.alt)}"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        >
+      </picture>
+    `
+    : '<div class="home-fixed-hero__media is-empty" aria-hidden="true"></div>';
+
+  return `
+    <section class="home-fixed-hero" aria-labelledby="home-fixed-hero-title">
+      ${image}
+      <div class="home-fixed-hero__overlay" aria-hidden="true"></div>
+      <div class="home-fixed-hero__text">
+        <h1 class="home-fixed-hero__title" id="home-fixed-hero-title">${escapeHtml(heroCopy.title)}</h1>
+        <p class="home-fixed-hero__lead">${heroCopy.lines.map((line) => escapeHtml(line)).join('<br>')}</p>
+      </div>
+      <p class="home-fixed-hero__vertical vertical-text">赤ちゃんとの毎日を、少し軽く、少し心地よく。</p>
+      <p class="home-fixed-hero__copy">Love The Baby, Love The Family.</p>
+    </section>
+  `;
+}
+
+function renderHomeMessageSection(state: HomeState): string {
+  const imageSrc = getHomeMessageImage(state);
+
+  return `
+    <section class="home-message-section">
+      ${
+        imageSrc
+          ? `
+            <div class="home-message__image reveal-wrapper">
+              <img class="reveal-img" src="${escapeAttr(imageSrc)}" alt="iLy.のおすすめ育児用品" loading="lazy">
+            </div>
+          `
+          : ''
+      }
+      <div class="home-message__content">
+        <div class="home-message__body">
+          <p>
+            使う場所、しまう場所、押す人、抱っこする人。<br>
+            iLy.は、スペックだけでは見えにくい毎日の使いやすさを整理しながら、<br>
+            家族に合う育児用品へ近づくためのガイドです。
+          </p>
+        </div>
+        <a class="home-message__link" href="/products.html">商品一覧を見る</a>
+      </div>
+    </section>
   `;
 }
 
@@ -503,8 +590,8 @@ function isPickupAsset(asset: HomeSiteAsset): boolean {
 function renderPickupCard(item: { title: string; label: string; href: string; imageSrc?: string }): string {
   return `
     <a class="home-pickup-card" href="${escapeAttr(item.href)}">
-      <span class="home-pickup-card__image">
-        ${item.imageSrc ? `<img src="${escapeAttr(item.imageSrc)}" alt="${escapeAttr(item.title)}" loading="lazy">` : '<em>画像準備中</em>'}
+      <span class="home-pickup-card__image reveal-wrapper">
+        ${item.imageSrc ? `<img class="reveal-img" src="${escapeAttr(item.imageSrc)}" alt="${escapeAttr(item.title)}" loading="lazy">` : '<em>画像準備中</em>'}
       </span>
       <strong>${escapeHtml(item.title)}</strong>
       <span>${escapeHtml(item.label)}</span>
@@ -545,9 +632,9 @@ function renderSearchSection(state: HomeState): string {
 function renderSearchGroupHeading(title: string): string {
   return `
     <div class="home-search-group-heading">
-      <span aria-hidden="true"></span>
+      <span class="line-expand" aria-hidden="true"></span>
       <h3>${escapeHtml(title)}</h3>
-      <span aria-hidden="true"></span>
+      <span class="line-expand" aria-hidden="true"></span>
     </div>
   `;
 }
@@ -848,7 +935,12 @@ function renderCategoryProducts(state: HomeState): string {
     `;
   }
 
-  return `<div class="home-product-grid">${products.slice(0, 5).map(renderProductCard).join('')}</div>`;
+  return `
+    <div class="home-product-grid">${products.slice(0, 5).map(renderProductCard).join('')}</div>
+    <div class="home-recommended-actions">
+      <a class="home-outline-link" href="/products.html">すべて見る</a>
+    </div>
+  `;
 }
 
 function renderProductCard(product: HomeProduct, index: number): string {
@@ -862,21 +954,22 @@ function renderProductCard(product: HomeProduct, index: number): string {
 
   return `
     <article class="home-product-card">
-      <div class="home-product-card__media">
+      <div class="home-product-card__media reveal-wrapper">
         <a class="home-product-card__image" href="/product.html?id=${productId}" aria-label="${escapeAttr(name)}の詳細を見る">
           ${
             product.imageSrc
               ? `
-                <img class="home-product-card__img home-product-card__img--primary" src="${escapeAttr(product.imageSrc)}" alt="${escapeAttr(name)}" ${getImageLoadingAttributes(index)}>
+                <img class="home-product-card__img home-product-card__img--primary reveal-img" src="${escapeAttr(product.imageSrc)}" alt="${escapeAttr(name)}" ${getImageLoadingAttributes(index)}>
                 ${
                   product.hoverImageSrc
-                    ? `<img class="home-product-card__img home-product-card__img--secondary" src="${escapeAttr(product.hoverImageSrc)}" alt="" loading="lazy" aria-hidden="true">`
+                    ? `<img class="home-product-card__img home-product-card__img--secondary reveal-img" src="${escapeAttr(product.hoverImageSrc)}" alt="" loading="lazy" aria-hidden="true">`
                     : ''
                 }
               `
               : '<span class="home-product-card__placeholder">画像準備中</span>'
           }
         </a>
+        ${renderQuickViewButton(product.id)}
       </div>
       <p class="home-product-card__title-line">
         <span class="home-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(displayBrand)}</a>` : escapeHtml(displayBrand)}</span>
@@ -884,6 +977,34 @@ function renderProductCard(product: HomeProduct, index: number): string {
       </p>
       <span class="home-product-card__price">${escapeHtml(formatPrice(product.price_yen))}（税込み）</span>
     </article>
+  `;
+}
+
+function renderHomeFooter(): string {
+  return `
+    <footer class="home-footer">
+      <div class="home-footer__inner">
+        <div class="home-footer__top">
+          <div class="home-footer__brand">
+            <a class="home-footer__logo" href="/">iLy.</a>
+            <p class="home-footer__tagline">育児用品選びを、暮らしに合わせてやさしく。</p>
+          </div>
+          <nav class="home-footer__nav" aria-label="フッターナビゲーション">
+            <a href="/products.html">商品一覧</a>
+            <a href="/compare.html">比較する</a>
+            <a href="/stroller-guide.html">ベビーカー診断</a>
+            <a href="/brand.html">ブランド</a>
+          </nav>
+        </div>
+        <div class="home-footer__bottom">
+          <div class="home-affiliate-notice">
+            <p>当サイトはアフィリエイト広告を利用しています。</p>
+            <p>掲載している商品・サービスの価格、在庫、仕様等は変更される場合があります。最新情報は各販売サイト・公式サイトにてご確認ください。</p>
+          </div>
+          <small>&copy; iLy.</small>
+        </div>
+      </div>
+    </footer>
   `;
 }
 
@@ -1010,6 +1131,129 @@ function getPopularBrands(products: Product[]): BrandCard[] {
 function getCategoryImage(state: HomeState, category: string): string | undefined {
   return state.categoryCards.find((card) => card.label === category)?.imageSrc
     ?? state.productsByCategory.get(category)?.find((product) => product.imageSrc)?.imageSrc;
+}
+
+function getHomeFixedHeroMedia(
+  state: HomeState,
+): { desktopSrc: string; mobileSrc: string; alt: string; copy: { title: string; lines: string[] } } | undefined {
+  const mainHero = selectHomeHeroAsset(state.mainHeroes);
+  if (mainHero) {
+    return {
+      desktopSrc: mainHero.desktop_image_url,
+      mobileSrc: mainHero.mobile_image_url,
+      alt: mainHero.alt_text || mainHero.title || 'iLy. メインビジュアル',
+      copy: getHomeHeroCopy(mainHero),
+    };
+  }
+
+  const fallbackHeroAssets = Array.from(state.siteAssetsByKey.values())
+    .filter(isHomeMainHeroAsset)
+    .sort((a, b) => getAssetSortOrder(a) - getAssetSortOrder(b) || a.asset_key.localeCompare(b.asset_key))
+    .filter((asset) => getAssetImage(asset));
+  const heroAsset = selectHomeHeroAsset(fallbackHeroAssets);
+  const desktopSrc = getAssetImage(heroAsset);
+  if (!desktopSrc) return undefined;
+
+  return {
+    desktopSrc,
+    mobileSrc: isSafeImageUrl(heroAsset?.mobile_image_url) ? heroAsset.mobile_image_url : desktopSrc,
+    alt: heroAsset?.alt_text || heroAsset?.title || 'iLy. メインビジュアル',
+    copy: getHomeHeroCopy(heroAsset),
+  };
+}
+
+function getHomeHeroCopy(asset: HomeSiteAsset | undefined): { title: string; lines: string[] } {
+  const captionLines = String(asset?.caption ?? '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (captionLines.length >= 2) {
+    return {
+      title: captionLines[0],
+      lines: captionLines.slice(1),
+    };
+  }
+
+  return selectDefaultHomeHeroCopy();
+}
+
+function selectDefaultHomeHeroCopy(): { title: string; lines: string[] } {
+  const lastCopyKey = readStorageValue(homeHeroLastCopyStorageKey);
+  const copyCandidates = defaultHomeHeroCopies
+    .map((copy, index) => ({ copy, key: String(index) }))
+    .filter((item) => defaultHomeHeroCopies.length < 2 || item.key !== lastCopyKey);
+  const selected = copyCandidates[Math.floor(Math.random() * copyCandidates.length)] ?? copyCandidates[0];
+  if (selected) {
+    saveStorageValue(homeHeroLastCopyStorageKey, selected.key);
+    return {
+      title: selected.copy.title,
+      lines: [...selected.copy.lines],
+    };
+  }
+
+  return {
+    title: defaultHomeHeroCopy.title,
+    lines: [...defaultHomeHeroCopy.lines],
+  };
+}
+
+function selectHomeHeroAsset<T extends { asset_key: string }>(assets: T[]): T | undefined {
+  if (assets.length === 0) return undefined;
+
+  const currentAsset = selectedHomeHeroAssetKey
+    ? assets.find((asset) => asset.asset_key === selectedHomeHeroAssetKey)
+    : undefined;
+  if (currentAsset) return currentAsset;
+
+  const previousAssetKey = readLastHomeHeroAssetKey();
+  const selectableAssets = assets.length > 1
+    ? assets.filter((asset) => asset.asset_key !== previousAssetKey)
+    : assets;
+  const selectedAsset = selectableAssets[Math.floor(Math.random() * selectableAssets.length)]
+    ?? selectableAssets[0]
+    ?? assets[0];
+  selectedHomeHeroAssetKey = selectedAsset.asset_key;
+  saveLastHomeHeroAssetKey(selectedAsset.asset_key);
+  return selectedAsset;
+}
+
+function readLastHomeHeroAssetKey(): string {
+  return readStorageValue(homeHeroLastAssetKeyStorageKey);
+}
+
+function saveLastHomeHeroAssetKey(assetKey: string): void {
+  saveStorageValue(homeHeroLastAssetKeyStorageKey, assetKey);
+}
+
+function readStorageValue(key: string): string {
+  try {
+    return window.sessionStorage.getItem(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function saveStorageValue(key: string, value: string): void {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Storage can be unavailable in private contexts; random selection still works.
+  }
+}
+
+function getHomeMessageImage(state: HomeState): string | undefined {
+  return getAssetImageByCandidates(state.siteAssetsByKey, [
+    'home_message',
+    'message',
+    'home_about',
+    'about',
+    'home_pickup',
+    'pickup',
+  ])
+    ?? state.categoryCards.find((card) => card.imageSrc)?.imageSrc
+    ?? Array.from(state.productsByCategory.values()).flat().find((product) => product.imageSrc)?.imageSrc;
 }
 
 function getBrandLogoSrc(brand: BrandCard, siteAssetsByKey: Map<string, HomeSiteAsset>): string | undefined {
