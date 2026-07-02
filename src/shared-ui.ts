@@ -196,6 +196,7 @@ export function applyFadeUpAnimations(root: ParentNode = document): void {
       '.reveal-wrapper',
       '.home-search-category-list li',
       '.home-search-scene-list li',
+      '.home-section__header',
       '.home-category-section',
       '.home-scene-section',
       '.home-recommended-section',
@@ -222,8 +223,12 @@ export function applyFadeUpAnimations(root: ParentNode = document): void {
   if (targets.length === 0) return;
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  targets.forEach((element) => {
+  targets.forEach((element, index) => {
     element.dataset.fadeUp = '';
+    if (isSoftRevealOffsetTarget(element)) {
+      element.style.setProperty('--fade-x', `${index % 2 === 0 ? -10 : 10}px`);
+      element.style.setProperty('--fade-y', '18px');
+    }
     if (reducedMotion) element.classList.add('is-visible');
   });
 
@@ -246,21 +251,39 @@ export function applyFadeUpAnimations(root: ParentNode = document): void {
   targets.forEach((element) => observer.observe(element));
 }
 
+function isSoftRevealOffsetTarget(element: HTMLElement): boolean {
+  return element.matches([
+    '.product-card',
+    '.url-product-card',
+    '.brand-product-card',
+    '.recommend-card',
+    '.home-product-card',
+    '.home-pickup-card',
+    '.home-category-card',
+    '.home-brand-card',
+    '.home-shopping-card',
+    '.home-message__image',
+    '.reveal-wrapper',
+  ].join(', '));
+}
+
 function injectFadeUpStyles(): void {
   if (document.getElementById(fadeUpStyleId)) return;
   const style = document.createElement('style');
   style.id = fadeUpStyleId;
   style.textContent = `
     [data-fade-up] {
+      --fade-x: 0px;
+      --fade-y: 18px;
       opacity: 0;
-      transform: translateY(16px);
-      transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1), transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translate3d(var(--fade-x), var(--fade-y), 0);
+      transition: opacity 760ms cubic-bezier(0.22, 1, 0.36, 1), transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
       will-change: opacity, transform;
     }
 
     [data-fade-up].is-visible {
       opacity: 1;
-      transform: translateY(0);
+      transform: translate3d(0, 0, 0);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -293,8 +316,10 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
     header.innerHTML = `
       <div class="site-header__inner">
         <a class="site-header__brand" href="/" aria-label="${SITE_NAME} トップへ">${SITE_NAME}</a>
-        <button class="site-header__menu" type="button" aria-expanded="false" aria-controls="site-nav">
-          メニュー
+        <button class="site-header__menu" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニューを開く">
+          <span class="site-header__menu-line" aria-hidden="true"></span>
+          <span class="site-header__menu-line" aria-hidden="true"></span>
+          <span class="site-header__menu-line" aria-hidden="true"></span>
         </button>
         <nav class="site-header__nav" id="site-nav" aria-label="サイト内メニュー">
           <a class="${page === 'products' ? 'is-current' : ''}" href="/products.html">商品を探す</a>
@@ -310,8 +335,21 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
 
     menuButton?.addEventListener('click', () => {
       const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
-      menuButton.setAttribute('aria-expanded', String(!isOpen));
-      nav?.classList.toggle('is-open', !isOpen);
+      setMobileHeaderMenuOpen(menuButton, nav, !isOpen);
+    });
+
+    nav?.querySelectorAll<HTMLAnchorElement>('a').forEach((link) => {
+      link.addEventListener('click', () => setMobileHeaderMenuOpen(menuButton, nav, false));
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || menuButton?.getAttribute('aria-expanded') !== 'true') return;
+      setMobileHeaderMenuOpen(menuButton, nav, false);
+      menuButton?.focus();
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 760) setMobileHeaderMenuOpen(menuButton, nav, false);
     });
 
     document.body.prepend(header);
@@ -322,6 +360,18 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
   } catch (error) {
     console.error('共通ヘッダーの初期化に失敗しました。', error);
   }
+}
+
+function setMobileHeaderMenuOpen(
+  menuButton: HTMLButtonElement | null | undefined,
+  nav: HTMLElement | null | undefined,
+  isOpen: boolean,
+): void {
+  if (!menuButton || !nav) return;
+  menuButton.setAttribute('aria-expanded', String(isOpen));
+  menuButton.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+  nav.classList.toggle('is-open', isOpen);
+  document.body.classList.toggle('is-menu-open', isOpen);
 }
 
 function syncHomeHeaderScrollState(header: HTMLElement): void {
@@ -1128,23 +1178,60 @@ function injectSharedStyles(): void {
       display: none;
       width: 44px;
       height: 44px;
+      position: relative;
+      align-items: center;
       justify-content: center;
-      border: 1px solid rgba(77, 77, 77, .2);
+      border: 0;
       border-radius: 0;
-      background: #fff;
+      background: transparent;
       color: #333;
       padding: 0;
       font: inherit;
       font-size: 0;
+      cursor: pointer;
+      flex: 0 0 44px;
+      z-index: 120;
     }
 
-    .site-header__menu::before {
+    .site-header__menu-line {
+      position: absolute;
+      left: 50%;
+      top: 50%;
       content: '';
       display: block;
-      width: 16px;
+      width: 22px;
       height: 1px;
       background: currentColor;
-      box-shadow: 0 6px 0 currentColor, 0 -6px 0 currentColor;
+      transform: translate(-50%, -50%);
+      transition: opacity .28s ease, transform .28s ease;
+    }
+
+    .site-header__menu-line:nth-child(1) {
+      transform: translate(-50%, calc(-50% - 7px));
+    }
+
+    .site-header__menu-line:nth-child(2) {
+      transform: translate(-50%, -50%);
+    }
+
+    .site-header__menu-line:nth-child(3) {
+      transform: translate(-50%, calc(-50% + 7px));
+    }
+
+    .site-header__menu[aria-expanded="true"] .site-header__menu-line:nth-child(1) {
+      transform: translate(-50%, -50%) rotate(42deg);
+    }
+
+    .site-header__menu[aria-expanded="true"] .site-header__menu-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    .site-header__menu[aria-expanded="true"] .site-header__menu-line:nth-child(3) {
+      transform: translate(-50%, -50%) rotate(-42deg);
+    }
+
+    body.is-menu-open {
+      overflow: hidden;
     }
 
     .compare-tray {
@@ -1346,7 +1433,6 @@ function injectSharedStyles(): void {
       .site-header__inner {
         width: min(100% - 28px, 1280px);
         min-height: 60px;
-        flex-wrap: wrap;
         gap: 10px;
         padding: 6px 0;
       }
@@ -1354,19 +1440,45 @@ function injectSharedStyles(): void {
       .site-header__menu {
         display: inline-flex;
         align-items: center;
-        width: 31px;
-        height: 31px;
-        border-radius: 0;
+        width: 44px;
+        height: 44px;
+        margin-right: -10px;
       }
 
       .site-header__nav {
         display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 110;
         width: 100%;
-        padding-bottom: 8px;
+        height: 100dvh;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, .98);
+        padding: 88px 28px 54px;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity .28s ease, transform .28s ease;
       }
 
       .site-header__nav.is-open {
-        display: flex;
+        display: grid;
+        align-content: start;
+        gap: 0;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .site-header__nav a {
+        display: block;
+        padding: 18px 0;
+        border-bottom: 1px solid #ececec;
+        font-size: 15px;
+        letter-spacing: .04em;
+      }
+
+      .site-header__nav a::after {
+        content: none;
+        display: none;
       }
 
       .compare-tray {
