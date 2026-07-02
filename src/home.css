@@ -3044,11 +3044,55 @@ body.home-body,
     width: min(100%, 420px);
     gap: 28px 22px !important;
     justify-items: center;
+    align-items: center;
   }
 
-  .home-brand-card {
-    width: 100%;
-    min-height: 70px !important;
+  .home-brand-section .home-brand-card {
+    width: min(100%, 158px);
+    min-height: 82px !important;
+    display: grid !important;
+    place-items: center !important;
+    justify-self: center;
+    align-self: center;
+    padding: 10px 12px !important;
+  }
+
+  .home-brand-section .home-brand-card img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 124px;
+    max-height: 48px;
+    margin: 0 auto;
+    object-fit: contain;
+    object-position: center center;
+  }
+
+  .home-shopping-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    align-items: center;
+  }
+
+  .home-shopping-card {
+    min-height: 92px;
+    padding: 12px 6px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .home-shopping-card__icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .home-shopping-card__icon img {
+    width: 56px;
+    height: 56px;
+    max-width: 56px;
+    max-height: 56px;
+    margin: 0 auto;
+    object-fit: contain;
   }
 
   .home-category-grid {
