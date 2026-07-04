@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 type AssetImportEnv = {
   VITE_SUPABASE_URL?: string;
   VITE_SUPABASE_ANON_KEY?: string;
+  ALLOWED_EXTENSION_ORIGINS?: string;
   ASSET_IMPORT_ALLOWED_ORIGINS?: string;
   ASSET_IMPORT_ENABLE_CLOUDFLARE_IMAGE_RESIZING?: string;
 };
@@ -112,6 +113,9 @@ const validAssetTypes: SiteAssetType[] = ['hero', 'category', 'article', 'brand_
 const validMimeTypes: SiteAssetMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 const assetKeyPattern = /^[a-z0-9][a-z0-9_-]*$/;
 const brandSlugPattern = /^[a-z0-9][a-z0-9-]*$/;
+const defaultAllowedExtensionOrigins = [
+  'chrome-extension://nacncbbiibbnjlhpadfbgdgnfejigmfm',
+];
 
 export async function onRequestOptions(context: PagesContext): Promise<Response> {
   const cors = getCorsHeaders(context.request, context.env);
@@ -966,11 +970,19 @@ function getCorsHeaders(request: Request, env: AssetImportEnv): { allowed: boole
 function isAllowedOrigin(origin: string, requestUrl: string, env: AssetImportEnv): boolean {
   const sameOrigin = new URL(requestUrl).origin;
   if (origin === sameOrigin) return true;
-  const allowedOrigins = String(env.ASSET_IMPORT_ALLOWED_ORIGINS ?? '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const allowedOrigins = [
+    ...defaultAllowedExtensionOrigins,
+    ...readOriginList(env.ALLOWED_EXTENSION_ORIGINS),
+    ...readOriginList(env.ASSET_IMPORT_ALLOWED_ORIGINS),
+  ];
   return allowedOrigins.includes(origin);
+}
+
+function readOriginList(value: string | undefined): string[] {
+  return String(value ?? '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
 }
 
 function json(value: unknown, status = 200, headers = new Headers()): Response {

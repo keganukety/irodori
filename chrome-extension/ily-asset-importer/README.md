@@ -40,7 +40,7 @@ Chromeは `dist/*.js` を読みます。TypeScriptは編集用の元ファイル
 2. Cloudflare PagesのVariables and secretsに次を追加します。
 
 ```text
-ASSET_IMPORT_ALLOWED_ORIGINS=chrome-extension://<拡張機能ID>
+ALLOWED_EXTENSION_ORIGINS=chrome-extension://nacncbbiibbnjlhpadfbgdgnfejigmfm
 ASSET_IMPORT_ENABLE_CLOUDFLARE_IMAGE_RESIZING=false
 ```
 
@@ -48,7 +48,7 @@ Cloudflare Image Resizingを有効にしている場合だけ、2つ目を `true
 
 3. Chromeで `chrome://extensions` を開き、デベロッパーモードをONにします。
 4. 「パッケージ化されていない拡張機能を読み込む」から `chrome-extension/ily-asset-importer` を選びます。
-5. 表示された拡張機能IDを `ASSET_IMPORT_ALLOWED_ORIGINS` に設定し、Cloudflare Pagesを再デプロイします。
+5. 表示された拡張機能IDを `ALLOWED_EXTENSION_ORIGINS` に設定し、Cloudflare Pagesを再デプロイします。本番IDは `chrome-extension://nacncbbiibbnjlhpadfbgdgnfejigmfm` です。
 
 ## 使い方
 
@@ -62,6 +62,8 @@ Cloudflare Image Resizingを有効にしている場合だけ、2つ目を `true
 
 - service role keyは拡張にもAPIにも入れません。
 - 拡張が送るのは画像URLとメタ情報、管理者本人のSupabase access tokenだけです。
+- CORSは許可済みのChrome拡張Originだけに `Access-Control-Allow-Origin` を返します。`*` は使いません。
+- 拡張側fetchは `credentials: include` を使わず、Authorizationヘッダーで本人のaccess tokenを送ります。
 - API側で `is_admin()` を再確認します。
 - API側で画像URLをfetchし、Storage uploadと `site_assets` 登録を行います。
 - `http` / `https` 以外、`data:` / `file:` / `blob:` などは拒否します。
@@ -78,6 +80,16 @@ Cloudflare Image Resizingを有効にしている場合だけ、2つ目を `true
 - `manifest.json` の `host_permissions`
 - `src/config.ts`
 - `dist/config.js`
-- Cloudflare Pagesの `ASSET_IMPORT_ALLOWED_ORIGINS`
+- Cloudflare Pagesの `ALLOWED_EXTENSION_ORIGINS`
 
 `host_permissions` は自サイトだけにしてください。任意サイトの画像抽出は `activeTab` でユーザー操作時だけ行います。
+
+## CORSエラーが出る場合
+
+保存時に「この送信元からは利用できません。」と出る場合は、Cloudflare Pagesの環境変数に次が入っているか確認します。
+
+```text
+ALLOWED_EXTENSION_ORIGINS=chrome-extension://nacncbbiibbnjlhpadfbgdgnfejigmfm
+```
+
+変更後はCloudflare Pagesを再デプロイし、Chromeの `chrome://extensions` で拡張機能を再読み込みします。

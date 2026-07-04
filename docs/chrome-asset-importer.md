@@ -52,11 +52,12 @@ API側で行うこと:
 ```text
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
-ASSET_IMPORT_ALLOWED_ORIGINS=chrome-extension://<拡張機能ID>
+ALLOWED_EXTENSION_ORIGINS=chrome-extension://nacncbbiibbnjlhpadfbgdgnfejigmfm
 ASSET_IMPORT_ENABLE_CLOUDFLARE_IMAGE_RESIZING=false
 ```
 
 service role keyは不要です。
+`ALLOWED_EXTENSION_ORIGINS` はカンマ区切りで複数指定できます。Productionには本番拡張ID、Previewには開発用拡張IDを分けて設定します。
 
 ## 動作確認
 
@@ -65,10 +66,11 @@ service role keyは不要です。
 3. `powershell -ExecutionPolicy Bypass -File scripts/dev-pages.ps1` でPages Functions込みのローカル環境を起動します。
 4. `chrome-extension/ily-asset-importer/manifest.json` の `host_permissions` にローカルURLが含まれていることを確認します。
 5. Chrome拡張を読み込みます。
-6. `/assets-admin.html` で管理者ログインします。
-7. 拡張ポップアップの接続先をローカルURLにして「接続」を押します。
-8. 画像のあるページで右クリックまたはポップアップから画像を選択して保存します。
-9. 成功後リンクから `/assets-admin.html?asset_key=...` を開き、登録内容を確認します。
+6. Chromeの拡張機能IDを確認し、Cloudflare Pagesまたはローカル検証環境の `ALLOWED_EXTENSION_ORIGINS` に `chrome-extension://<拡張機能ID>` を設定します。
+7. `/assets-admin.html` で管理者ログインします。
+8. 拡張ポップアップの接続先をローカルURLにして「接続」を押します。
+9. 画像のあるページで右クリックまたはポップアップから画像を選択して保存します。
+10. 成功後リンクから `/assets-admin.html?asset_key=...` を開き、登録内容を確認します。
 
 ## 注意点
 
