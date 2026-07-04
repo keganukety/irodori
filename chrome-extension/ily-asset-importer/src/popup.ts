@@ -168,9 +168,9 @@ function applySuggestions(force: boolean) {
   if (!primary) return;
 
   const assetType = getFieldValue('asset_type');
-  const scope = slugify(getFieldValue('brand_slug_or_category'));
-  const suggestedKey = suggestAssetKey(assetType, scope, primary);
   const suggestedTitle = primary.title || primary.alt || getUrlFilename(primary.url);
+  const brandSlug = normalizeAssetKeyPart(getFieldValue('brand_slug_or_category'));
+  const suggestedKey = suggestAssetKey(assetType, brandSlug, suggestedTitle, primary);
   const suggestedAlt = primary.alt || suggestedTitle;
 
   setGeneratedInput('asset_key', suggestedKey, force);
@@ -333,13 +333,25 @@ function setGeneratedInput(name: string, value: string, force: boolean) {
   input.dataset.generatedValue = value;
 }
 
-function suggestAssetKey(assetType: string, scope: string, image: ImageCandidate): string {
-  if (assetType === 'hero') return 'home_main_hero';
-  if (assetType === 'brand_logo') return `brand_logo_${scope || slugify(getUrlHost(image.url)) || 'brand'}`;
-  if (assetType === 'brand_hero') return `brand_hero_${scope || slugify(getUrlHost(image.url)) || 'brand'}`;
-  if (assetType === 'category') return `category_${scope || slugify(image.alt || image.title) || 'item'}`;
-  if (assetType === 'article') return `article_${slugify(image.title || image.alt || getUrlFilename(image.url)) || 'image'}`;
-  return `asset_${Date.now()}`;
+function suggestAssetKey(assetType: string, brandSlug: string, title: string, image: ImageCandidate): string {
+  const usage = normalizeAssetKeyPart(assetType) || 'asset';
+  const normalizedTitle = normalizeAssetKeyPart(title || image.alt || image.title || getUrlFilename(image.url)) || 'image';
+  const fallbackBrandSlug = brandSlug || '';
+
+  if (usage === 'brand_hero' && fallbackBrandSlug) {
+    return composeAssetKey(['brand_hero', fallbackBrandSlug]);
+  }
+
+  if (usage === 'brand_logo' && fallbackBrandSlug) {
+    return composeAssetKey(['brand_logo', fallbackBrandSlug]);
+  }
+
+  if (usage === 'product' || usage === 'product_image') {
+    const role = normalizeAssetKeyPart(getFieldValue('image_slot')) || 'image';
+    return composeAssetKey(['product', fallbackBrandSlug, normalizedTitle, role]);
+  }
+
+  return composeAssetKey([usage, fallbackBrandSlug, normalizedTitle]);
 }
 
 function getFieldValue(name: string): string {
@@ -419,15 +431,33 @@ function getUrlFilename(value: string): string {
   }
 }
 
-function slugify(value: string): string {
+function normalizeAssetKeyPart(value: string): string {
   return value
+    .normalize('NFKC')
     .normalize('NFKD')
+    .replace(/&/g, ' and ')
+    .replace(/\+/g, ' plus ')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     .replace(/_+/g, '_')
     .slice(0, 48);
+}
+
+function composeAssetKey(parts: string[]): string {
+  const key = parts
+    .map((part) => normalizeAssetKeyPart(part))
+    .filter(Boolean)
+    .join('_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return trimAssetKey(key || 'asset');
+}
+
+function trimAssetKey(value: string): string {
+  if (value.length <= 80) return value;
+  return value.slice(0, 80).replace(/_+$/g, '') || 'asset';
 }
 
 function decodeJwtExp(token: string): number {

@@ -58,6 +58,22 @@ Cloudflare Image Resizingを有効にしている場合だけ、2つ目を `true
 4. 用途、asset_key、title、alt、brand slug/category、PC/SP、公開状態などを入力して保存します。
 5. 成功後の「画像管理で開く」から登録結果を確認します。
 
+## asset_key候補
+
+新規保存時の候補は、入力済みの値を勝手に上書きせず、自動生成された候補だけを更新します。
+
+```text
+{usage}_{brandSlug}_{normalizedTitle}
+```
+
+例:
+
+```text
+article_combi_auto_n_first_ii_nc
+```
+
+`brandSlug` が空の場合は `{usage}_{normalizedTitle}` になります。`brand_hero` と `brand_logo` で `brandSlug` がある場合は、ブランド全体用として `brand_hero_{brandSlug}` / `brand_logo_{brandSlug}` を優先します。全角英数字、ローマ数字、記号は安全なASCIIへ正規化し、連続する `_` や末尾 `_` は除去します。
+
 ## セキュリティ
 
 - service role keyは拡張にもAPIにも入れません。
