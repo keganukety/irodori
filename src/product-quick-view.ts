@@ -18,7 +18,6 @@ let lastTrigger: HTMLElement | null = null;
 
 export function setupProductQuickView(nextOptions: QuickViewOptions): void {
   options = nextOptions;
-  ensureDialog();
   if (eventsBound) return;
   eventsBound = true;
 
@@ -38,6 +37,7 @@ function handleDocumentClick(event: MouseEvent): void {
 
   const trigger = target.closest<HTMLElement>('[data-quick-view-id]');
   if (trigger) {
+    if (isSmallViewport()) return;
     event.preventDefault();
     event.stopPropagation();
     const productId = trigger.dataset.quickViewId;
@@ -46,6 +46,10 @@ function handleDocumentClick(event: MouseEvent): void {
   }
 
   if (target.closest('[data-quick-view-close]')) closeQuickView();
+}
+
+function isSmallViewport(): boolean {
+  return window.matchMedia('(max-width: 767px)').matches;
 }
 
 function ensureDialog(): HTMLDialogElement {

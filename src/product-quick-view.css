@@ -480,6 +480,21 @@ body.has-quick-view-open {
   }
 }
 
+@media (max-width: 767px) {
+  .quick-view-trigger,
+  .quick-view-button,
+  .product-card .quick-view-button,
+  .product-quick-view-button,
+  .product-media > .quick-view-trigger,
+  .home-product-card__media > .quick-view-trigger,
+  .url-product-card__media > .quick-view-trigger,
+  .card-actions > .quick-view-trigger,
+  .home-product-card > .quick-view-trigger,
+  .url-product-card > .quick-view-trigger {
+    display: none !important;
+  }
+}
+
 /* EC links are intentionally hidden until mall icon assets are available. */
 .quick-view-shop-links {
   display: none !important;

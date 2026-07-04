@@ -1,0 +1,547 @@
+import { ASSETS_ADMIN_PATH, DEFAULT_SITE_ORIGIN, IMPORT_API_PATH } from './config';
+
+declare const chrome: any;
+
+type ImageCandidate = {
+  url: string;
+  sourcePageUrl: string;
+  alt: string;
+  title: string;
+  width?: number | null;
+  height?: number | null;
+  source?: string;
+  fromContextMenu?: boolean;
+};
+
+type AuthState = {
+  siteOrigin: string;
+  accessToken: string;
+  expiresAt: number;
+  userEmail: string;
+};
+
+type ImportResponse = {
+  ok?: boolean;
+  partial?: boolean;
+  duplicate?: boolean;
+  error?: string;
+  assets?: Array<{ asset_key: string }>;
+  failures?: Array<{ source_url: string; error: string }>;
+  warnings?: string[];
+  assets_admin_url?: string;
+  duplicates?: Array<{ existing_asset?: { asset_key?: string; title?: string } }>;
+};
+
+const imageList = getElement<HTMLDivElement>('image-list');
+const imageSummary = getElement<HTMLElement>('image-summary');
+const message = getElement<HTMLElement>('message');
+const openAdminLink = getElement<HTMLAnchorElement>('open-admin-link');
+const saveForm = getElement<HTMLFormElement>('save-form');
+const saveButton = getElement<HTMLButtonElement>('save-button');
+const connectButton = getElement<HTMLButtonElement>('connect-button');
+const refreshButton = getElement<HTMLButtonElement>('refresh-images-button');
+const siteOriginInput = getElement<HTMLInputElement>('site-origin-input');
+const connectionStatus = getElement<HTMLElement>('connection-status');
+const forceDuplicateWrap = getElement<HTMLElement>('force-duplicate-wrap');
+
+let images: ImageCandidate[] = [];
+const selectedUrls = new Set<string>();
+
+void init();
+
+async function init() {
+  const settings = await storageLocalGet(['siteOrigin', 'assetImporterAuth']);
+  siteOriginInput.value = normalizeSiteOrigin(settings.siteOrigin) || DEFAULT_SITE_ORIGIN;
+  bindEvents();
+  updateConnectionStatus(settings.assetImporterAuth as AuthState | undefined);
+  await loadImages();
+}
+
+function bindEvents() {
+  connectButton.addEventListener('click', () => void connectToSite());
+  refreshButton.addEventListener('click', () => void loadImages());
+  siteOriginInput.addEventListener('change', () => void saveSiteOrigin());
+  imageList.addEventListener('change', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
+    if (target.checked) selectedUrls.add(target.value);
+    else selectedUrls.delete(target.value);
+    renderImages();
+    applySuggestions(false);
+  });
+  saveForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void saveSelectedImages();
+  });
+
+  ['asset_type', 'brand_slug_or_category', 'title'].forEach((name) => {
+    const field = saveForm.elements.namedItem(name);
+    if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement) {
+      field.addEventListener('input', () => applySuggestions(false));
+      field.addEventListener('change', () => applySuggestions(false));
+    }
+  });
+
+  const assetKey = saveForm.elements.namedItem('asset_key');
+  if (assetKey instanceof HTMLInputElement) {
+    assetKey.addEventListener('input', () => {
+      assetKey.dataset.generated = 'false';
+    });
+  }
+  const altText = saveForm.elements.namedItem('alt_text');
+  if (altText instanceof HTMLInputElement) {
+    altText.addEventListener('input', () => {
+      altText.dataset.generated = 'false';
+    });
+  }
+}
+
+async function saveSiteOrigin() {
+  const siteOrigin = normalizeSiteOrigin(siteOriginInput.value) || DEFAULT_SITE_ORIGIN;
+  siteOriginInput.value = siteOrigin;
+  await storageLocalSet({ siteOrigin });
+}
+
+async function loadImages() {
+  setMessage('画像を探しています...', 'normal');
+  selectedUrls.clear();
+  const pending = await readPendingImages();
+  const collected = await collectImagesFromActiveTab();
+  images = mergeImages([...pending, ...collected]);
+  pending.forEach((image) => selectedUrls.add(image.url));
+  if (pending.length === 0 && images.length === 1) selectedUrls.add(images[0].url);
+  renderImages();
+  applySuggestions(true);
+  setMessage(images.length ? '' : 'このページから保存できる画像URLが見つかりませんでした。', images.length ? 'normal' : 'warning');
+}
+
+async function readPendingImages(): Promise<ImageCandidate[]> {
+  const stored = await storageSessionGet(['pendingImages']);
+  await storageSessionRemove(['pendingImages']);
+  const pending = Array.isArray(stored.pendingImages) ? stored.pendingImages : [];
+  return pending.filter(isImageCandidate);
+}
+
+async function collectImagesFromActiveTab(): Promise<ImageCandidate[]> {
+  const tab = await getActiveTab();
+  if (!tab?.id || !tab.url || isRestrictedTabUrl(tab.url)) return [];
+  try {
+    const response = await sendCollectMessage(tab.id);
+    return normalizeCollectedImages(response?.images);
+  } catch {
+    try {
+      await executeContentScript(tab.id);
+      const response = await sendCollectMessage(tab.id);
+      return normalizeCollectedImages(response?.images);
+    } catch (error) {
+      setMessage(`ページ内画像を取得できませんでした: ${getErrorMessage(error)}`, 'warning');
+      return [];
+    }
+  }
+}
+
+function renderImages() {
+  imageSummary.textContent = `${images.length}件 / ${selectedUrls.size}件選択中`;
+  if (images.length === 0) {
+    imageList.innerHTML = '';
+    return;
+  }
+
+  imageList.innerHTML = images.map((image) => {
+    const selected = selectedUrls.has(image.url);
+    const dimensions = image.width && image.height ? `${image.width}x${image.height}` : image.source || 'image';
+    return `
+      <label class="image-card ${selected ? 'is-selected' : ''}">
+        <input type="checkbox" value="${escapeAttr(image.url)}" ${selected ? 'checked' : ''} />
+        <img src="${escapeAttr(image.url)}" alt="" loading="lazy" />
+        <span class="image-meta">
+          <strong>${escapeText(image.alt || image.title || getUrlFilename(image.url))}</strong>
+          <span>${escapeText(dimensions)} / ${escapeText(getUrlHost(image.url))}</span>
+        </span>
+      </label>
+    `;
+  }).join('');
+}
+
+function applySuggestions(force: boolean) {
+  const primary = getSelectedImages()[0] ?? images[0];
+  if (!primary) return;
+
+  const assetType = getFieldValue('asset_type');
+  const scope = slugify(getFieldValue('brand_slug_or_category'));
+  const suggestedKey = suggestAssetKey(assetType, scope, primary);
+  const suggestedTitle = primary.title || primary.alt || getUrlFilename(primary.url);
+  const suggestedAlt = primary.alt || suggestedTitle;
+
+  setGeneratedInput('asset_key', suggestedKey, force);
+  setGeneratedInput('title', suggestedTitle, false);
+  setGeneratedInput('alt_text', suggestedAlt, force);
+}
+
+async function connectToSite() {
+  const siteOrigin = normalizeSiteOrigin(siteOriginInput.value) || DEFAULT_SITE_ORIGIN;
+  siteOriginInput.value = siteOrigin;
+  await storageLocalSet({ siteOrigin });
+  setMessage('サイトのログイン状態を確認しています...', 'normal');
+
+  const tabs = await queryTabs({ url: `${siteOrigin}/*` });
+  let tab = tabs.find((item) => item.id && item.url?.startsWith(siteOrigin));
+  if (!tab?.id) {
+    tab = await createTab(`${siteOrigin}${ASSETS_ADMIN_PATH}`);
+    setMessage('開いた画像管理画面でログインしてから、もう一度「接続」を押してください。', 'warning');
+    return;
+  }
+
+  try {
+    const session = await executeSessionExtractor(tab.id);
+    if (!session?.accessToken) {
+      await updateTab(tab.id, `${siteOrigin}${ASSETS_ADMIN_PATH}`);
+      setMessage('画像管理画面でログインしてから、もう一度「接続」を押してください。', 'warning');
+      return;
+    }
+
+    const authState: AuthState = {
+      siteOrigin,
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt || decodeJwtExp(session.accessToken),
+      userEmail: session.userEmail || '',
+    };
+    await storageLocalSet({ assetImporterAuth: authState });
+    updateConnectionStatus(authState);
+    setMessage('接続しました。', 'success');
+  } catch (error) {
+    setMessage(`接続できませんでした: ${getErrorMessage(error)}`, 'error');
+  }
+}
+
+async function saveSelectedImages() {
+  const selected = getSelectedImages();
+  if (selected.length === 0) {
+    setMessage('保存する画像を選択してください。', 'error');
+    return;
+  }
+
+  const siteOrigin = normalizeSiteOrigin(siteOriginInput.value) || DEFAULT_SITE_ORIGIN;
+  const auth = await getUsableAuth(siteOrigin);
+  if (!auth) {
+    setMessage('先にサイトへ接続してください。', 'error');
+    return;
+  }
+
+  const formData = new FormData(saveForm);
+  const body = {
+    images: selected.map((image) => ({
+      url: image.url,
+      sourcePageUrl: image.sourcePageUrl,
+      alt: image.alt,
+      title: image.title,
+    })),
+    asset: {
+      asset_key: String(formData.get('asset_key') ?? ''),
+      asset_type: String(formData.get('asset_type') ?? ''),
+      title: String(formData.get('title') ?? ''),
+      alt_text: String(formData.get('alt_text') ?? ''),
+      brand_slug_or_category: String(formData.get('brand_slug_or_category') ?? ''),
+      image_slot: String(formData.get('image_slot') ?? 'desktop'),
+      is_published: formData.get('is_published') === 'on',
+      display_order: Number(formData.get('display_order') ?? 1),
+      link_url: String(formData.get('link_url') ?? ''),
+      memo: String(formData.get('memo') ?? ''),
+    },
+    options: {
+      optimize: formData.get('optimize') === 'on',
+      force_duplicate: formData.get('force_duplicate') === 'on',
+    },
+  };
+
+  setBusy(true);
+  setMessage('保存しています...', 'normal');
+  openAdminLink.hidden = true;
+
+  try {
+    const response = await fetch(`${siteOrigin}${IMPORT_API_PATH}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${auth.accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const payload = await response.json() as ImportResponse;
+
+    if (response.status === 409 && payload.duplicate) {
+      forceDuplicateWrap.hidden = false;
+      const existingKey = payload.duplicates?.[0]?.existing_asset?.asset_key;
+      if (existingKey) setAdminLink(siteOrigin, `/assets-admin.html?asset_key=${encodeURIComponent(existingKey)}`);
+      setMessage(payload.error || '同じ画像URLがすでに登録されています。', 'warning');
+      return;
+    }
+
+    if (!response.ok || (!payload.ok && !payload.partial)) {
+      throw new Error(payload.error || `保存に失敗しました (${response.status})`);
+    }
+
+    forceDuplicateWrap.hidden = true;
+    const adminUrl = payload.assets_admin_url || `/assets-admin.html?asset_key=${encodeURIComponent(payload.assets?.[0]?.asset_key ?? '')}`;
+    setAdminLink(siteOrigin, adminUrl);
+
+    const savedCount = payload.assets?.length ?? 0;
+    const failedCount = payload.failures?.length ?? 0;
+    const warningText = [...(payload.warnings ?? []), ...(payload.failures ?? []).map((failure) => failure.error)].slice(0, 3).join(' ');
+    setMessage(
+      failedCount > 0
+        ? `${savedCount}件保存しました。${failedCount}件は失敗しました。${warningText}`
+        : `${savedCount}件保存しました。${warningText}`,
+      failedCount > 0 || warningText ? 'warning' : 'success',
+    );
+  } catch (error) {
+    setMessage(getErrorMessage(error), 'error');
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function getUsableAuth(siteOrigin: string): Promise<AuthState | null> {
+  const stored = await storageLocalGet(['assetImporterAuth']);
+  const auth = stored.assetImporterAuth as AuthState | undefined;
+  if (!auth?.accessToken || auth.siteOrigin !== siteOrigin) return null;
+  const expiresAt = auth.expiresAt || decodeJwtExp(auth.accessToken);
+  if (expiresAt && expiresAt * 1000 < Date.now() + 60_000) return null;
+  return { ...auth, expiresAt };
+}
+
+function updateConnectionStatus(auth: AuthState | undefined) {
+  const usable = auth?.accessToken && (!auth.expiresAt || auth.expiresAt * 1000 > Date.now() + 60_000);
+  connectionStatus.textContent = usable
+    ? `接続中${auth.userEmail ? ` / ${auth.userEmail}` : ''}`
+    : '未接続';
+}
+
+function getSelectedImages(): ImageCandidate[] {
+  return images.filter((image) => selectedUrls.has(image.url));
+}
+
+function setGeneratedInput(name: string, value: string, force: boolean) {
+  if (!value) return;
+  const input = saveForm.elements.namedItem(name);
+  if (!(input instanceof HTMLInputElement)) return;
+  const generated = input.dataset.generated !== 'false';
+  if (!force && input.value.trim() && !generated) return;
+  if (input.value.trim() && input.value !== input.dataset.generatedValue && !generated) return;
+  input.value = value;
+  input.dataset.generated = 'true';
+  input.dataset.generatedValue = value;
+}
+
+function suggestAssetKey(assetType: string, scope: string, image: ImageCandidate): string {
+  if (assetType === 'hero') return 'home_main_hero';
+  if (assetType === 'brand_logo') return `brand_logo_${scope || slugify(getUrlHost(image.url)) || 'brand'}`;
+  if (assetType === 'brand_hero') return `brand_hero_${scope || slugify(getUrlHost(image.url)) || 'brand'}`;
+  if (assetType === 'category') return `category_${scope || slugify(image.alt || image.title) || 'item'}`;
+  if (assetType === 'article') return `article_${slugify(image.title || image.alt || getUrlFilename(image.url)) || 'image'}`;
+  return `asset_${Date.now()}`;
+}
+
+function getFieldValue(name: string): string {
+  const field = saveForm.elements.namedItem(name);
+  if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) {
+    return field.value.trim();
+  }
+  return '';
+}
+
+function mergeImages(input: ImageCandidate[]): ImageCandidate[] {
+  const map = new Map<string, ImageCandidate>();
+  input.forEach((image) => {
+    if (!isImageCandidate(image) || map.has(image.url)) return;
+    map.set(image.url, image);
+  });
+  return [...map.values()];
+}
+
+function normalizeCollectedImages(value: unknown): ImageCandidate[] {
+  return Array.isArray(value) ? value.filter(isImageCandidate) : [];
+}
+
+function isImageCandidate(value: unknown): value is ImageCandidate {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.url === 'string' && /^https?:\/\//i.test(record.url);
+}
+
+function setAdminLink(siteOrigin: string, path: string) {
+  openAdminLink.href = `${siteOrigin}${path.startsWith('/') ? path : `/${path}`}`;
+  openAdminLink.hidden = false;
+}
+
+function setBusy(busy: boolean) {
+  saveButton.disabled = busy;
+  connectButton.disabled = busy;
+  refreshButton.disabled = busy;
+}
+
+function setMessage(text: string, tone: 'normal' | 'success' | 'warning' | 'error') {
+  message.textContent = text;
+  message.dataset.tone = tone;
+}
+
+function normalizeSiteOrigin(value: unknown): string {
+  try {
+    const url = new URL(String(value ?? '').trim());
+    if (url.protocol !== 'https:' && url.origin !== 'http://localhost:8788') return '';
+    url.pathname = '';
+    url.search = '';
+    url.hash = '';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
+function isRestrictedTabUrl(value: string): boolean {
+  return /^(chrome|chrome-extension|edge|about|devtools):/i.test(value);
+}
+
+function getUrlHost(value: string): string {
+  try {
+    return new URL(value).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+function getUrlFilename(value: string): string {
+  try {
+    const path = new URL(value).pathname.split('/').filter(Boolean).pop() || 'image';
+    return decodeURIComponent(path).replace(/\.[a-z0-9]+$/i, '');
+  } catch {
+    return 'image';
+  }
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_')
+    .slice(0, 48);
+}
+
+function decodeJwtExp(token: string): number {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function extractSupabaseSessionFromPage(): { accessToken: string; expiresAt: number; userEmail: string } | null {
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index) || '';
+    if (!/^sb-.+-auth-token$/.test(key)) continue;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      const session = parsed.currentSession || parsed.session || parsed;
+      const accessToken = String(session.access_token || parsed.access_token || '');
+      if (!accessToken) continue;
+      return {
+        accessToken,
+        expiresAt: Number(session.expires_at || parsed.expires_at || 0),
+        userEmail: String(session.user?.email || parsed.user?.email || ''),
+      };
+    } catch {
+      // Try the next localStorage entry.
+    }
+  }
+  return null;
+}
+
+async function executeSessionExtractor(tabId: number): Promise<{ accessToken: string; expiresAt: number; userEmail: string } | null> {
+  const results = await executeScript(tabId, { func: extractSupabaseSessionFromPage });
+  return results?.[0]?.result ?? null;
+}
+
+function getActiveTab(): Promise<any> {
+  return queryTabs({ active: true, currentWindow: true }).then((tabs) => tabs[0] ?? null);
+}
+
+function queryTabs(queryInfo: Record<string, unknown>): Promise<any[]> {
+  return new Promise((resolve) => chrome.tabs.query(queryInfo, resolve));
+}
+
+function createTab(url: string): Promise<any> {
+  return new Promise((resolve) => chrome.tabs.create({ url, active: true }, resolve));
+}
+
+function updateTab(tabId: number, url: string): Promise<any> {
+  return new Promise((resolve) => chrome.tabs.update(tabId, { url, active: true }, resolve));
+}
+
+function sendCollectMessage(tabId: number): Promise<any> {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, { type: 'COLLECT_IRODORI_IMAGES' }, (response: unknown) => {
+      const error = chrome.runtime.lastError;
+      if (error) reject(new Error(error.message));
+      else resolve(response);
+    });
+  });
+}
+
+function executeContentScript(tabId: number): Promise<unknown> {
+  return executeScript(tabId, { files: ['dist/content-script.js'] });
+}
+
+function executeScript(tabId: number, details: Record<string, unknown>): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    chrome.scripting.executeScript({ target: { tabId }, ...details }, (results: unknown[]) => {
+      const error = chrome.runtime.lastError;
+      if (error) reject(new Error(error.message));
+      else resolve(results as any[]);
+    });
+  });
+}
+
+function storageLocalGet(keys: string[]): Promise<Record<string, unknown>> {
+  return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
+}
+
+function storageLocalSet(value: Record<string, unknown>): Promise<void> {
+  return new Promise((resolve) => chrome.storage.local.set(value, resolve));
+}
+
+function storageSessionGet(keys: string[]): Promise<Record<string, unknown>> {
+  return new Promise((resolve) => chrome.storage.session.get(keys, resolve));
+}
+
+function storageSessionRemove(keys: string[]): Promise<void> {
+  return new Promise((resolve) => chrome.storage.session.remove(keys, resolve));
+}
+
+function getElement<T extends HTMLElement>(id: string): T {
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`#${id} was not found.`);
+  return element as T;
+}
+
+function escapeText(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(value: unknown): string {
+  return escapeText(value).replace(/`/g, '&#096;');
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

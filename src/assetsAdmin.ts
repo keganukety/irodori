@@ -85,7 +85,9 @@ const sizeRecommendations: Record<SiteAssetType, string> = {
 };
 
 let assets: SiteAsset[] = [];
-let query = '';
+let query = new URLSearchParams(window.location.search).get('asset_key')
+  ?? new URLSearchParams(window.location.search).get('q')
+  ?? '';
 let typeFilter: 'all' | SiteAssetType = 'all';
 let brands: BrandOption[] = [];
 let brandHeroLinkAvailable = true;

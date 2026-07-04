@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "iLy. Image Manager Saver",
+  "description": "Web上の画像URLをiLy. / IRODORIの画像管理へ直接保存します。",
+  "version": "0.1.0",
+  "minimum_chrome_version": "116",
+  "action": {
+    "default_title": "iLy.画像管理に保存",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://irodori-cu2.pages.dev/*",
+    "http://localhost:8788/*"
+  ]
+}

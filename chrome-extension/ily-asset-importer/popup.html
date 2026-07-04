@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iLy.画像管理に保存</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="popup-header">
+        <div>
+          <h1>iLy.画像管理に保存</h1>
+          <p id="connection-status">未接続</p>
+        </div>
+        <button id="connect-button" type="button">接続</button>
+      </header>
+
+      <section class="site-panel" aria-label="接続先">
+        <label>
+          接続先
+          <input id="site-origin-input" type="url" spellcheck="false" />
+        </label>
+      </section>
+
+      <section class="image-panel" aria-label="画像一覧">
+        <div class="panel-heading">
+          <h2>ページ内画像</h2>
+          <button id="refresh-images-button" type="button">再取得</button>
+        </div>
+        <p id="image-summary" class="muted">画像を読み込み中...</p>
+        <div id="image-list" class="image-list"></div>
+      </section>
+
+      <form id="save-form" class="save-form">
+        <div class="field-grid">
+          <label>
+            用途
+            <select name="asset_type">
+              <option value="hero">hero</option>
+              <option value="category">category</option>
+              <option value="article">article</option>
+              <option value="brand_logo">brand_logo</option>
+              <option value="brand_hero">brand_hero</option>
+            </select>
+          </label>
+          <label>
+            保存先
+            <select name="image_slot">
+              <option value="desktop">PC画像</option>
+              <option value="mobile">SP画像</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          asset_key
+          <input name="asset_key" required placeholder="home_main_hero" spellcheck="false" />
+        </label>
+
+        <div class="field-grid">
+          <label>
+            title
+            <input name="title" />
+          </label>
+          <label>
+            alt
+            <input name="alt_text" />
+          </label>
+        </div>
+
+        <label>
+          brand slug / category
+          <input name="brand_slug_or_category" placeholder="cybex / stroller" spellcheck="false" />
+        </label>
+
+        <div class="field-grid">
+          <label>
+            表示順
+            <input name="display_order" type="number" min="1" value="1" />
+          </label>
+          <label class="check-label">
+            <input name="is_published" type="checkbox" />
+            公開
+          </label>
+        </div>
+
+        <label>
+          リンクURL
+          <input name="link_url" placeholder="/products.html" />
+        </label>
+
+        <label>
+          メモ
+          <textarea name="memo" rows="3"></textarea>
+        </label>
+
+        <label class="check-label duplicate-control" id="force-duplicate-wrap" hidden>
+          <input name="force_duplicate" type="checkbox" />
+          重複警告を確認して保存する
+        </label>
+
+        <label class="check-label">
+          <input name="optimize" type="checkbox" checked />
+          可能ならサーバー側で軽量化
+        </label>
+
+        <button id="save-button" class="primary-button" type="submit">選択画像を保存</button>
+      </form>
+
+      <section class="result-panel" aria-live="polite">
+        <p id="message" class="message"></p>
+        <a id="open-admin-link" href="#" target="_blank" rel="noreferrer" hidden>画像管理で開く</a>
+      </section>
+    </main>
+    <script type="module" src="dist/popup.js"></script>
+  </body>
+</html>

@@ -156,7 +156,12 @@ a {
 .hero-inner {
   width: min(100%, 1280px);
   margin: 0 auto;
-  padding: 34px 32px 38px;
+  padding: 34px 32px 28px;
+}
+
+.category-hero-copy {
+  position: relative;
+  z-index: 2;
 }
 
 .hero-panel h1 {
@@ -176,12 +181,30 @@ a {
   line-height: 1.75;
 }
 
+.category-hero-image {
+  display: block;
+  width: min(100%, 980px);
+  margin: 28px auto 0;
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  background: #fff;
+}
+
+.category-hero-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .guide-links {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
-  margin-top: 24px;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 0 32px 38px;
 }
 
 .guide-links a {
@@ -2449,9 +2472,70 @@ textarea,
   color: #fff;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .hero-inner {
     padding: 38px 20px 42px;
+  }
+
+  .category-hero-image {
+    width: 100%;
+    margin-top: 22px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .hero-panel.has-category-image {
+    background: #fff;
+  }
+
+  .hero-panel.has-category-image .hero-inner {
+    position: relative;
+    width: 100vw;
+    min-height: 76svh;
+    margin-left: 50%;
+    padding: 0;
+    overflow: hidden;
+    transform: translateX(-50%);
+  }
+
+  .hero-panel.has-category-image .category-hero-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    aspect-ratio: auto;
+  }
+
+  .hero-panel.has-category-image .category-hero-image::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .08) 42%, rgba(0, 0, 0, .36)),
+      linear-gradient(90deg, rgba(0, 0, 0, .22), rgba(0, 0, 0, .04) 58%);
+    content: "";
+    pointer-events: none;
+  }
+
+  .hero-panel.has-category-image .category-hero-image img {
+    object-fit: cover;
+  }
+
+  .hero-panel.has-category-image .category-hero-copy {
+    position: absolute;
+    right: 24px;
+    left: 24px;
+    z-index: 2;
+    color: #fff;
+    text-align: left;
+    text-shadow: 0 1px 18px rgba(0, 0, 0, .28);
+  }
+
+  .hero-panel.has-category-image .hero-copy {
+    max-width: 21em;
+    margin: 16px 0 0;
+    font-size: 14px;
+    line-height: 1.85;
   }
 
   .detail-info {
@@ -4900,6 +4984,124 @@ body {
   font-size: 20px !important;
 }
 
+@media (max-width: 767px) {
+  .product-media,
+  .brand-product-card__image,
+  .url-product-card__image,
+  .home-product-card__image,
+  .home-product-card__media,
+  .recommend-image,
+  .recent-image {
+    background: #fff !important;
+  }
+
+  .product-media img,
+  .product-media .image-hover-stack,
+  .brand-product-card__image img,
+  .brand-product-card__image .image-hover-stack,
+  .url-product-card__image img,
+  .url-product-card__image .image-hover-stack,
+  .home-product-card__image img,
+  .home-product-card__media img,
+  .recommend-image img,
+  .recommend-image .image-hover-stack,
+  .recent-image img,
+  .recent-image .image-hover-stack {
+    object-fit: contain !important;
+  }
+
+  .product-brand,
+  .url-product-card__brand,
+  .brand-product-card__category,
+  .home-product-card__brand,
+  .recommend-card > p,
+  .compare-product__brand {
+    font-size: 12px !important;
+    line-height: 1.65 !important;
+  }
+
+  .product-name,
+  .product-name a,
+  .url-product-card__name,
+  .brand-product-card h3,
+  .brand-product-card h3 a,
+  .home-product-card__name,
+  .home-product-card__name a,
+  .recommend-card h3,
+  .recommend-card h3 a,
+  .compare-product__name {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .product-price,
+  .url-product-card__price,
+  .brand-product-card__price,
+  .home-product-card__price,
+  .recommend-card strong,
+  .compare-product__price {
+    margin-top: 7px !important;
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+    letter-spacing: 1.4px !important;
+  }
+
+  .product-tag,
+  .feature-tag,
+  .product-card .tag,
+  .product-card .feature-tags li,
+  .feature-tags li,
+  .url-product-card__tags span,
+  .home-tags span,
+  .home-tags span:first-child {
+    min-height: 24px !important;
+    padding: 4px 8px !important;
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  .brand-product-card__link,
+  .compare-detail-link,
+  .compare-empty a,
+  .product-card .mall-links a,
+  .product-card .store-links a,
+  .compare-mall-links a,
+  .url-product-card__compare,
+  .compare-check,
+  .compare-inline-control {
+    min-height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+  }
+
+  .hero-panel.has-category-image .guide-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: min(100% - 28px, 420px);
+    padding: 22px 0 30px;
+  }
+
+  .hero-panel.has-category-image .guide-links a {
+    min-width: 0;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(49, 49, 49, .18) !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    background-image: none !important;
+    color: #333 !important;
+    padding: 9px 10px;
+    font-size: 12px !important;
+    font-weight: 400;
+    letter-spacing: .04em;
+  }
+}
+
 /* Product detail thumbnail rail: horizontal thumbnails under the main media. */
 .detail-gallery:has(.detail-thumbnails-wrap) {
   display: block !important;
@@ -5267,4 +5469,36 @@ body {
   font-weight: 400 !important;
   letter-spacing: .03em !important;
   line-height: 1.7 !important;
+}
+
+@media (max-width: 767px) {
+  .hero-panel.has-category-image .category-hero-copy {
+    top: clamp(92px, 18svh, 150px);
+    bottom: auto;
+    padding-bottom: 0;
+  }
+
+  .hero-panel.has-category-image .section-title-en {
+    color: #fff !important;
+    font-size: clamp(24px, 8vw, 34px) !important;
+    text-shadow: 0 1px 18px rgba(0, 0, 0, .32);
+  }
+
+  .hero-panel.has-category-image .product-list-title {
+    margin-top: 10px;
+    color: #fff !important;
+    font-size: clamp(15px, 4.4vw, 21px) !important;
+    line-height: 1.15 !important;
+    text-shadow: 0 1px 18px rgba(0, 0, 0, .32);
+  }
+
+  .hero-panel.has-category-image .hero-copy {
+    position: static;
+    max-width: 16em;
+    margin: 18px 0 0;
+    color: #fff !important;
+    font-size: 14px;
+    line-height: 1.85;
+    text-shadow: 0 1px 18px rgba(0, 0, 0, .32);
+  }
 }

@@ -13,6 +13,7 @@ import {
 } from './shared-ui';
 import { supabase } from './lib/supabase';
 import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
+import type { SiteAsset } from './siteAssetTypes';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
 type Product = {
@@ -216,6 +217,7 @@ let activeCategory = getInitialCategory();
 let productImages = new Map<string, ProductImagePair>();
 let productColors = new Map<string, ProductColor[]>();
 let brandsById = new Map<string, Brand>();
+let categoryHeroAssets = new Map<string, SiteAsset>();
 let activeQuickFilter: QuickFilter = getInitialQuickFilter(activeCategory);
 let activeSidebarFilters = getInitialSidebarFilters();
 let sortKey: SortKey = getInitialSortKey();
@@ -253,7 +255,7 @@ async function renderPublicPage() {
     </main>
   `;
 
-  const [productsResult, imagesResult, colorsResult, brandsResult] = await Promise.all([
+  const [productsResult, imagesResult, colorsResult, brandsResult, siteAssets] = await Promise.all([
     supabase.from('products').select('*').order('id', { ascending: true }),
     supabase
       .from('product_affiliate_images')
@@ -262,6 +264,7 @@ async function renderPublicPage() {
       .order('display_order', { ascending: true }),
     supabase.from('product_colors').select('*').order('display_order', { ascending: true }),
     supabase.from('brands').select('*').eq('is_published', true),
+    loadProductListSiteAssets(),
   ]);
 
   if (productsResult.error) {
@@ -286,6 +289,7 @@ async function renderPublicPage() {
   if (brandsResult.error) console.info('ブランド導線はmigration適用後に有効になります。', brandsResult.error.message);
   productColors = groupProductColors((colorsResult.data ?? []) as ProductColor[]);
   brandsById = new Map(((brandsResult.data ?? []) as Brand[]).map((brand) => [brand.id, brand]));
+  categoryHeroAssets = buildCategoryHeroAssetMap(siteAssets);
   renderStorefront();
 }
 
@@ -293,20 +297,24 @@ function renderStorefront() {
   comparedProducts = new Set<string>(loadCompareProductIds());
   updateListingMetadata(activeCategory);
   const heroCopy = getCategoryHeroCopy(activeCategory);
+  const categoryHero = getCategoryHeroAsset(activeCategory);
   app.innerHTML = `
     <main class="storefront-shell">
-      <section class="hero-panel">
+      <section class="hero-panel${categoryHero ? ' has-category-image' : ''}">
         <div class="hero-inner">
-          <p class="section-title-en">COLLECTION</p>
-          <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
-          <p class="hero-copy">${escapeText(heroCopy)}</p>
-          <nav class="guide-links" aria-label="ベビーカー選びの導線">
-            <a href="#">人気ランキング</a>
-            <a href="/stroller-guide.html#stroller-diagnosis">かんたん診断</a>
-            <a href="#">比較表</a>
-            <a href="#">メーカーから探す</a>
-          </nav>
+          <div class="category-hero-copy">
+            <p class="section-title-en">COLLECTION</p>
+            <h1 class="product-list-title">${escapeText(activeCategory)}</h1>
+            <p class="hero-copy">${renderMultilineText(heroCopy)}</p>
+          </div>
+          ${categoryHero ? renderCategoryHeroImage(categoryHero) : ''}
         </div>
+        <nav class="guide-links" aria-label="ベビーカー選びの導線">
+          <a href="#">人気ランキング</a>
+          <a href="/stroller-guide.html#stroller-diagnosis">かんたん診断</a>
+          <a href="#">比較表</a>
+          <a href="#">メーカーから探す</a>
+        </nav>
       </section>
 
       ${renderCategoryTabs()}
@@ -926,6 +934,10 @@ function buildCategoryUrl(category: string): string {
 }
 
 function getCategoryHeroCopy(category: string): string {
+  if (category === 'ベビーカー') {
+    return '暮らしにあった\nベビーカーを。';
+  }
+
   if (category === 'ヒップシート') {
     return '歩いたり抱っこしたりをくり返す時期に。軽さ・安定感・収納力で選べるヒップシートをまとめました。';
   }
@@ -1247,6 +1259,81 @@ function getPurchaseLinks(product: Product) {
   ];
 }
 
+async function loadProductListSiteAssets(): Promise<SiteAsset[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_published_site_assets', {
+      p_asset_type: null,
+      p_asset_key: null,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return Array.isArray(data) ? (data as SiteAsset[]) : [];
+  } catch (error) {
+    console.info('商品一覧用カテゴリ画像は未取得です。', error);
+    return [];
+  }
+}
+
+function buildCategoryHeroAssetMap(siteAssets: SiteAsset[]): Map<string, SiteAsset> {
+  const assetsByKey = new Map(siteAssets.map((asset) => [asset.asset_key, asset]));
+  const map = new Map<string, SiteAsset>();
+
+  getMainCategories().forEach((category) => {
+    const asset = getCategoryHeroKeyCandidates(category)
+      .map((assetKey) => assetsByKey.get(assetKey))
+      .find((candidate): candidate is SiteAsset =>
+        Boolean(candidate && (isSafeImageUrl(candidate.desktop_image_url) || isSafeImageUrl(candidate.mobile_image_url)))
+      );
+
+    if (asset) {
+      map.set(category, asset);
+    }
+  });
+
+  return map;
+}
+
+function getCategoryHeroAsset(category: string): SiteAsset | null {
+  return categoryHeroAssets.get(category) ?? null;
+}
+
+function getCategoryHeroKeyCandidates(category: string): string[] {
+  if (category === 'ベビーカー') return ['category_hero_stroller', 'category_stroller'];
+  if (category === '抱っこ紐') return ['category_hero_carrier', 'category_carrier'];
+  if (category === 'チャイルドシート') return ['category_hero_car_seat', 'category_hero_carseat', 'category_car_seat', 'category_carseat'];
+  if (category === 'ヒップシート') return ['category_hero_hipseat', 'category_hipseat'];
+  return [];
+}
+
+function renderCategoryHeroImage(asset: SiteAsset): string {
+  const fallbackSrc = isSafeImageUrl(asset.desktop_image_url) ? asset.desktop_image_url : asset.mobile_image_url;
+  if (!isSafeImageUrl(fallbackSrc)) return '';
+
+  const desktopSrc = isSafeImageUrl(asset.desktop_image_url) ? asset.desktop_image_url : fallbackSrc;
+  const mobileSrc = isSafeImageUrl(asset.mobile_image_url) ? asset.mobile_image_url : desktopSrc;
+  const alt = asset.alt_text || asset.title || `${activeCategory} 商品一覧イメージ`;
+
+  return `
+    <picture class="category-hero-image">
+      <source media="(max-width: 640px)" srcset="${escapeAttr(mobileSrc)}">
+      <img src="${escapeAttr(desktopSrc)}" alt="${escapeAttr(alt)}" loading="eager" decoding="async">
+    </picture>
+  `;
+}
+
+function isSafeImageUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value, window.location.origin);
+    return ['http:', 'https:', 'data:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
 function getFirstText(product: Product, keys: string[]) {
   for (const key of keys) {
     const value = product[key];
@@ -1283,6 +1370,10 @@ function escapeText(value: string) {
   const div = document.createElement('div');
   div.textContent = value;
   return div.innerHTML;
+}
+
+function renderMultilineText(value: string): string {
+  return escapeText(value).replace(/\r?\n/g, '<br>');
 }
 
 function escapeAttr(value: string) {
