@@ -2,6 +2,7 @@ import './assetsAdmin.css';
 import JSZip from 'jszip';
 import { supabase } from './lib/supabase';
 import {
+  type AssetFolder,
   siteAssetTypes,
   type ImageMetadata,
   type SiteAsset,
@@ -89,7 +90,10 @@ let query = new URLSearchParams(window.location.search).get('asset_key')
   ?? new URLSearchParams(window.location.search).get('q')
   ?? '';
 let typeFilter: 'all' | SiteAssetType = 'all';
+let folderFilter: 'all' | 'uncategorized' | string = 'all';
 let brands: BrandOption[] = [];
+let folders: AssetFolder[] = [];
+let assetFoldersAvailable = true;
 let brandHeroLinkAvailable = true;
 const previewUrls = new Set<string>();
 const selectedIconIds = new Set<string>();
@@ -175,7 +179,7 @@ async function checkAdmin() {
 }
 
 async function renderAdmin() {
-  await loadBrands();
+  await Promise.all([loadBrands(), loadFolders()]);
   app.innerHTML = `
     <header class="admin-header">
       <div>
@@ -203,6 +207,7 @@ async function renderAdmin() {
         <div class="toolbar">
           <label>検索<input id="asset-search" type="search" value="${escapeAttr(query)}" placeholder="asset_key / タイトル" /></label>
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
+          <label>フォルダ<select id="asset-folder-filter">${renderFolderOptions(folderFilter, true)}</select></label>
         </div>
         <div id="icon-bulk-actions" class="icon-bulk-actions" hidden></div>
         <p id="page-message" class="page-message" aria-live="polite">読み込み中...</p>
@@ -228,6 +233,7 @@ function renderAssetForm() {
       <div class="field-grid identity-grid">
         <label class="asset-key-field">asset_key<input name="asset_key" required placeholder="home_main_hero" /><small data-asset-key-suggestion>候補: home_main_hero</small></label>
         <label>用途<select name="asset_type">${renderTypeOptions('hero')}</select></label>
+        ${renderFolderField()}
         ${renderBrandField()}
         <label>並び順<input name="display_order" type="number" min="1" value="1" required /></label>
         <label class="toggle-label"><input name="is_published" type="checkbox" />公開する</label>
@@ -283,6 +289,39 @@ function renderBrandField(selectedBrandId = '') {
       <small data-brand-link-note></small>
     </label>
   `;
+}
+
+function renderFolderField(selectedFolderId = '') {
+  if (!assetFoldersAvailable) {
+    return `
+      <label>
+        フォルダ
+        <select name="folder_id" disabled>
+          <option value="">未分類</option>
+        </select>
+      </label>
+    `;
+  }
+  return `
+    <label>
+      フォルダ
+      <select name="folder_id">
+        ${renderFolderOptions(selectedFolderId, false)}
+      </select>
+    </label>
+  `;
+}
+
+function renderFolderOptions(selectedFolderId: string, includeAll: boolean) {
+  const options = includeAll
+    ? ['<option value="all">すべて</option>', `<option value="uncategorized" ${selectedFolderId === 'uncategorized' ? 'selected' : ''}>未分類</option>`]
+    : [`<option value="" ${!selectedFolderId ? 'selected' : ''}>未分類</option>`];
+
+  folders.forEach((folder) => {
+    options.push(`<option value="${escapeAttr(folder.id)}" ${folder.id === selectedFolderId ? 'selected' : ''}>${escapeText(folder.name)}</option>`);
+  });
+
+  return options.join('');
 }
 
 function renderIconFields(isEdit = false) {
@@ -350,6 +389,18 @@ async function loadBrands() {
   brandHeroLinkAvailable = false;
 }
 
+async function loadFolders() {
+  const { data, error } = await supabase.rpc('list_site_asset_folders');
+  if (error) {
+    console.warn('フォルダ一覧を取得できませんでした。migrationの適用後に利用できます。', error);
+    folders = [];
+    assetFoldersAvailable = false;
+    return;
+  }
+  folders = (data ?? []) as AssetFolder[];
+  assetFoldersAvailable = true;
+}
+
 function renderUploadField(name: string, label: string, required: boolean, variant: 'desktop' | 'mobile') {
   return `
     <label class="upload-field">
@@ -376,8 +427,11 @@ function renderAssetList() {
   const normalizedQuery = query.trim().toLowerCase();
   const visibleAssets = assets.filter((asset) => {
     const matchesType = typeFilter === 'all' || asset.asset_type === typeFilter;
-    const matchesQuery = !normalizedQuery || `${asset.asset_key} ${asset.title}`.toLowerCase().includes(normalizedQuery);
-    return matchesType && matchesQuery;
+    const folderLabel = getFolderLabel(asset.folder_id);
+    const matchesFolder = folderFilter === 'all'
+      || (folderFilter === 'uncategorized' ? !asset.folder_id : asset.folder_id === folderFilter);
+    const matchesQuery = !normalizedQuery || `${asset.asset_key} ${asset.title} ${folderLabel}`.toLowerCase().includes(normalizedQuery);
+    return matchesType && matchesFolder && matchesQuery;
   });
   const currentIconIds = new Set(assets.filter((asset) => asset.asset_type === 'icon').map((asset) => asset.id));
   selectedIconIds.forEach((id) => {
@@ -438,6 +492,7 @@ function renderAssetCard(asset: SiteAsset) {
       <div class="asset-card-head">
         <div>
           <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
+          <div class="asset-folder-line">${escapeText(getFolderLabel(asset.folder_id))}</div>
           <h3>${escapeText(asset.asset_key)}</h3>
           <p>${escapeText(asset.title || 'タイトル未設定')}</p>
           ${isIcon ? `<p class="asset-card-alt">${escapeText(asset.alt_text || 'alt未設定')}</p>` : ''}
@@ -452,6 +507,7 @@ function renderAssetCard(asset: SiteAsset) {
         <div class="field-grid identity-grid">
           <label>asset_key<input name="asset_key" value="${escapeAttr(asset.asset_key)}" required /></label>
           <label>用途<select name="asset_type">${renderTypeOptions(asset.asset_type)}</select></label>
+          ${renderFolderField(asset.folder_id ?? '')}
           ${renderBrandField(selectedBrandId)}
           <label>並び順<input name="display_order" type="number" min="1" value="${asset.display_order}" required /></label>
           <label class="toggle-label"><input name="is_published" type="checkbox" ${asset.is_published ? 'checked' : ''} />公開する</label>
@@ -534,6 +590,12 @@ function bindToolbar() {
     const select = event.currentTarget;
     if (!(select instanceof HTMLSelectElement)) return;
     typeFilter = select.value as typeof typeFilter;
+    renderAssetList();
+  });
+  document.querySelector<HTMLSelectElement>('#asset-folder-filter')?.addEventListener('change', (event) => {
+    const select = event.currentTarget;
+    if (!(select instanceof HTMLSelectElement)) return;
+    folderFilter = select.value as typeof folderFilter;
     renderAssetList();
   });
 }
@@ -859,7 +921,7 @@ function getSuggestedAlt(form: HTMLFormElement) {
 function saveCreateDraft(form: HTMLFormElement) {
   const draft: Record<string, string | boolean> = {};
   const fieldNames = [
-    'asset_key', 'asset_type', 'brand_id', 'display_order', 'is_published',
+    'asset_key', 'asset_type', 'folder_id', 'brand_id', 'display_order', 'is_published',
     'title', 'alt_text', 'link_url', 'caption', 'starts_at', 'ends_at',
     'optimize_images', 'optimization_level',
   ];
@@ -914,6 +976,11 @@ function getBrandIdForAsset(asset: SiteAsset) {
     )?.id ?? '';
   }
   return '';
+}
+
+function getFolderLabel(folderId: string | null | undefined) {
+  if (!folderId) return '未分類';
+  return folders.find((folder) => folder.id === folderId)?.name ?? '未分類';
 }
 
 function bindFilePreview(form: HTMLFormElement, inputName: string, variant: 'desktop' | 'mobile') {
@@ -1392,8 +1459,10 @@ function readFormFields(form: HTMLFormElement, assetKey: string) {
   const startsAt = parseDatetime(String(values.get('starts_at') ?? ''));
   const endsAt = parseDatetime(String(values.get('ends_at') ?? ''));
   const brandId = String(values.get('brand_id') ?? '').trim();
+  const folderId = assetFoldersAvailable ? String(values.get('folder_id') ?? '').trim() || null : null;
 
   if (!siteAssetTypes.includes(assetType)) throw new Error('用途が正しくありません。');
+  if (folderId && !folders.some((folder) => folder.id === folderId)) throw new Error('フォルダが正しくありません。');
   if ((assetType === 'brand_logo' || assetType === 'brand_hero') && !brandId) throw new Error('ブランドを選択してください。');
   if (!Number.isInteger(displayOrder) || displayOrder < 1) throw new Error('並び順は1以上の整数で入力してください。');
   if (startsAt && endsAt && new Date(endsAt) < new Date(startsAt)) throw new Error('公開終了は公開開始以降にしてください。');
@@ -1401,6 +1470,7 @@ function readFormFields(form: HTMLFormElement, assetKey: string) {
   return {
     assetKey,
     assetType,
+    folderId,
     brandId,
     title: String(values.get('title') ?? '').trim(),
     altText: String(values.get('alt_text') ?? '').trim(),
@@ -1432,7 +1502,7 @@ function buildRpcPayload(
   desktop: StoredImage,
   mobile: StoredImage | null,
 ) {
-  return {
+  const payload = {
     p_asset_key: fields.assetKey,
     p_asset_type: fields.assetType,
     p_title: fields.title,
@@ -1454,6 +1524,10 @@ function buildRpcPayload(
     p_starts_at: fields.startsAt,
     p_ends_at: fields.endsAt,
   };
+
+  return assetFoldersAvailable
+    ? { ...payload, p_folder_id: fields.folderId }
+    : payload;
 }
 
 function readOptimizationSettings(form: HTMLFormElement): ImageOptimizationSettings {

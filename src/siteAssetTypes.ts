@@ -7,6 +7,7 @@ export type SiteAsset = {
   id: string;
   asset_key: string;
   asset_type: SiteAssetType;
+  folder_id: string | null;
   title: string;
   alt_text: string;
   caption: string;
@@ -26,6 +27,16 @@ export type SiteAsset = {
   starts_at: string | null;
   ends_at: string | null;
   created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AssetFolder = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };

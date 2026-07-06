@@ -27,6 +27,7 @@ type ImportImageInput = {
 type AssetInput = {
   asset_key?: unknown;
   asset_type?: unknown;
+  folder_id?: unknown;
   title?: unknown;
   alt_text?: unknown;
   brand_slug_or_category?: unknown;
@@ -46,12 +47,14 @@ type ImportRequestBody = {
 type NormalizedAssetInput = {
   assetKey: string;
   assetType: SiteAssetType;
+  folderId: string | null;
   title: string;
   altText: string;
   scope: string;
   imageSlot: ImageSlot;
   isPublished: boolean;
   displayOrder: number;
+  assetKeyStartIndex: number | null;
   linkUrl: string | null;
   memo: string;
   optimize: boolean;
@@ -103,6 +106,14 @@ type CreatedAsset = {
   mobile_image_url: string | null;
 };
 
+type AssetFolder = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  sort_order: number;
+};
+
 const storageBucket = 'site-assets';
 const maxImportImages = 30;
 const maxSourceBytes = 20 * 1024 * 1024;
@@ -124,6 +135,26 @@ export async function onRequestOptions(context: PagesContext): Promise<Response>
     status: 204,
     headers: cors.headers,
   });
+}
+
+export async function onRequestGet(context: PagesContext): Promise<Response> {
+  const cors = getCorsHeaders(context.request, context.env);
+  if (!cors.allowed) return json({ ok: false, error: 'この送信元からは利用できません。' }, 403, cors.headers);
+
+  try {
+    const token = readBearerToken(context.request);
+    const supabase = createAuthenticatedSupabaseClient(context.env, token);
+    await assertAdmin(supabase);
+    const { data, error } = await supabase.rpc('list_site_asset_folders');
+    if (error) throw new UserFacingError('フォルダ一覧を取得できませんでした。Supabase migrationを適用してください。', 500);
+    return json({ ok: true, folders: (data ?? []) as AssetFolder[] }, 200, cors.headers);
+  } catch (error) {
+    const status = error instanceof UserFacingError ? error.status : 500;
+    return json({
+      ok: false,
+      error: getErrorMessage(error),
+    }, status, cors.headers);
+  }
 }
 
 export async function onRequestPost(context: PagesContext): Promise<Response> {
@@ -265,7 +296,9 @@ function normalizeImportBody(body: ImportRequestBody): { images: ImportImageInpu
   const rawOptions = body.options && typeof body.options === 'object' ? body.options as Record<string, unknown> : {};
   const assetKey = normalizeAssetKey(readText(rawAsset.asset_key, 80));
   const assetType = readSiteAssetType(rawAsset.asset_type);
+  const folderId = readOptionalUuid(rawAsset.folder_id, 'フォルダ');
   const displayOrder = readDisplayOrder(rawAsset.display_order);
+  const assetKeyStartIndex = readAssetKeyStartIndex(rawOptions.asset_key_start_index);
   const imageSlot = rawAsset.image_slot === 'mobile' ? 'mobile' : 'desktop';
   const scope = readText(rawAsset.brand_slug_or_category, 120);
   const forceDuplicate = rawOptions.force_duplicate === true;
@@ -282,12 +315,14 @@ function normalizeImportBody(body: ImportRequestBody): { images: ImportImageInpu
     asset: {
       assetKey,
       assetType,
+      folderId,
       title: readText(rawAsset.title, 160),
       altText: readText(rawAsset.alt_text, 220),
       scope,
       imageSlot,
       isPublished: rawAsset.is_published === true,
       displayOrder,
+      assetKeyStartIndex,
       linkUrl: normalizeLinkUrl(readText(rawAsset.link_url, 500)),
       memo: readText(rawAsset.memo, 1000),
       optimize: rawOptions.optimize !== false,
@@ -337,10 +372,13 @@ async function importOneImage(
   index: number,
   total: number,
 ): Promise<{ asset: CreatedAsset; warnings: string[] }> {
-  const assetKey = total === 1 ? fields.assetKey : createIndexedAssetKey(fields.assetKey, index + 1);
-  const title = total === 1
+  const sequenceIndex = fields.assetKeyStartIndex === null ? index + 1 : fields.assetKeyStartIndex + index;
+  const assetKey = total === 1 && fields.assetKeyStartIndex === null
+    ? fields.assetKey
+    : createIndexedAssetKey(fields.assetKey, sequenceIndex);
+  const title = total === 1 && fields.assetKeyStartIndex === null
     ? fields.title || image.title
-    : appendIndex(fields.title || image.title || assetKey, index + 1);
+    : appendIndex(fields.title || image.title || assetKey, sequenceIndex);
   const altText = fields.altText || image.alt || title;
   const fetched = await fetchAndPrepareImage(image.sourceUrl, env, fields.optimize);
   const uploadedPaths: string[] = [];
@@ -356,7 +394,7 @@ async function importOneImage(
       uploadedPaths.push(mobileImage.storagePath);
     }
 
-    const { data, error } = await supabase.rpc('create_site_asset', {
+    const createPayload = {
       p_asset_key: assetKey,
       p_asset_type: fields.assetType,
       p_title: title,
@@ -377,7 +415,10 @@ async function importOneImage(
       p_is_published: fields.isPublished,
       p_starts_at: null,
       p_ends_at: null,
-    });
+    };
+    const { data, error } = await supabase.rpc('create_site_asset', fields.folderId
+      ? { ...createPayload, p_folder_id: fields.folderId }
+      : createPayload);
     if (error) throw new UserFacingError(error.message, 400);
     const asset = data as CreatedAsset;
 
@@ -693,6 +734,24 @@ function readDisplayOrder(value: unknown): number {
   return order;
 }
 
+function readAssetKeyStartIndex(value: unknown): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const index = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(index) || index < 1 || index > 9999) {
+    throw new UserFacingError('asset_keyの開始番号が正しくありません。', 400);
+  }
+  return index;
+}
+
+function readOptionalUuid(value: unknown, label: string): string | null {
+  const uuid = readText(value, 64);
+  if (!uuid) return null;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(uuid)) {
+    throw new UserFacingError(`${label}が正しくありません。`, 400);
+  }
+  return uuid.toLowerCase();
+}
+
 function readText(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
@@ -955,7 +1014,7 @@ function normalizeSupabaseUrl(value: string | undefined): string {
 function getCorsHeaders(request: Request, env: AssetImportEnv): { allowed: boolean; headers: Headers } {
   const origin = request.headers.get('origin') ?? '';
   const headers = new Headers({
-    'access-control-allow-methods': 'POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-allow-headers': 'authorization, content-type',
     'access-control-max-age': '86400',
     'cache-control': 'no-store',

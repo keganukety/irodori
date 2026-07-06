@@ -20,6 +20,12 @@ type AuthState = {
   userEmail: string;
 };
 
+type AssetFolder = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 type ImportResponse = {
   ok?: boolean;
   partial?: boolean;
@@ -28,6 +34,7 @@ type ImportResponse = {
   assets?: Array<{ asset_key: string }>;
   failures?: Array<{ source_url: string; error: string }>;
   warnings?: string[];
+  folders?: AssetFolder[];
   assets_admin_url?: string;
   duplicates?: Array<{ existing_asset?: { asset_key?: string; title?: string } }>;
   details?: {
@@ -46,9 +53,12 @@ const refreshButton = getElement<HTMLButtonElement>('refresh-images-button');
 const siteOriginInput = getElement<HTMLInputElement>('site-origin-input');
 const connectionStatus = getElement<HTMLElement>('connection-status');
 const forceDuplicateWrap = getElement<HTMLElement>('force-duplicate-wrap');
-const maxImportImages = 30;
+const folderSelect = getElement<HTMLSelectElement>('folder-select');
+const maxImportImages = 100;
+const importChunkSize = 30;
 
 let images: ImageCandidate[] = [];
+let folders: AssetFolder[] = [];
 const selectedUrls = new Set<string>();
 
 void init();
@@ -57,7 +67,9 @@ async function init() {
   const settings = await storageLocalGet(['siteOrigin', 'assetImporterAuth']);
   siteOriginInput.value = normalizeSiteOrigin(settings.siteOrigin) || DEFAULT_SITE_ORIGIN;
   bindEvents();
-  updateConnectionStatus(settings.assetImporterAuth as AuthState | undefined);
+  const auth = settings.assetImporterAuth as AuthState | undefined;
+  updateConnectionStatus(auth);
+  await loadFolders(auth);
   await loadImages();
 }
 
@@ -212,9 +224,35 @@ async function connectToSite() {
     };
     await storageLocalSet({ assetImporterAuth: authState });
     updateConnectionStatus(authState);
+    await loadFolders(authState);
     setMessage('接続しました。', 'success');
   } catch (error) {
     setMessage(`接続できませんでした: ${getErrorMessage(error)}`, 'error');
+  }
+}
+
+async function loadFolders(auth?: AuthState | null) {
+  renderFolderOptions();
+  const siteOrigin = normalizeSiteOrigin(siteOriginInput.value) || DEFAULT_SITE_ORIGIN;
+  const usableAuth = auth?.accessToken && auth.siteOrigin === siteOrigin
+    ? { ...auth, expiresAt: auth.expiresAt || decodeJwtExp(auth.accessToken) }
+    : await getUsableAuth(siteOrigin);
+  if (!usableAuth || (usableAuth.expiresAt && usableAuth.expiresAt * 1000 < Date.now() + 60_000)) return;
+
+  try {
+    const response = await fetch(`${siteOrigin}${IMPORT_API_PATH}`, {
+      headers: {
+        authorization: `Bearer ${usableAuth.accessToken}`,
+      },
+    });
+    const payload = await response.json() as ImportResponse;
+    if (!response.ok || !payload.ok) throw new Error(payload.error || 'フォルダ一覧を取得できませんでした。');
+    folders = (payload.folders ?? []).filter(isAssetFolder);
+    renderFolderOptions();
+  } catch (error) {
+    folders = [];
+    renderFolderOptions();
+    console.warn('フォルダ一覧を取得できませんでした。', error);
   }
 }
 
@@ -237,8 +275,76 @@ async function saveSelectedImages() {
   }
 
   const formData = new FormData(saveForm);
-  const body = {
-    images: selected.map((image) => ({
+  const createdAssets: NonNullable<ImportResponse['assets']> = [];
+  const failures: NonNullable<ImportResponse['failures']> = [];
+  const warnings: string[] = [];
+  let firstAdminUrl = '';
+
+  setBusy(true);
+  setMessage(`0/${selected.length}件 保存中...`, 'normal');
+  openAdminLink.hidden = true;
+
+  try {
+    for (let offset = 0; offset < selected.length; offset += importChunkSize) {
+      const chunk = selected.slice(offset, offset + importChunkSize);
+      const progress = Math.min(offset + chunk.length, selected.length);
+      setMessage(`${progress}/${selected.length}件 保存中...`, 'normal');
+      const body = buildImportBody(chunk, formData, offset, selected.length);
+      const { response, payload } = await postImportChunk(siteOrigin, auth, body);
+
+      if (response.status === 409 && payload.duplicate) {
+        forceDuplicateWrap.hidden = false;
+        const existingKey = payload.duplicates?.[0]?.existing_asset?.asset_key;
+        if (existingKey) setAdminLink(siteOrigin, `/assets-admin.html?asset_key=${encodeURIComponent(existingKey)}`);
+        const savedPrefix = createdAssets.length > 0 ? `${createdAssets.length}件保存済みです。` : '';
+        setMessage(`${savedPrefix}${payload.error || '同じ画像URLがすでに登録されています。'}`, 'warning');
+        return;
+      }
+
+      const payloadFailures = payload.failures ?? payload.details?.failures ?? [];
+      if (!response.ok || (!payload.ok && !payload.partial)) {
+        if (payloadFailures.length > 0) {
+          failures.push(...payloadFailures);
+          continue;
+        }
+        throw new Error(formatImportError(payload, response.status));
+      }
+
+      createdAssets.push(...(payload.assets ?? []));
+      failures.push(...(payload.failures ?? []));
+      warnings.push(...(payload.warnings ?? []));
+      if (!firstAdminUrl && payload.assets_admin_url) firstAdminUrl = payload.assets_admin_url;
+    }
+
+    forceDuplicateWrap.hidden = true;
+    const adminUrl = firstAdminUrl || `/assets-admin.html?asset_key=${encodeURIComponent(createdAssets[0]?.asset_key ?? '')}`;
+    if (createdAssets.length > 0) setAdminLink(siteOrigin, adminUrl);
+
+    setImportResultMessage({
+      ok: failures.length === 0,
+      partial: failures.length > 0,
+      assets: createdAssets,
+      failures,
+      warnings,
+      assets_admin_url: firstAdminUrl,
+    });
+  } catch (error) {
+    setMessage(getErrorMessage(error), 'error');
+  } finally {
+    setBusy(false);
+  }
+}
+
+function buildImportBody(imagesToSave: ImageCandidate[], formData: FormData, offset: number, total: number) {
+  const displayOrder = Number(formData.get('display_order') ?? 1);
+  const options: Record<string, unknown> = {
+    optimize: formData.get('optimize') === 'on',
+    force_duplicate: formData.get('force_duplicate') === 'on',
+  };
+  if (total > 1) options.asset_key_start_index = offset + 1;
+
+  return {
+    images: imagesToSave.map((image) => ({
       url: image.url,
       sourcePageUrl: image.sourcePageUrl,
       alt: image.alt,
@@ -247,58 +353,31 @@ async function saveSelectedImages() {
     asset: {
       asset_key: String(formData.get('asset_key') ?? ''),
       asset_type: String(formData.get('asset_type') ?? ''),
+      folder_id: String(formData.get('folder_id') ?? ''),
       title: String(formData.get('title') ?? ''),
       alt_text: String(formData.get('alt_text') ?? ''),
       brand_slug_or_category: String(formData.get('brand_slug_or_category') ?? ''),
       image_slot: String(formData.get('image_slot') ?? 'desktop'),
       is_published: formData.get('is_published') === 'on',
-      display_order: Number(formData.get('display_order') ?? 1),
+      display_order: Number.isFinite(displayOrder) ? displayOrder + offset : 1 + offset,
       link_url: String(formData.get('link_url') ?? ''),
       memo: String(formData.get('memo') ?? ''),
     },
-    options: {
-      optimize: formData.get('optimize') === 'on',
-      force_duplicate: formData.get('force_duplicate') === 'on',
-    },
+    options,
   };
+}
 
-  setBusy(true);
-  setMessage('保存しています...', 'normal');
-  openAdminLink.hidden = true;
-
-  try {
-    const response = await fetch(`${siteOrigin}${IMPORT_API_PATH}`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${auth.accessToken}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-    const payload = await response.json() as ImportResponse;
-
-    if (response.status === 409 && payload.duplicate) {
-      forceDuplicateWrap.hidden = false;
-      const existingKey = payload.duplicates?.[0]?.existing_asset?.asset_key;
-      if (existingKey) setAdminLink(siteOrigin, `/assets-admin.html?asset_key=${encodeURIComponent(existingKey)}`);
-      setMessage(payload.error || '同じ画像URLがすでに登録されています。', 'warning');
-      return;
-    }
-
-    if (!response.ok || (!payload.ok && !payload.partial)) {
-      throw new Error(formatImportError(payload, response.status));
-    }
-
-    forceDuplicateWrap.hidden = true;
-    const adminUrl = payload.assets_admin_url || `/assets-admin.html?asset_key=${encodeURIComponent(payload.assets?.[0]?.asset_key ?? '')}`;
-    setAdminLink(siteOrigin, adminUrl);
-
-    setImportResultMessage(payload);
-  } catch (error) {
-    setMessage(getErrorMessage(error), 'error');
-  } finally {
-    setBusy(false);
-  }
+async function postImportChunk(siteOrigin: string, auth: AuthState, body: ReturnType<typeof buildImportBody>) {
+  const response = await fetch(`${siteOrigin}${IMPORT_API_PATH}`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${auth.accessToken}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json() as ImportResponse;
+  return { response, payload };
 }
 
 function formatImportError(payload: ImportResponse, status: number): string {
@@ -318,6 +397,15 @@ function setImportResultMessage(payload: ImportResponse) {
     ? `${savedCount}件保存しました。${failures.length}件は失敗しました。`
     : `${savedCount}件保存しました。`;
   setMessage(`${summary}${details ? ` ${details}` : ''}`, failures.length > 0 || warnings.length > 0 ? 'warning' : 'success');
+}
+
+function renderFolderOptions() {
+  const currentValue = folderSelect.value;
+  folderSelect.innerHTML = [
+    '<option value="">未分類</option>',
+    ...folders.map((folder) => `<option value="${escapeAttr(folder.id)}">${escapeText(folder.name)}</option>`),
+  ].join('');
+  if (folders.some((folder) => folder.id === currentValue)) folderSelect.value = currentValue;
 }
 
 async function getUsableAuth(siteOrigin: string): Promise<AuthState | null> {
@@ -398,6 +486,14 @@ function isImageCandidate(value: unknown): value is ImageCandidate {
   if (!value || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
   return typeof record.url === 'string' && /^https?:\/\//i.test(record.url);
+}
+
+function isAssetFolder(value: unknown): value is AssetFolder {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.id === 'string'
+    && typeof record.name === 'string'
+    && typeof record.slug === 'string';
 }
 
 function setAdminLink(siteOrigin: string, path: string) {

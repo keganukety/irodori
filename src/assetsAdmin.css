@@ -184,7 +184,7 @@ label {
 }
 
 .identity-grid {
-  grid-template-columns: minmax(210px, 1.4fr) minmax(150px, .8fr) minmax(190px, 1fr) 110px minmax(120px, auto);
+  grid-template-columns: minmax(210px, 1.4fr) minmax(140px, .75fr) minmax(150px, .8fr) minmax(190px, 1fr) 110px minmax(120px, auto);
 }
 
 .brand-select-field[hidden] {
@@ -432,7 +432,7 @@ label {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(160px, 220px);
+  grid-template-columns: minmax(240px, 1fr) minmax(150px, 210px) minmax(150px, 220px);
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -520,6 +520,13 @@ label {
   margin: 0;
   color: #687481;
   font-size: 13px;
+}
+
+.asset-folder-line {
+  margin-top: 7px;
+  color: #596673;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .asset-card--icon .asset-card-head p {
