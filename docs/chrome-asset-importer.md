@@ -36,6 +36,8 @@ POST /api/assets-import
 - リンクURL
 - メモ
 
+一括保存は最大30件です。31件以上はAPI側でエラーにし、暗黙に切り捨てません。
+
 API側で行うこと:
 
 - Supabase access tokenで `is_admin()` を確認

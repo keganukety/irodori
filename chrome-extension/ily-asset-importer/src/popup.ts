@@ -30,6 +30,9 @@ type ImportResponse = {
   warnings?: string[];
   assets_admin_url?: string;
   duplicates?: Array<{ existing_asset?: { asset_key?: string; title?: string } }>;
+  details?: {
+    failures?: Array<{ source_url: string; error: string }>;
+  };
 };
 
 const imageList = getElement<HTMLDivElement>('image-list');
@@ -43,6 +46,7 @@ const refreshButton = getElement<HTMLButtonElement>('refresh-images-button');
 const siteOriginInput = getElement<HTMLInputElement>('site-origin-input');
 const connectionStatus = getElement<HTMLElement>('connection-status');
 const forceDuplicateWrap = getElement<HTMLElement>('force-duplicate-wrap');
+const maxImportImages = 30;
 
 let images: ImageCandidate[] = [];
 const selectedUrls = new Set<string>();
@@ -141,7 +145,7 @@ async function collectImagesFromActiveTab(): Promise<ImageCandidate[]> {
 }
 
 function renderImages() {
-  imageSummary.textContent = `${images.length}件 / ${selectedUrls.size}件選択中`;
+  imageSummary.textContent = `${images.length}件 / ${selectedUrls.size}件選択中（最大${maxImportImages}件）`;
   if (images.length === 0) {
     imageList.innerHTML = '';
     return;
@@ -220,6 +224,10 @@ async function saveSelectedImages() {
     setMessage('保存する画像を選択してください。', 'error');
     return;
   }
+  if (selected.length > maxImportImages) {
+    setMessage(`一度に保存できる画像は最大${maxImportImages}件です。選択数を減らしてください。`, 'error');
+    return;
+  }
 
   const siteOrigin = normalizeSiteOrigin(siteOriginInput.value) || DEFAULT_SITE_ORIGIN;
   const auth = await getUsableAuth(siteOrigin);
@@ -278,27 +286,38 @@ async function saveSelectedImages() {
     }
 
     if (!response.ok || (!payload.ok && !payload.partial)) {
-      throw new Error(payload.error || `保存に失敗しました (${response.status})`);
+      throw new Error(formatImportError(payload, response.status));
     }
 
     forceDuplicateWrap.hidden = true;
     const adminUrl = payload.assets_admin_url || `/assets-admin.html?asset_key=${encodeURIComponent(payload.assets?.[0]?.asset_key ?? '')}`;
     setAdminLink(siteOrigin, adminUrl);
 
-    const savedCount = payload.assets?.length ?? 0;
-    const failedCount = payload.failures?.length ?? 0;
-    const warningText = [...(payload.warnings ?? []), ...(payload.failures ?? []).map((failure) => failure.error)].slice(0, 3).join(' ');
-    setMessage(
-      failedCount > 0
-        ? `${savedCount}件保存しました。${failedCount}件は失敗しました。${warningText}`
-        : `${savedCount}件保存しました。${warningText}`,
-      failedCount > 0 || warningText ? 'warning' : 'success',
-    );
+    setImportResultMessage(payload);
   } catch (error) {
     setMessage(getErrorMessage(error), 'error');
   } finally {
     setBusy(false);
   }
+}
+
+function formatImportError(payload: ImportResponse, status: number): string {
+  const failures = payload.failures ?? payload.details?.failures ?? [];
+  const details = failures.map((failure) => `${getImageLabel(failure.source_url)}: ${failure.error}`).join(' / ');
+  const message = payload.error || `保存に失敗しました (${status})`;
+  return details ? `${message} ${details}` : message;
+}
+
+function setImportResultMessage(payload: ImportResponse) {
+  const savedCount = payload.assets?.length ?? 0;
+  const failures = payload.failures ?? [];
+  const warnings = payload.warnings ?? [];
+  const failureDetails = failures.map((failure) => `${getImageLabel(failure.source_url)}: ${failure.error}`);
+  const details = [...warnings, ...failureDetails].filter(Boolean).join(' / ');
+  const summary = failures.length > 0
+    ? `${savedCount}件保存しました。${failures.length}件は失敗しました。`
+    : `${savedCount}件保存しました。`;
+  setMessage(`${summary}${details ? ` ${details}` : ''}`, failures.length > 0 || warnings.length > 0 ? 'warning' : 'success');
 }
 
 async function getUsableAuth(siteOrigin: string): Promise<AuthState | null> {
@@ -429,6 +448,12 @@ function getUrlFilename(value: string): string {
   } catch {
     return 'image';
   }
+}
+
+function getImageLabel(value: string): string {
+  const filename = getUrlFilename(value);
+  const host = getUrlHost(value);
+  return host ? `${filename} (${host})` : filename;
 }
 
 function normalizeAssetKeyPart(value: string): string {

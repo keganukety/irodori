@@ -55,7 +55,7 @@ Cloudflare Image Resizingを有効にしている場合だけ、2つ目を `true
 1. 自サイトの `/assets-admin.html` で管理者ログインします。
 2. 拡張のポップアップで「接続」を押します。
 3. 参考ページで画像を右クリックして「iLy.画像管理に保存」を押すか、拡張アイコンからページ内画像を選びます。
-4. 用途、asset_key、title、alt、brand slug/category、PC/SP、公開状態などを入力して保存します。
+4. 用途、asset_key、title、alt、brand slug/category、PC/SP、公開状態などを入力して保存します。一括保存は最大30件です。
 5. 成功後の「画像管理で開く」から登録結果を確認します。
 
 ## asset_key候補
@@ -81,6 +81,7 @@ article_combi_auto_n_first_ii_nc
 - CORSは許可済みのChrome拡張Originだけに `Access-Control-Allow-Origin` を返します。`*` は使いません。
 - 拡張側fetchは `credentials: include` を使わず、Authorizationヘッダーで本人のaccess tokenを送ります。
 - API側で `is_admin()` を再確認します。
+- 一括登録はAPI側でも最大30件に制限し、31件以上は保存前にエラーにします。
 - API側で画像URLをfetchし、Storage uploadと `site_assets` 登録を行います。
 - `http` / `https` 以外、`data:` / `file:` / `blob:` などは拒否します。
 - localhost、internal host、IP直指定、非標準ポートへのfetchは拒否します。

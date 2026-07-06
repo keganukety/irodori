@@ -104,7 +104,7 @@ type CreatedAsset = {
 };
 
 const storageBucket = 'site-assets';
-const maxImportImages = 10;
+const maxImportImages = 30;
 const maxSourceBytes = 20 * 1024 * 1024;
 const maxStoredBytes = 5 * 1024 * 1024;
 const fetchTimeoutMs = 12_000;
@@ -254,9 +254,11 @@ async function readJsonBody(request: Request): Promise<ImportRequestBody> {
 
 function normalizeImportBody(body: ImportRequestBody): { images: ImportImageInput[]; asset: NormalizedAssetInput } {
   const rawImages = Array.isArray(body.images) ? body.images : [];
+  if (rawImages.length > maxImportImages) {
+    throw new UserFacingError(`一度に保存できる画像は最大${maxImportImages}件です。選択数を減らしてください。`, 400);
+  }
   const images = rawImages
-    .filter((image): image is ImportImageInput => Boolean(image && typeof image === 'object'))
-    .slice(0, maxImportImages);
+    .filter((image): image is ImportImageInput => Boolean(image && typeof image === 'object'));
   if (images.length === 0) throw new UserFacingError('保存する画像を選択してください。', 400);
 
   const rawAsset = body.asset && typeof body.asset === 'object' ? body.asset as AssetInput : {};
