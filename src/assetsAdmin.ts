@@ -782,12 +782,14 @@ function syncIconControls(form: HTMLFormElement) {
 
   const isIcon = typeSelect.value === 'icon';
   const hasZip = Boolean(zipInput?.files?.[0]);
+  // 編集フォームでは画像差し替えは任意。必須にするのは新規登録フォームのみ。
+  const isCreateForm = form.id === 'create-asset-form';
   iconPanel.hidden = !isIcon;
   form.querySelectorAll<HTMLElement>('.upload-grid').forEach((grid) => {
     grid.hidden = isIcon;
   });
   assetKeyInput.required = !isIcon || !hasZip;
-  if (desktopInput) desktopInput.required = !isIcon;
+  if (desktopInput) desktopInput.required = isCreateForm && !isIcon;
   if (mobileInput) mobileInput.required = false;
   if (removeMobile) removeMobile.hidden = isIcon;
   if (optimizationControls) optimizationControls.hidden = isIcon;
