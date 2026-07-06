@@ -353,10 +353,7 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
     });
 
     document.body.prepend(header);
-    if (page === 'home') {
-      syncHomeHeaderScrollState(header);
-      window.addEventListener('scroll', () => syncHomeHeaderScrollState(header), { passive: true });
-    }
+    setupHeaderScrollBehaviour(header, page === 'home');
   } catch (error) {
     console.error('共通ヘッダーの初期化に失敗しました。', error);
   }
@@ -372,10 +369,56 @@ function setMobileHeaderMenuOpen(
   menuButton.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
   nav.classList.toggle('is-open', isOpen);
   document.body.classList.toggle('is-menu-open', isOpen);
+  if (isOpen) {
+    // メニューを開くときはヘッダー（＝閉じるボタン）が隠れないように必ず表示する。
+    menuButton.closest('.site-header')?.classList.remove('is-header-hidden');
+  }
 }
 
-function syncHomeHeaderScrollState(header: HTMLElement): void {
-  header.classList.toggle('is-scrolled', window.scrollY > 12);
+// 下スクロールでヘッダーを控えめに隠し、上スクロールで再表示するスマートヘッダー。
+// prefers-reduced-motion: reduce やメニュー展開中は隠さず常時表示する。
+function setupHeaderScrollBehaviour(header: HTMLElement, isHome: boolean): void {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let lastY = Math.max(0, window.scrollY);
+  let ticking = false;
+
+  const update = (): void => {
+    ticking = false;
+    const currentY = Math.max(0, window.scrollY);
+
+    if (isHome) {
+      header.classList.toggle('is-scrolled', currentY > 12);
+    }
+
+    const delta = currentY - lastY;
+
+    if (reduceMotion.matches || document.body.classList.contains('is-menu-open')) {
+      header.classList.remove('is-header-hidden');
+      lastY = currentY;
+      return;
+    }
+
+    // わずかな揺れは無視して、意図したスクロールにのみ反応する。
+    if (Math.abs(delta) < 6) {
+      return;
+    }
+
+    if (delta > 0 && currentY > 96) {
+      header.classList.add('is-header-hidden');
+    } else {
+      header.classList.remove('is-header-hidden');
+    }
+    lastY = currentY;
+  };
+
+  const onScroll = (): void => {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(update);
+  };
+
+  update();
+  window.addEventListener('scroll', onScroll, { passive: true });
 }
 
 export function setupCompareEnhancements(): void {
@@ -1093,6 +1136,11 @@ function injectSharedStyles(): void {
       color: #333;
       border-bottom: 1px solid #e5e5e5;
       backdrop-filter: blur(14px);
+      transition: transform .34s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .site-header.is-header-hidden {
+      transform: translateY(-100%);
     }
 
     .site-header__inner {
@@ -1129,7 +1177,7 @@ function injectSharedStyles(): void {
       background: rgba(255, 255, 255, 0);
       border-bottom-color: transparent;
       backdrop-filter: none;
-      transition: background .28s ease, border-color .28s ease, backdrop-filter .28s ease;
+      transition: background .28s ease, border-color .28s ease, backdrop-filter .28s ease, transform .34s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .site-header--home.is-scrolled,
@@ -1426,6 +1474,14 @@ function injectSharedStyles(): void {
       .recent-card a {
         transition: none !important;
         animation: none !important;
+      }
+
+      .site-header {
+        transition: background .28s ease, border-color .28s ease, backdrop-filter .28s ease;
+      }
+
+      .site-header.is-header-hidden {
+        transform: none;
       }
     }
 

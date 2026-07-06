@@ -429,6 +429,8 @@ function renderShell(state: HomeState): void {
       <div class="home-hero-spacer" aria-hidden="true"></div>
 
       <div class="home-content-surface">
+        ${renderHomeMarquee()}
+
         ${renderPickupSection(state)}
 
         ${renderSearchSection(state)}
@@ -473,6 +475,21 @@ function renderShell(state: HomeState): void {
     brandsById: homeBrandsById,
   });
   applyFadeUpAnimations(app);
+}
+
+// TOPの見出し帯に、控えめな横ループの装飾テキストを添える（装飾のみ・aria-hidden）。
+function renderHomeMarquee(): string {
+  const phrase = 'Love the baby, love the family.';
+  const unit = `<span class="home-marquee__item">${escapeHtml(phrase)}</span><span class="home-marquee__dot">·</span>`;
+  const group = `<div class="home-marquee__group">${unit.repeat(6)}</div>`;
+  return `
+    <div class="home-marquee" aria-hidden="true">
+      <div class="home-marquee__track">
+        ${group}
+        ${group}
+      </div>
+    </div>
+  `;
 }
 
 function renderHomeSectionHeading(english: string, japanese: string): string {
