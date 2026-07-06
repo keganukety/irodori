@@ -12,7 +12,7 @@ import {
   updateCompareState,
 } from './shared-ui';
 import { supabase } from './lib/supabase';
-import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
+import { setupProductQuickView } from './product-quick-view';
 import type { SiteAsset } from './siteAssetTypes';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
@@ -683,7 +683,6 @@ function renderProductCard(product: Product, index: number) {
               : `<div class="image-placeholder">画像準備中</div>`
           }
         </a>
-        ${renderQuickViewButton(productId)}
       </div>
       <div class="product-body">
         <p class="product-brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeText(brandRecord.display_name)}</a>` : escapeText(brand)}</p>

@@ -7,7 +7,7 @@ import {
   normalizeProductDisplayName,
 } from './shared-ui';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
-import { renderQuickViewButton, setupProductQuickView } from './product-quick-view';
+import { setupProductQuickView } from './product-quick-view';
 import type { Brand, Product as SharedProduct, ProductColor } from './types';
 
 type Product = {
@@ -969,7 +969,6 @@ function renderProductCard(product: HomeProduct, index: number): string {
               : '<span class="home-product-card__placeholder">画像準備中</span>'
           }
         </a>
-        ${renderQuickViewButton(product.id)}
       </div>
       <p class="home-product-card__title-line">
         <span class="home-product-card__brand">${brandRecord ? `<a href="/brand.html?slug=${encodeURIComponent(brandRecord.slug)}">${escapeHtml(displayBrand)}</a>` : escapeHtml(displayBrand)}</span>
