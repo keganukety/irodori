@@ -13,3 +13,5 @@ codex_tasks/
 *.xlsx
 supabase/.temp/
 *.bak
+# Claude Code のworktree（コミット対象外）
+.claude/worktrees/
