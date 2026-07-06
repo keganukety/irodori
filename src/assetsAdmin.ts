@@ -207,6 +207,16 @@ async function renderAdmin() {
           <div class="library-count" id="library-count">0件</div>
         </div>
         <div id="folder-cards" class="folder-cards" hidden></div>
+        <div id="folder-add" class="folder-add" hidden>
+          <form id="folder-add-form" class="folder-add-form">
+            <label>フォルダ名<input name="folder_name" maxlength="40" placeholder="例: ベビーグッズ" autocomplete="off" required /></label>
+            <div class="folder-add-actions">
+              <button type="submit" class="primary-action">作成</button>
+              <button type="button" class="quiet-button" data-action="cancel-add-folder">キャンセル</button>
+            </div>
+            <p class="folder-add-message" aria-live="polite"></p>
+          </form>
+        </div>
         <div class="toolbar">
           <label>検索<input id="asset-search" type="search" value="${escapeAttr(query)}" placeholder="asset_key / タイトル" /></label>
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
@@ -223,6 +233,7 @@ async function renderAdmin() {
   bindLogout();
   bindCreateForm();
   bindToolbar();
+  bindFolderAddForm();
   try {
     await loadAssets();
     renderAssetList();
@@ -769,7 +780,16 @@ function renderFolderCards() {
     )),
   ];
   container.hidden = false;
-  container.innerHTML = cards.join('');
+  container.innerHTML = cards.join('') + addFolderCardMarkup();
+}
+
+function addFolderCardMarkup() {
+  return `
+    <button type="button" class="folder-card folder-card--add" data-action="toggle-add-folder" aria-expanded="false">
+      <span class="folder-card__icon folder-card__icon--add" aria-hidden="true">＋</span>
+      <span class="folder-card__body"><span class="folder-card__name">フォルダ追加</span></span>
+    </button>
+  `;
 }
 
 function folderCardMarkup(value: string, name: string, count: number, active: boolean, variant: 'all' | 'uncategorized' | 'folder') {
@@ -786,6 +806,15 @@ function folderCardMarkup(value: string, name: string, count: number, active: bo
 }
 
 function bindFolderCards() {
+  document.querySelector<HTMLButtonElement>('[data-action="toggle-add-folder"]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget as HTMLButtonElement;
+    const panel = document.querySelector<HTMLElement>('#folder-add');
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+    button.setAttribute('aria-expanded', String(!panel.hidden));
+    if (!panel.hidden) panel.querySelector<HTMLInputElement>('input[name="folder_name"]')?.focus();
+  });
+
   document.querySelectorAll<HTMLButtonElement>('[data-folder-card]').forEach((card) => {
     card.addEventListener('click', () => setFolderFilter(card.dataset.folderValue ?? 'all'));
     if (card.dataset.folderDroppable === undefined) return;
@@ -937,6 +966,87 @@ function buildMovePayload(asset: SiteAsset, folderId: string | null) {
     p_ends_at: asset.ends_at,
     p_folder_id: folderId,
   };
+}
+
+function bindFolderAddForm() {
+  const form = document.querySelector<HTMLFormElement>('#folder-add-form');
+  if (!form) return;
+  form.addEventListener('submit', (event) => void handleCreateFolder(event));
+  form.querySelector<HTMLButtonElement>('[data-action="cancel-add-folder"]')?.addEventListener('click', () => {
+    const panel = document.querySelector<HTMLElement>('#folder-add');
+    if (panel) panel.hidden = true;
+    document.querySelector<HTMLButtonElement>('[data-action="toggle-add-folder"]')?.setAttribute('aria-expanded', 'false');
+    form.reset();
+    setFolderAddMessage('', 'normal');
+  });
+}
+
+async function handleCreateFolder(event: SubmitEvent) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement)) return;
+  const nameInput = form.elements.namedItem('folder_name');
+  if (!(nameInput instanceof HTMLInputElement)) return;
+  const name = nameInput.value.trim();
+  if (!name) {
+    setFolderAddMessage('フォルダ名を入力してください。', 'error');
+    return;
+  }
+
+  const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submitButton) submitButton.disabled = true;
+  setFolderAddMessage('作成しています...', 'normal');
+  try {
+    const { data, error } = await supabase.rpc('create_site_asset_folder', {
+      p_name: name,
+      p_slug: slugifyFolderName(name),
+    });
+    if (error) throw error;
+    await loadFolders();
+    refreshFolderFilterSelect();
+    renderAssetList();
+    form.reset();
+    const created = Array.isArray(data) ? data[0] : data;
+    setFolderAddMessage(`「${created?.name ?? name}」を作成しました。`, 'success');
+  } catch (error) {
+    setFolderAddMessage(folderCreateErrorMessage(error), 'error');
+  } finally {
+    if (submitButton) submitButton.disabled = false;
+  }
+}
+
+function slugifyFolderName(name: string): string {
+  const ascii = name
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  if (ascii) return ascii.slice(0, 48);
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `folder-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+}
+
+function refreshFolderFilterSelect() {
+  const select = document.querySelector<HTMLSelectElement>('#asset-folder-filter');
+  if (!select) return;
+  select.innerHTML = renderFolderOptions(folderFilter, true);
+}
+
+function setFolderAddMessage(text: string, tone: 'normal' | 'success' | 'error') {
+  const element = document.querySelector<HTMLElement>('.folder-add-message');
+  if (!element) return;
+  element.textContent = text;
+  element.dataset.tone = tone;
+}
+
+function folderCreateErrorMessage(error: unknown): string {
+  const message = getErrorMessage(error);
+  if (/already exists/i.test(message)) return 'このフォルダ（slug）はすでに存在します。別のフォルダ名にしてください。';
+  if (/invalid folder slug/i.test(message)) return 'フォルダ名から安全なslugを生成できませんでした。別の名前でお試しください。';
+  if (/admin only/i.test(message)) return 'フォルダの作成は管理者のみ可能です。';
+  if (/folder name required/i.test(message)) return 'フォルダ名を入力してください。';
+  return message;
 }
 
 function bindAssetTypeRecommendation(form: HTMLFormElement) {

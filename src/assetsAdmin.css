@@ -671,6 +671,73 @@ label {
   font-size: 11px;
 }
 
+.folder-card--add {
+  border-style: dashed;
+  border-color: #cfd6dd;
+  background: #ffffff;
+  color: #6a7681;
+}
+
+.folder-card--add:hover {
+  border-color: #80bd9e;
+  background: #f7faf8;
+}
+
+.folder-card__icon--add {
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 20px;
+  line-height: 1;
+  color: #80bd9e;
+}
+
+.folder-add {
+  margin: 0 0 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 14px;
+}
+
+.folder-add[hidden] {
+  display: none;
+}
+
+.folder-add-form {
+  display: grid;
+  gap: 10px;
+}
+
+.folder-add-form label {
+  display: grid;
+  gap: 5px;
+  max-width: 360px;
+  font-size: 13px;
+  color: #47535f;
+}
+
+.folder-add-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.folder-add-message {
+  min-height: 1em;
+  margin: 0;
+  font-size: 12px;
+  color: #65707d;
+}
+
+.folder-add-message[data-tone='error'] {
+  color: #c0392b;
+}
+
+.folder-add-message[data-tone='success'] {
+  color: #256f5b;
+}
+
 /* 素材の選択（移動用）とドラッグ */
 .asset-select-control {
   display: inline-flex;
