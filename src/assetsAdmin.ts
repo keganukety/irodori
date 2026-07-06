@@ -97,6 +97,8 @@ let assetFoldersAvailable = true;
 let brandHeroLinkAvailable = true;
 const previewUrls = new Set<string>();
 const selectedIconIds = new Set<string>();
+const selectedAssetIds = new Set<string>();
+let draggingAssetIds: string[] = [];
 
 void init();
 
@@ -204,12 +206,14 @@ async function renderAdmin() {
           <div><p class="eyebrow">ASSET LIBRARY</p><h2 id="library-heading">登録済み素材</h2></div>
           <div class="library-count" id="library-count">0件</div>
         </div>
+        <div id="folder-cards" class="folder-cards" hidden></div>
         <div class="toolbar">
           <label>検索<input id="asset-search" type="search" value="${escapeAttr(query)}" placeholder="asset_key / タイトル" /></label>
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
           <label>フォルダ<select id="asset-folder-filter">${renderFolderOptions(folderFilter, true)}</select></label>
         </div>
         <div id="icon-bulk-actions" class="icon-bulk-actions" hidden></div>
+        <div id="asset-move-bar" class="asset-move-bar" hidden></div>
         <p id="page-message" class="page-message" aria-live="polite">読み込み中...</p>
         <div id="asset-list" class="asset-list"></div>
       </section>
@@ -443,15 +447,24 @@ function renderAssetList() {
     if (!visibleIconIds.has(id)) selectedIconIds.delete(id);
   });
   const isIconGrid = visibleAssets.length > 0 && visibleAssets.every((asset) => asset.asset_type === 'icon');
+  const visibleMoveIds = new Set(visibleAssets.filter((asset) => asset.asset_type !== 'icon').map((asset) => asset.id));
+  selectedAssetIds.forEach((id) => {
+    if (!visibleMoveIds.has(id)) selectedAssetIds.delete(id);
+  });
 
   count.textContent = `${visibleAssets.length}件`;
   message.textContent = visibleAssets.length ? '' : '条件に一致する素材はありません。';
   list.classList.toggle('asset-list--icons', isIconGrid);
   list.innerHTML = visibleAssets.map(renderAssetCard).join('');
+  renderFolderCards();
   renderIconBulkActions(visibleIconAssets);
+  renderAssetMoveBar();
+  bindFolderCards();
   bindAssetCards();
   bindIconBulkActions(visibleIconAssets);
+  bindAssetMoveBar();
   updateIconSelectionUi();
+  updateAssetSelectionUi();
 }
 
 function renderAssetCard(asset: SiteAsset) {
@@ -459,6 +472,8 @@ function renderAssetCard(asset: SiteAsset) {
   const selectedBrandId = getBrandIdForAsset(asset);
   const isIcon = asset.asset_type === 'icon';
   const isSelected = selectedIconIds.has(asset.id);
+  const canMove = !isIcon && assetFoldersAvailable;
+  const isMoveSelected = canMove && selectedAssetIds.has(asset.id);
   const mobileUrl = asset.mobile_image_url || asset.desktop_image_url;
   const mobileDimensions = asset.mobile_width && asset.mobile_height
     ? `${asset.mobile_width}×${asset.mobile_height}`
@@ -467,6 +482,14 @@ function renderAssetCard(asset: SiteAsset) {
     ? `
       <label class="icon-select-control">
         <input type="checkbox" data-icon-select value="${escapeAttr(asset.id)}" ${isSelected ? 'checked' : ''} aria-label="${escapeAttr(asset.asset_key)}を選択" />
+        <span>選択</span>
+      </label>
+    `
+    : '';
+  const moveSelectMarkup = canMove
+    ? `
+      <label class="asset-select-control">
+        <input type="checkbox" data-asset-select value="${escapeAttr(asset.id)}" ${isMoveSelected ? 'checked' : ''} aria-label="${escapeAttr(asset.asset_key)}を選択" />
         <span>選択</span>
       </label>
     `
@@ -488,7 +511,7 @@ function renderAssetCard(asset: SiteAsset) {
     `;
 
   return `
-    <article class="asset-card asset-card--${escapeAttr(asset.asset_type)}" data-asset-id="${escapeAttr(asset.id)}">
+    <article class="asset-card asset-card--${escapeAttr(asset.asset_type)}${isMoveSelected ? ' is-selected' : ''}" data-asset-id="${escapeAttr(asset.id)}"${canMove ? ' draggable="true"' : ''}>
       <div class="asset-card-head">
         <div>
           <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
@@ -499,6 +522,7 @@ function renderAssetCard(asset: SiteAsset) {
         </div>
         <div class="asset-card-actions">
           ${selectionMarkup}
+          ${moveSelectMarkup}
           <button type="button" class="quiet-button" data-action="toggle-edit" aria-expanded="false">編集</button>
         </div>
       </div>
@@ -637,6 +661,30 @@ function bindAssetCards() {
       else selectedIconIds.delete(id);
       updateIconSelectionUi();
     });
+
+    const assetSelect = card.querySelector<HTMLInputElement>('[data-asset-select]');
+    assetSelect?.addEventListener('change', () => {
+      const id = assetSelect.value;
+      if (assetSelect.checked) selectedAssetIds.add(id);
+      else selectedAssetIds.delete(id);
+      updateAssetSelectionUi();
+    });
+
+    if (card.getAttribute('draggable') === 'true') {
+      card.addEventListener('dragstart', (event) => {
+        const id = card.dataset.assetId ?? '';
+        draggingAssetIds = selectedAssetIds.has(id) && selectedAssetIds.size > 0
+          ? [...selectedAssetIds]
+          : [id];
+        event.dataTransfer?.setData('text/plain', draggingAssetIds.join(','));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+        card.classList.add('is-dragging');
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('is-dragging');
+        draggingAssetIds = [];
+      });
+    }
   });
 }
 
@@ -695,6 +743,200 @@ function updateIconSelectionUi() {
   document.querySelectorAll<HTMLButtonElement>('[data-action="delete-selected-icons"]').forEach((button) => {
     button.disabled = selectedCount === 0;
   });
+}
+
+const folderCardIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.4c0-.83.67-1.5 1.5-1.5h3.86c.4 0 .78.16 1.06.44l1.1 1.1c.28.28.66.44 1.06.44h6.96c.83 0 1.5.67 1.5 1.5v9.28c0 .83-.67 1.5-1.5 1.5H5c-.83 0-1.5-.67-1.5-1.5z"/></svg>';
+const allCardIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 4.5h6v6h-6zM13.5 4.5h6v6h-6zM4.5 13.5h6v6h-6zM13.5 13.5h6v6h-6z"/></svg>';
+
+function renderFolderCards() {
+  const container = document.querySelector<HTMLElement>('#folder-cards');
+  if (!container) return;
+  if (!assetFoldersAvailable) {
+    container.hidden = true;
+    container.innerHTML = '';
+    return;
+  }
+  const uncategorizedCount = assets.filter((asset) => !asset.folder_id).length;
+  const cards = [
+    folderCardMarkup('all', 'すべて', assets.length, folderFilter === 'all', 'all'),
+    folderCardMarkup('uncategorized', '未分類', uncategorizedCount, folderFilter === 'uncategorized', 'uncategorized'),
+    ...folders.map((folder) => folderCardMarkup(
+      folder.id,
+      folder.name,
+      assets.filter((asset) => asset.folder_id === folder.id).length,
+      folderFilter === folder.id,
+      'folder',
+    )),
+  ];
+  container.hidden = false;
+  container.innerHTML = cards.join('');
+}
+
+function folderCardMarkup(value: string, name: string, count: number, active: boolean, variant: 'all' | 'uncategorized' | 'folder') {
+  const droppable = variant !== 'all';
+  return `
+    <button type="button" class="folder-card${active ? ' is-active' : ''}" data-folder-card data-folder-value="${escapeAttr(value)}"${droppable ? ' data-folder-droppable' : ''} aria-pressed="${active}">
+      <span class="folder-card__icon">${variant === 'all' ? allCardIcon : folderCardIcon}</span>
+      <span class="folder-card__body">
+        <span class="folder-card__name">${escapeText(name)}</span>
+        <span class="folder-card__count">${count}件</span>
+      </span>
+    </button>
+  `;
+}
+
+function bindFolderCards() {
+  document.querySelectorAll<HTMLButtonElement>('[data-folder-card]').forEach((card) => {
+    card.addEventListener('click', () => setFolderFilter(card.dataset.folderValue ?? 'all'));
+    if (card.dataset.folderDroppable === undefined) return;
+    card.addEventListener('dragover', (event) => {
+      if (draggingAssetIds.length === 0) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      card.classList.add('is-drop-target');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('is-drop-target'));
+    card.addEventListener('drop', (event) => {
+      event.preventDefault();
+      card.classList.remove('is-drop-target');
+      const ids = draggingAssetIds.length > 0
+        ? [...draggingAssetIds]
+        : (event.dataTransfer?.getData('text/plain') ?? '').split(',').filter(Boolean);
+      const value = card.dataset.folderValue ?? '';
+      if (ids.length > 0) void moveAssetsToFolder(ids, value === 'uncategorized' ? '' : value);
+    });
+  });
+}
+
+function setFolderFilter(value: string) {
+  folderFilter = value;
+  const select = document.querySelector<HTMLSelectElement>('#asset-folder-filter');
+  if (select && select.value !== value) select.value = value;
+  renderAssetList();
+}
+
+function renderAssetMoveBar() {
+  const bar = document.querySelector<HTMLElement>('#asset-move-bar');
+  if (!bar) return;
+  if (!assetFoldersAvailable) {
+    bar.hidden = true;
+    bar.innerHTML = '';
+    return;
+  }
+  const defaultTarget = folders.some((folder) => folder.id === folderFilter) ? folderFilter : '';
+  const disabled = selectedAssetIds.size === 0;
+  bar.innerHTML = `
+    <div class="asset-move-bar__info">
+      <strong>素材の移動</strong>
+      <span data-move-count>${selectedAssetIds.size}件選択中</span>
+    </div>
+    <div class="asset-move-bar__controls">
+      <label>移動先<select data-move-target>${renderMoveTargetOptions(defaultTarget)}</select></label>
+      <button type="button" class="primary-action" data-action="move-selected"${disabled ? ' disabled' : ''}>選択した素材を移動</button>
+      <button type="button" class="quiet-button" data-action="clear-asset-selection"${disabled ? ' disabled' : ''}>選択解除</button>
+    </div>
+  `;
+  bar.hidden = disabled;
+}
+
+function renderMoveTargetOptions(selectedFolderId: string) {
+  return [
+    '<option value="">未分類</option>',
+    ...folders.map((folder) => `<option value="${escapeAttr(folder.id)}" ${folder.id === selectedFolderId ? 'selected' : ''}>${escapeText(folder.name)}</option>`),
+  ].join('');
+}
+
+function bindAssetMoveBar() {
+  const bar = document.querySelector<HTMLElement>('#asset-move-bar');
+  if (!bar) return;
+  bar.querySelector<HTMLButtonElement>('[data-action="clear-asset-selection"]')?.addEventListener('click', () => {
+    selectedAssetIds.clear();
+    updateAssetSelectionUi();
+  });
+  bar.querySelector<HTMLButtonElement>('[data-action="move-selected"]')?.addEventListener('click', () => {
+    const target = bar.querySelector<HTMLSelectElement>('[data-move-target]');
+    void moveAssetsToFolder([...selectedAssetIds], target?.value ?? '');
+  });
+}
+
+function updateAssetSelectionUi() {
+  document.querySelectorAll<HTMLElement>('.asset-card').forEach((card) => {
+    if (card.classList.contains('asset-card--icon')) return;
+    const id = card.dataset.assetId ?? '';
+    const selected = selectedAssetIds.has(id);
+    card.classList.toggle('is-selected', selected);
+    const checkbox = card.querySelector<HTMLInputElement>('[data-asset-select]');
+    if (checkbox) checkbox.checked = selected;
+  });
+
+  const bar = document.querySelector<HTMLElement>('#asset-move-bar');
+  if (!bar || !assetFoldersAvailable) return;
+  const disabled = selectedAssetIds.size === 0;
+  bar.hidden = disabled;
+  bar.querySelectorAll<HTMLElement>('[data-move-count]').forEach((element) => {
+    element.textContent = `${selectedAssetIds.size}件選択中`;
+  });
+  bar.querySelectorAll<HTMLButtonElement>('[data-action="move-selected"], [data-action="clear-asset-selection"]').forEach((button) => {
+    button.disabled = disabled;
+  });
+}
+
+async function moveAssetsToFolder(assetIds: string[], targetFolderId: string) {
+  const ids = new Set(assetIds.filter(Boolean));
+  const targets = assets.filter((asset) => ids.has(asset.id) && asset.asset_type !== 'icon');
+  if (targets.length === 0) return;
+  const folderId = targetFolderId || null;
+  const folderName = folderId ? (folders.find((folder) => folder.id === folderId)?.name ?? 'フォルダ') : '未分類';
+  showPageMessage(`${targets.length}件を「${folderName}」へ移動しています...`, 'warning');
+
+  const movedIds: string[] = [];
+  const failures: string[] = [];
+  for (const asset of targets) {
+    try {
+      const { error } = await supabase.rpc('update_site_asset', buildMovePayload(asset, folderId));
+      if (error) throw error;
+      movedIds.push(asset.id);
+    } catch (error) {
+      failures.push(`${asset.asset_key}: ${getErrorMessage(error)}`);
+    }
+  }
+
+  movedIds.forEach((id) => selectedAssetIds.delete(id));
+  await loadAssets();
+  renderAssetList();
+
+  if (failures.length > 0) {
+    showPageMessage(`移動 ${movedIds.length}件 / 失敗 ${failures.length}件。${failures.slice(0, 2).join(' ')}`, 'warning');
+    return;
+  }
+  showPageMessage(`${movedIds.length}件を「${folderName}」へ移動しました。`, 'success');
+}
+
+function buildMovePayload(asset: SiteAsset, folderId: string | null) {
+  return {
+    p_asset_id: asset.id,
+    p_asset_key: asset.asset_key,
+    p_asset_type: asset.asset_type,
+    p_title: asset.title,
+    p_alt_text: asset.alt_text,
+    p_caption: asset.caption,
+    p_desktop_image_url: asset.desktop_image_url,
+    p_desktop_storage_path: asset.desktop_storage_path,
+    p_desktop_mime_type: asset.desktop_mime_type,
+    p_desktop_width: asset.desktop_width,
+    p_desktop_height: asset.desktop_height,
+    p_mobile_image_url: asset.mobile_image_url,
+    p_mobile_storage_path: asset.mobile_storage_path,
+    p_mobile_mime_type: asset.mobile_mime_type,
+    p_mobile_width: asset.mobile_width,
+    p_mobile_height: asset.mobile_height,
+    p_link_url: asset.link_url,
+    p_display_order: asset.display_order,
+    p_is_published: asset.is_published,
+    p_starts_at: asset.starts_at,
+    p_ends_at: asset.ends_at,
+    p_folder_id: folderId,
+  };
 }
 
 function bindAssetTypeRecommendation(form: HTMLFormElement) {
