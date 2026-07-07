@@ -85,6 +85,10 @@ const sizeRecommendations: Record<SiteAssetType, string> = {
   icon: 'SVG推奨 / 48×48表示想定 / ZIP一括登録可',
 };
 
+// スマホ用クイックアップロードで選べる用途（アイコン等の特殊フローは除外）。
+const quickUploadTypes: SiteAssetType[] = ['hero', 'category', 'article', 'brand_logo', 'brand_hero'];
+const quickUploadDefaultType: SiteAssetType = 'article';
+
 let assets: SiteAsset[] = [];
 let query = new URLSearchParams(window.location.search).get('asset_key')
   ?? new URLSearchParams(window.location.search).get('q')
@@ -96,6 +100,7 @@ let folders: AssetFolder[] = [];
 let assetFoldersAvailable = true;
 let brandHeroLinkAvailable = true;
 const previewUrls = new Set<string>();
+const quickPreviewUrls = new Set<string>();
 const selectedIconIds = new Set<string>();
 const selectedAssetIds = new Set<string>();
 let draggingAssetIds: string[] = [];
@@ -195,6 +200,12 @@ async function renderAdmin() {
       </div>
     </header>
     <main class="admin-main">
+      <section class="quick-upload-section" aria-labelledby="quick-heading">
+        <div class="section-heading">
+          <div><p class="eyebrow">QUICK UPLOAD</p><h2 id="quick-heading">画像をポイッと保存</h2></div>
+        </div>
+        ${renderQuickUploadForm()}
+      </section>
       <section class="create-section" aria-labelledby="create-heading">
         <div class="section-heading">
           <div><p class="eyebrow">NEW ASSET</p><h2 id="create-heading">素材を登録</h2></div>
@@ -231,6 +242,7 @@ async function renderAdmin() {
   `;
 
   bindLogout();
+  bindQuickUploadForm();
   bindCreateForm();
   bindToolbar();
   bindFolderAddForm();
@@ -291,6 +303,321 @@ function renderOptimizationControls() {
       <p data-optimization-summary>JPG / PNG / WebPは元画像${maxOptimizableSourceSizeLabel}までWebP軽量化を試します。最終アップロードは${maxFileSizeLabel}以下です。</p>
     </section>
   `;
+}
+
+function renderQuickUploadForm() {
+  return `
+    <form id="quick-upload-form" class="quick-upload-form">
+      <label class="quick-dropzone">
+        <input name="quick_files" type="file" accept="image/*" multiple />
+        <span class="quick-dropzone__icon" aria-hidden="true">＋</span>
+        <span class="quick-dropzone__title">写真を選ぶ</span>
+        <span class="quick-dropzone__hint">スマホの写真フォルダから複数選べます（JPEG・PNG・WebP・AVIF・SVG）</span>
+      </label>
+      <div class="quick-previews" data-quick-previews hidden></div>
+      <div class="quick-fields">
+        <label class="quick-later-toggle toggle-label">
+          <input name="quick_later" type="checkbox" />
+          あとで整理モード（用途=記事 / 未分類で一旦保存）
+        </label>
+        <label>用途<select name="quick_asset_type">${renderQuickTypeOptions(quickUploadDefaultType)}</select></label>
+        <label class="quick-brand-field" data-quick-brand-field hidden>
+          ブランド
+          <select name="quick_brand_id">
+            <option value="">ブランドを選択</option>
+            ${brands.map((brand) => `<option value="${escapeAttr(brand.id)}">${escapeText(brand.display_name)} (${escapeText(brand.slug)})</option>`).join('')}
+          </select>
+        </label>
+        <label class="quick-folder-field" data-quick-folder-field>
+          フォルダ
+          <select name="quick_folder_id" ${assetFoldersAvailable ? '' : 'disabled'}>
+            ${renderFolderOptions('', false)}
+          </select>
+        </label>
+        <label class="toggle-label"><input name="quick_is_published" type="checkbox" />公開する</label>
+      </div>
+      <div class="quick-actions">
+        <button type="submit" class="primary-action quick-submit">選んだ画像をまとめて登録</button>
+        <span class="quick-selected-count" data-quick-count hidden></span>
+      </div>
+      <p class="form-message quick-message" aria-live="polite"></p>
+      <ul class="quick-result" data-quick-result hidden></ul>
+    </form>
+  `;
+}
+
+function renderQuickTypeOptions(selected: SiteAssetType) {
+  return quickUploadTypes
+    .map((type) => `<option value="${type}" ${selected === type ? 'selected' : ''}>${escapeText(assetTypeLabels[type])}</option>`)
+    .join('');
+}
+
+function bindQuickUploadForm() {
+  const form = document.querySelector<HTMLFormElement>('#quick-upload-form');
+  if (!form) return;
+
+  const fileInput = getFileInput(form, 'quick_files');
+  const laterToggle = form.elements.namedItem('quick_later');
+  const typeSelect = form.elements.namedItem('quick_asset_type');
+
+  fileInput?.addEventListener('change', () => renderQuickPreviews(form));
+  if (typeSelect instanceof HTMLSelectElement) {
+    typeSelect.addEventListener('change', () => syncQuickBrandField(form));
+  }
+  if (laterToggle instanceof HTMLInputElement) {
+    laterToggle.addEventListener('change', () => syncQuickLaterMode(form));
+  }
+
+  syncQuickLaterMode(form);
+  syncQuickBrandField(form);
+  form.addEventListener('submit', (event) => void handleQuickUpload(event));
+}
+
+function syncQuickLaterMode(form: HTMLFormElement) {
+  const laterToggle = form.elements.namedItem('quick_later');
+  const typeSelect = form.elements.namedItem('quick_asset_type');
+  const folderSelect = form.elements.namedItem('quick_folder_id');
+  const publishToggle = form.elements.namedItem('quick_is_published');
+  const later = laterToggle instanceof HTMLInputElement && laterToggle.checked;
+
+  if (typeSelect instanceof HTMLSelectElement) {
+    if (later) typeSelect.value = 'article';
+    typeSelect.disabled = later;
+  }
+  if (folderSelect instanceof HTMLSelectElement) {
+    if (later) folderSelect.value = '';
+    folderSelect.disabled = later || !assetFoldersAvailable;
+  }
+  // 事故防止のため、あとで整理モードに切り替えた時点で非公開をデフォルトにする（チェックUIは残し再選択可能）。
+  if (later && publishToggle instanceof HTMLInputElement) {
+    publishToggle.checked = false;
+  }
+  syncQuickBrandField(form);
+}
+
+function syncQuickBrandField(form: HTMLFormElement) {
+  const typeSelect = form.elements.namedItem('quick_asset_type');
+  const brandSelect = form.elements.namedItem('quick_brand_id');
+  const field = form.querySelector<HTMLElement>('[data-quick-brand-field]');
+  if (!(typeSelect instanceof HTMLSelectElement) || !field) return;
+
+  const isBrandAsset = typeSelect.value === 'brand_logo' || typeSelect.value === 'brand_hero';
+  field.hidden = !isBrandAsset;
+  // 必須判定はhandleQuickUpload側で行い、分かりやすいメッセージとスクロールで案内する。
+  if (brandSelect instanceof HTMLSelectElement) brandSelect.required = false;
+}
+
+function renderQuickPreviews(form: HTMLFormElement) {
+  const container = form.querySelector<HTMLElement>('[data-quick-previews]');
+  const countLabel = form.querySelector<HTMLElement>('[data-quick-count]');
+  const input = getFileInput(form, 'quick_files');
+  if (!container || !input) return;
+
+  revokeQuickPreviewUrls();
+  const files = input.files ? [...input.files] : [];
+  if (files.length === 0) {
+    container.hidden = true;
+    container.innerHTML = '';
+    if (countLabel) {
+      countLabel.hidden = true;
+      countLabel.textContent = '';
+    }
+    return;
+  }
+
+  const heicCount = files.filter((file) => isHeicFile(file)).length;
+  container.hidden = false;
+  container.innerHTML = files
+    .map((file) => {
+      // HEICはブラウザがデコードできず壊れた画像になるため、注意書きに置き換える。
+      if (isHeicFile(file)) {
+        return `
+          <figure class="quick-preview-item quick-preview-item--warning">
+            <div class="quick-preview-warn">HEIC<br>未対応</div>
+            <figcaption>${escapeText(file.name)}<br>JPEG等に変換してください</figcaption>
+          </figure>
+        `;
+      }
+      const url = URL.createObjectURL(file);
+      quickPreviewUrls.add(url);
+      return `
+        <figure class="quick-preview-item">
+          <img src="${escapeAttr(url)}" alt="" loading="lazy" />
+          <figcaption>${escapeText(file.name)}<br>${escapeText(formatBytes(file.size))}</figcaption>
+        </figure>
+      `;
+    })
+    .join('');
+
+  if (countLabel) {
+    countLabel.hidden = false;
+    countLabel.textContent = heicCount > 0
+      ? `${files.length}枚を選択中（うちHEIC ${heicCount}枚は未対応）`
+      : `${files.length}枚を選択中`;
+  }
+}
+
+function revokeQuickPreviewUrls() {
+  quickPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+  quickPreviewUrls.clear();
+}
+
+async function handleQuickUpload(event: SubmitEvent) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement)) return;
+
+  const input = getFileInput(form, 'quick_files');
+  const files = input?.files ? [...input.files] : [];
+  if (files.length === 0) {
+    setFormMessage(form, '登録する画像を選択してください。', 'error');
+    return;
+  }
+
+  const values = new FormData(form);
+  const later = values.get('quick_later') === 'on';
+  const assetType = (later ? 'article' : String(values.get('quick_asset_type') ?? 'article')) as SiteAssetType;
+  const brandId = String(values.get('quick_brand_id') ?? '').trim();
+  const folderIdRaw = String(values.get('quick_folder_id') ?? '').trim();
+  const folderId = later || !assetFoldersAvailable ? null : (folderIdRaw || null);
+  const isPublished = values.get('quick_is_published') === 'on';
+
+  if (!quickUploadTypes.includes(assetType)) {
+    setFormMessage(form, '用途が正しくありません。', 'error');
+    return;
+  }
+  if ((assetType === 'brand_logo' || assetType === 'brand_hero') && !brandId) {
+    setFormMessage(form, `${assetTypeLabels[assetType]}にはブランドの選択が必要です。ブランドを選んでください。`, 'error');
+    const brandSelect = form.elements.namedItem('quick_brand_id');
+    if (brandSelect instanceof HTMLSelectElement) {
+      brandSelect.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      brandSelect.focus();
+    }
+    return;
+  }
+  if (folderId && !folders.some((folder) => folder.id === folderId)) {
+    setFormMessage(form, 'フォルダが正しくありません。', 'error');
+    return;
+  }
+
+  const brand = brands.find((item) => item.id === brandId);
+  const brandSlug = brand?.slug ?? '';
+  const optimizationSettings: ImageOptimizationSettings = { enabled: true, level: 'medium' };
+  const results: IconUploadResult[] = [];
+
+  setFormBusy(form, true);
+  setQuickResults(form, []);
+  try {
+    setFormMessage(form, '既存の素材を確認しています...', 'normal');
+    await loadAssets();
+    const usedKeys = new Set(assets.map((asset) => asset.asset_key));
+    let displayOrder = nextQuickDisplayOrder(assetType);
+
+    for (const [index, file] of files.entries()) {
+      const assetKey = generateQuickAssetKey(assetType, brandSlug, file.name, usedKeys);
+      usedKeys.add(assetKey);
+      const title = humanizeFileName(file.name);
+      const fields = {
+        assetKey,
+        assetType,
+        folderId,
+        brandId,
+        title,
+        altText: title,
+        caption: '',
+        linkUrl: null as string | null,
+        displayOrder: displayOrder + index,
+        isPublished,
+        startsAt: null as string | null,
+        endsAt: null as string | null,
+      };
+
+      setFormMessage(form, `${index + 1}/${files.length} 件目を登録しています...`, 'normal');
+      const uploadedPaths: string[] = [];
+      try {
+        const prepared = await prepareImageForUpload(file, optimizationSettings, file.name);
+        const desktopImage = await uploadImage(prepared.metadata, assetKey, 'desktop');
+        uploadedPaths.push(desktopImage.storagePath);
+        const { error } = await supabase.rpc('create_site_asset', buildRpcPayload(fields, desktopImage, null));
+        if (error) throw error;
+        const brandLinkWarning = await linkBrandAsset(fields);
+        results.push({
+          fileName: file.name,
+          status: 'success',
+          message: brandLinkWarning ? `${assetKey}（${brandLinkWarning}）` : `${assetKey} を登録`,
+        });
+      } catch (error) {
+        await rollbackUploads(uploadedPaths);
+        results.push({ fileName: file.name, status: 'error', message: getErrorMessage(error) });
+      }
+    }
+
+    await loadAssets();
+    renderAssetList();
+    setQuickResults(form, results);
+    const success = results.filter((result) => result.status === 'success').length;
+    const failure = results.filter((result) => result.status === 'error').length;
+    if (success > 0) {
+      form.reset();
+      renderQuickPreviews(form);
+      syncQuickLaterMode(form);
+    }
+    setFormMessage(form, `登録完了: 成功 ${success}件 / 失敗 ${failure}件`, failure > 0 ? 'warning' : 'success');
+  } catch (error) {
+    setFormMessage(form, getErrorMessage(error), 'error');
+  } finally {
+    setFormBusy(form, false);
+  }
+}
+
+function nextQuickDisplayOrder(assetType: SiteAssetType) {
+  const orders = assets.filter((asset) => asset.asset_type === assetType).map((asset) => asset.display_order);
+  return (orders.length > 0 ? Math.max(...orders) : 0) + 1;
+}
+
+function generateQuickAssetKey(assetType: SiteAssetType, brandSlug: string, fileName: string, usedKeys: Set<string>) {
+  const prefixByType: Record<string, string> = {
+    hero: 'hero',
+    category: 'category',
+    article: 'article',
+    brand_logo: `brand_logo_${brandSlug || 'brand'}`,
+    brand_hero: `brand_hero_${brandSlug || 'brand'}`,
+  };
+  const prefix = normalizeIconBase(prefixByType[assetType] ?? assetType) || 'asset';
+  const slug = normalizeIconBase(fileName);
+  const core = !slug || slug === prefix || slug.startsWith(`${prefix}_`) ? (slug || prefix) : `${prefix}_${slug}`;
+  // IMG_1234 のような汎用名でも衝突しにくいよう日付(YYYYMMDD)を付与する。
+  let base = `${core}_${formatDateStamp(new Date())}`;
+  if (!ASSET_KEY_PATTERN.test(base)) base = `${prefix}_${formatDateStamp(new Date())}`;
+
+  let candidate = base;
+  let suffix = 2;
+  while (usedKeys.has(candidate)) {
+    candidate = `${base}_${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function formatDateStamp(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+}
+
+function humanizeFileName(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+}
+
+function setQuickResults(form: HTMLFormElement, results: IconUploadResult[]) {
+  const list = form.querySelector<HTMLElement>('[data-quick-result]');
+  if (!list) return;
+  list.hidden = results.length === 0;
+  list.innerHTML = results
+    .map((result) => `<li data-status="${result.status}">${escapeText(result.fileName)}: ${escapeText(result.message)}</li>`)
+    .join('');
 }
 
 function renderBrandField(selectedBrandId = '') {
@@ -2064,7 +2391,12 @@ async function readImageMetadata(
   options: { maxSizeBytes?: number; sizeErrorMessage?: string } = {},
 ): Promise<ImageMetadata> {
   const mimeType = getSupportedMimeType(file);
-  if (!mimeType) throw new Error('JPEG・PNG・WebP・AVIF・SVG形式の画像を選択してください。');
+  if (!mimeType) {
+    if (isHeicFile(file)) {
+      throw new Error('HEIC画像は未対応です。JPEG/PNG/WebPに変換してからアップロードしてください。');
+    }
+    throw new Error('JPEG・PNG・WebP・AVIF・SVG形式の画像を選択してください。');
+  }
   const maxSizeBytes = options.maxSizeBytes ?? maxFileSize;
   if (file.size <= 0) throw new Error('画像ファイルを選択してください。');
   if (file.size > maxSizeBytes) throw new Error(options.sizeErrorMessage ?? '画像サイズは5MB以下にしてください。');
@@ -2136,6 +2468,10 @@ function getSupportedMimeType(file: File): SiteAssetMimeType | null {
   if (/\.avif$/i.test(file.name)) return 'image/avif';
   if (/\.svg$/i.test(file.name)) return 'image/svg+xml';
   return null;
+}
+
+function isHeicFile(file: File): boolean {
+  return /image\/(heic|heif)/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
 }
 
 function storedImageFromAsset(asset: SiteAsset, variant: 'desktop' | 'mobile'): StoredImage | null {
@@ -2273,6 +2609,7 @@ function showPageMessage(text: string, tone: 'success' | 'warning') {
 function revokePreviewUrls() {
   previewUrls.forEach((url) => URL.revokeObjectURL(url));
   previewUrls.clear();
+  revokeQuickPreviewUrls();
 }
 
 function formatBytes(bytes: number) {
