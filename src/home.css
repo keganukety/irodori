@@ -3442,6 +3442,10 @@ body.home-body {
   display: block;
   width: 100%;
   height: 100%;
+  /* The recommended wrapper is frameless (transparent), so any inset reads as a
+     left-edge gap. Drop the padding to 0 so the visible photo edge lines up with
+     the brand / name / price text baseline. */
+  padding: 0 !important;
   object-fit: contain !important;
 }
 
@@ -3449,6 +3453,48 @@ body.home-body {
   width: 100%;
   min-height: 100%;
   background: rgba(248, 248, 247, .46);
+}
+
+/* Recommended card: manage vertically and lock every row to the same left edge / width */
+.home-recommended-section .home-product-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+/* Image wrapper, action row and product info all share the card's full width,
+   so the text left edge is based on the image wrapper — not the image's real size or padding */
+.home-recommended-section .home-product-card__media,
+.home-recommended-section .home-product-card__actions,
+.home-recommended-section .home-product-card__title-line,
+.home-recommended-section .home-product-card__price {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+  text-align: left !important;
+}
+
+/* Unified vertical rhythm: gap under image, action row, and info margin-top */
+.home-recommended-section .home-product-card__media {
+  margin-bottom: 14px !important;
+}
+
+.home-recommended-section .home-product-card__actions {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px !important;
+}
+
+.home-recommended-section .home-product-card__title-line {
+  margin-top: 0 !important;
+}
+
+.home-recommended-section .home-product-card__price {
+  margin-top: 6px !important;
 }
 
 .home-recommended-actions {
@@ -3821,13 +3867,17 @@ body.home-body {
   }
 
   .home-recommended-section .home-product-card__img {
-    padding: 12px !important;
+    padding: 0 !important;
+  }
+
+  .home-recommended-section .home-product-card__media {
+    margin-bottom: 14px !important;
   }
 
   .home-recommended-section .home-product-card__title-line,
   .home-recommended-section .home-product-card__price {
-    padding-right: 2px;
-    padding-left: 2px;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
   }
 
   .home-recommended-section .home-product-card__brand {
@@ -3842,7 +3892,7 @@ body.home-body {
   }
 
   .home-recommended-section .home-product-card__price {
-    margin-top: 7px !important;
+    margin-top: 6px !important;
     font-size: 16px !important;
     line-height: 1.55 !important;
     letter-spacing: 1.4px !important;
