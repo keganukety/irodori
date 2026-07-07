@@ -572,7 +572,7 @@ function renderPickupSection(state: HomeState): string {
         <h2 class="home-section-heading section-title" id="home-pickup-title">おすすめ特集</h2>
       </div>
       <div class="home-pickup-grid">
-        ${pickupItems.map(renderPickupCard).join('')}
+        ${pickupItems.map((item, index) => renderPickupCard(item, index)).join('')}
       </div>
     </section>
   `;
@@ -604,14 +604,73 @@ function isPickupAsset(asset: HomeSiteAsset): boolean {
     || asset.asset_type === 'article';
 }
 
-function renderPickupCard(item: { title: string; label: string; href: string; imageSrc?: string }): string {
+// Editorial framing for the pickup section. Raw asset titles (e.g. "コンビ公式ブランドストア 1")
+// are intentionally kept out of view — they only feed the image alt text — while the visible
+// heading is a short, curated line so the block reads like a magazine feature, not a product list.
+//
+// NOTE: PICKUP_LABELS / PICKUP_HEADINGS are matched to cards by array index, which follows the
+// current sort order in getPickupItems() (asset sort_order → asset_key → title). If that ordering
+// changes, or assets are added/removed/reordered, the headings will attach to different cards.
+// The curated copy is deliberately generic so a mismatch never reads as wrong — but this is a
+// stopgap. TODO: drive the heading/label from dedicated editorial fields on site_assets (e.g.
+// title/caption, or new pickup_heading/pickup_label columns) so each asset carries its own copy
+// instead of relying on position. When that lands, thread the values through getPickupItems() and
+// prefer them here, falling back to these arrays only when the asset provides nothing.
+const PICKUP_LABELS = ['FEATURE', 'PICK UP', 'COLUMN'];
+const PICKUP_HEADINGS = ['はじめての育児に、\nそっと寄り添って', 'いま、選ばれているもの', '暮らしの読みもの'];
+
+// Empty strings and obvious work-in-progress placeholders ("テスト", "test", "ダミー" …) are
+// treated as "no caption", so unfinished admin values never leak into production.
+function isPlaceholderCaption(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return true;
+  return /^(テスト|てすと|ﾃｽﾄ|test+|ダミー|だみー|dummy|サンプル|sample|placeholder|未定|あ+|a+|・+|-+)$/.test(normalized);
+}
+
+function renderPickupCard(
+  item: { title: string; label: string; href: string; imageSrc?: string },
+  index: number,
+): string {
+  const category = PICKUP_LABELS[index] ?? 'PICK UP';
+  const heading = PICKUP_HEADINGS[index] ?? PICKUP_HEADINGS[1];
+  // Only surface a supplementary line when the admin set a real caption (not the default link
+  // label and not a placeholder such as "テスト").
+  const lead = item.label && item.label !== '詳しく見る' && !isPlaceholderCaption(item.label) ? item.label : '';
+  const isFeature = index === 0;
+  const image = item.imageSrc
+    ? `<img class="reveal-img" src="${escapeAttr(item.imageSrc)}" alt="${escapeAttr(item.title)}" loading="lazy">`
+    : '<em>画像準備中</em>';
+  const more = '<span class="home-pickup-card__more">詳しく見る</span>';
+
+  if (isFeature) {
+    return `
+      <a class="home-pickup-card home-pickup-card--feature" href="${escapeAttr(item.href)}">
+        <span class="home-pickup-card__image reveal-wrapper">
+          ${image}
+          <span class="home-pickup-card__overlay">
+            <span class="home-pickup-card__label">${escapeHtml(category)}</span>
+            <span class="home-pickup-card__heading">${escapeHtml(heading)}</span>
+          </span>
+        </span>
+        <span class="home-pickup-card__body">
+          ${lead ? `<span class="home-pickup-card__lead">${escapeHtml(lead)}</span>` : ''}
+          ${more}
+        </span>
+      </a>
+    `;
+  }
+
   return `
-    <a class="home-pickup-card" href="${escapeAttr(item.href)}">
+    <a class="home-pickup-card home-pickup-card--sub" href="${escapeAttr(item.href)}">
       <span class="home-pickup-card__image reveal-wrapper">
-        ${item.imageSrc ? `<img class="reveal-img" src="${escapeAttr(item.imageSrc)}" alt="${escapeAttr(item.title)}" loading="lazy">` : '<em>画像準備中</em>'}
+        ${image}
       </span>
-      <strong>${escapeHtml(item.title)}</strong>
-      <span>${escapeHtml(item.label)}</span>
+      <span class="home-pickup-card__body">
+        <span class="home-pickup-card__label">${escapeHtml(category)}</span>
+        <span class="home-pickup-card__heading">${escapeHtml(heading)}</span>
+        ${lead ? `<span class="home-pickup-card__lead">${escapeHtml(lead)}</span>` : ''}
+        ${more}
+      </span>
     </a>
   `;
 }
