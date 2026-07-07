@@ -579,18 +579,68 @@ function renderPickupSection(state: HomeState): string {
 }
 
 function getPickupItems(state: HomeState): Array<{ title: string; label: string; href: string; imageSrc?: string }> {
-  return Array.from(state.siteAssetsByKey.values())
+  // Candidates stay in editorial order (display_order → asset_key); selectDiversePickupAssets then
+  // spreads the visible three across groups instead of taking the first alphabetical cluster
+  // (which used to surface near-identical titles, e.g. スゴカル系 variants, back to back).
+  const candidates = Array.from(state.siteAssetsByKey.values())
     .filter(isPickupAsset)
-    .sort((a, b) => getAssetSortOrder(a) - getAssetSortOrder(b) || a.asset_key.localeCompare(b.asset_key))
-    .map((asset) => ({
-      title: asset.title || 'おすすめ特集',
-      label: asset.caption || '詳しく見る',
-      href: getSafeAssetLink(asset.link_url) ?? '/products.html',
-      imageSrc: getAssetImage(asset),
-    }))
-    .filter((item): item is { title: string; label: string; href: string; imageSrc: string } => Boolean(item.imageSrc))
-    .sort((a, b) => a.title.localeCompare(b.title, 'ja'))
-    .slice(0, 3);
+    .filter((asset) => Boolean(getAssetImage(asset)))
+    .sort((a, b) => getAssetSortOrder(a) - getAssetSortOrder(b) || a.asset_key.localeCompare(b.asset_key));
+
+  return selectDiversePickupAssets(candidates, 3).map((asset) => ({
+    title: asset.title || 'おすすめ特集',
+    label: asset.caption || '詳しく見る',
+    href: getSafeAssetLink(asset.link_url) ?? '/products.html',
+    imageSrc: getAssetImage(asset),
+  }));
+}
+
+// Pickup assets carry no brand/series column (see get_published_site_assets), so genuine
+// brand-level grouping isn't possible. We approximate it from the only signal we have — the
+// leading stem of the asset's own text (title → caption → alt_text → asset_key) with any trailing
+// sequence number stripped. Assets that share that stem (e.g. スゴカル系 variants, or "… 1" / "… 2"
+// pairs) are treated as one group. It is intentionally conservative: it never invents data and, at
+// worst, two unrelated titles that share a short stem collapse into one group — a cosmetic miss,
+// not a wrong link.
+const PICKUP_GROUP_KEY_LENGTH = 4;
+
+function pickupGroupKey(asset: HomeSiteAsset): string {
+  const source = [asset.title, asset.caption, asset.alt_text, asset.asset_key]
+    .map((value) => (value ?? '').toString())
+    .find((value) => value.trim().length > 0) ?? '';
+  const normalized = source
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[\s　]+/g, '')
+    .replace(/(?:no\.?)?\d+[)\]）】]*$/u, '')
+    .trim();
+  return normalized.slice(0, PICKUP_GROUP_KEY_LENGTH) || asset.asset_key;
+}
+
+// Choose up to `limit` pickup cards that spread across groups. The first asset in editorial order
+// always leads (the FEATURE card); each later slot prefers the next asset whose group has not been
+// used yet. Only if diversity cannot fill every slot do we backfill in order, allowing repeats
+// rather than rendering fewer cards.
+function selectDiversePickupAssets(candidates: HomeSiteAsset[], limit: number): HomeSiteAsset[] {
+  const selected: HomeSiteAsset[] = [];
+  const usedGroups = new Set<string>();
+
+  for (const asset of candidates) {
+    if (selected.length >= limit) break;
+    const key = pickupGroupKey(asset);
+    if (usedGroups.has(key)) continue;
+    selected.push(asset);
+    usedGroups.add(key);
+  }
+
+  if (selected.length < limit) {
+    for (const asset of candidates) {
+      if (selected.length >= limit) break;
+      if (!selected.includes(asset)) selected.push(asset);
+    }
+  }
+
+  return selected;
 }
 
 function isPickupAsset(asset: HomeSiteAsset): boolean {
@@ -609,8 +659,9 @@ function isPickupAsset(asset: HomeSiteAsset): boolean {
 // heading is a short, curated line so the block reads like a magazine feature, not a product list.
 //
 // NOTE: PICKUP_LABELS / PICKUP_HEADINGS are matched to cards by array index, which follows the
-// current sort order in getPickupItems() (asset sort_order → asset_key → title). If that ordering
-// changes, or assets are added/removed/reordered, the headings will attach to different cards.
+// output order of getPickupItems() (editorial sort_order → asset_key, then diversity selection).
+// If that ordering changes, or assets are added/removed/reordered, the headings will attach to
+// different cards.
 // The curated copy is deliberately generic so a mismatch never reads as wrong — but this is a
 // stopgap. TODO: drive the heading/label from dedicated editorial fields on site_assets (e.g.
 // title/caption, or new pickup_heading/pickup_label columns) so each asset carries its own copy
