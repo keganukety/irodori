@@ -2617,9 +2617,11 @@ body.home-body,
    Deliberately asymmetric so it reads as a curated spread rather than an even product grid. */
 .home-pickup-grid {
   display: grid;
-  grid-template-columns: 1.12fr 0.88fr;
+  /* Ease the left FEATURE back and give the right sub column more room so the sub cards read as a
+     genuine pair, not an afterthought. */
+  grid-template-columns: 1fr 0.94fr;
   grid-template-rows: auto auto;
-  column-gap: 52px;
+  column-gap: 44px;
   row-gap: 40px;
   align-items: start;
 }
@@ -2730,7 +2732,9 @@ body.home-body,
 }
 
 .home-pickup-card--feature .home-pickup-card__image {
-  aspect-ratio: 5 / 6;
+  /* Slightly less tall than before (was 5 / 6) so the FEATURE reads a touch calmer next to the
+     enlarged sub cards. */
+  aspect-ratio: 7 / 8;
 }
 
 .home-pickup-card__overlay {
@@ -2759,11 +2763,12 @@ body.home-body,
   margin-top: 16px;
 }
 
-/* Sub cards (index 1–2): compact, image beside text, visually lighter. */
+/* Sub cards (index 1–2): image beside text. Kept lighter than the FEATURE, but the image is large
+   enough (was 128px) that the pair holds real presence rather than looking like a footnote. */
 .home-pickup-card--sub {
   display: grid;
-  grid-template-columns: 128px 1fr;
-  gap: 22px;
+  grid-template-columns: 172px 1fr;
+  gap: 26px;
   align-items: center;
 }
 
@@ -2772,7 +2777,7 @@ body.home-body,
 }
 
 .home-pickup-card--sub .home-pickup-card__heading {
-  font-size: 15px;
+  font-size: 16px;
 }
 
 /* On very narrow screens the image-beside-text sub layout gets cramped, so stack it vertically.
