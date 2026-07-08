@@ -1006,6 +1006,15 @@ function updateCompareTray(tray = document.getElementById(compareTrayId)): void 
     countElement.textContent = String(count);
   }
 
+  // 比較点数が増えたときだけ、トレイと数字を軽くバウンスさせる（シームレス追加）。
+  // 初回描画（dataset未設定）ではバウンスさせない。
+  const hasPreviousCount = tray.dataset.compareCount !== undefined;
+  const previousCount = Number(tray.dataset.compareCount ?? '0');
+  if (hasPreviousCount && count > previousCount) {
+    bumpCompareTray(tray);
+  }
+  tray.dataset.compareCount = String(count);
+
   tray.classList.toggle('is-active', count > 0);
 
   if (openButton) {
@@ -1015,6 +1024,16 @@ function updateCompareTray(tray = document.getElementById(compareTrayId)): void 
   if (clearButton) {
     clearButton.disabled = count === 0;
   }
+}
+
+function bumpCompareTray(tray: HTMLElement): void {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  tray.classList.remove('is-bumped');
+  // リフローを挟んでアニメーションを確実に再生する。
+  void tray.offsetWidth;
+  tray.classList.add('is-bumped');
+  window.setTimeout(() => tray.classList.remove('is-bumped'), 520);
 }
 
 function setCompareMessage(message: string): void {
@@ -1319,6 +1338,24 @@ function injectSharedStyles(): void {
 
     .compare-tray.is-active .compare-tray__content {
       opacity: 1;
+    }
+
+    /* 比較トレイは position:fixed + translateX(-50%) で中央寄せしているため、
+       バウンスのキーフレーム内でも translateX(-50%) を保持する。 */
+    .compare-tray.is-bumped {
+      animation: compare-tray-bounce .5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes compare-tray-bounce {
+      0% { transform: translateX(-50%) translateY(0) scale(1); }
+      35% { transform: translateX(-50%) translateY(-6px) scale(1.03); }
+      100% { transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .compare-tray.is-bumped {
+        animation: none;
+      }
     }
 
     .compare-tray__count,

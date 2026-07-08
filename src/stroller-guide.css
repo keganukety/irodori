@@ -78,25 +78,26 @@
 }
 
 .stroller-diagnosis__kicker {
-  margin: 0 0 8px;
-  color: #333;
+  margin: 0 0 12px;
+  color: #a6a6a6;
   font-family: var(--ily-heading-en);
-  font-size: clamp(21px, 2.8vw, 30px);
+  font-size: clamp(10px, 1vw, 12px);
   font-weight: 400;
-  letter-spacing: .01em;
-  line-height: 1.25;
+  letter-spacing: .24em;
+  line-height: 1.4;
   text-align: center;
+  text-transform: uppercase;
 }
 
 .stroller-diagnosis h2,
 .stroller-diagnosis__panel--question h2 {
   margin: 0;
-  color: #666;
+  color: #333;
   font-family: var(--ily-heading-ja);
-  font-size: clamp(13px, 1.25vw, 16px);
+  font-size: clamp(16px, 1.4vw + 8px, 21px);
   font-weight: 400;
-  letter-spacing: .04em;
-  line-height: 1.8;
+  letter-spacing: .05em;
+  line-height: 1.7;
   text-align: center;
 }
 
@@ -503,6 +504,112 @@
   padding: 14px 18px 18px;
 }
 
+/* --- A. 控えめなキネティック・タイポグラフィ（ゆっくり横ループ） --- */
+.stroller-marquee {
+  width: 100vw;
+  max-width: 100%;
+  margin: 8px auto 40px;
+  overflow: hidden;
+  border-top: 1px solid var(--ily-border-light);
+  border-bottom: 1px solid var(--ily-border-light);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.stroller-marquee--divider {
+  margin: 48px auto;
+}
+
+.stroller-marquee__track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  will-change: transform;
+  animation: stroller-marquee-scroll 48s linear infinite;
+}
+
+.stroller-marquee__track--reverse {
+  animation-duration: 56s;
+  animation-direction: reverse;
+}
+
+.stroller-marquee:hover .stroller-marquee__track,
+.stroller-marquee:focus-within .stroller-marquee__track {
+  animation-play-state: paused;
+}
+
+.stroller-marquee__group {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.stroller-marquee__item {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 0;
+  color: #bdbdbd;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(12px, 1.3vw, 15px);
+  font-weight: 400;
+  letter-spacing: .12em;
+  line-height: 1.4;
+}
+
+.stroller-marquee__item::after {
+  margin: 0 clamp(20px, 3vw, 40px);
+  color: #dcdcdc;
+  content: '\2022';
+}
+
+@keyframes stroller-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* --- E. 没入演出：診断カードがスクロールで奥から手前に近づく（1箇所のみ・CSSのみ） --- */
+.stroller-diagnosis__stage {
+  transform-origin: center top;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .stroller-diagnosis__stage {
+      animation: stroller-stage-dive linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 30%;
+    }
+  }
+}
+
+@keyframes stroller-stage-dive {
+  from {
+    opacity: .72;
+    transform: scale(.965);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* --- D. セクション・スタッキング：見出しをstickyで軽く重ねる --- */
+@media (min-width: 761px) {
+  .stroller-guide__block > h2 {
+    position: sticky;
+    top: 76px;
+    z-index: 2;
+    padding: 10px 0;
+    background: #fff;
+  }
+}
+
 @keyframes stroller-guide-panel-in {
   from {
     opacity: 0;
@@ -565,10 +672,38 @@
     font-size: 18px;
   }
 
+  /* --- C. ドラッガブル・サイズセレクター：スマホは横スクロール＋スナップ --- */
+  .stroller-diagnosis__options {
+    grid-auto-flow: column;
+    grid-auto-columns: 80%;
+    gap: 12px;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .stroller-diagnosis__options::-webkit-scrollbar {
+    display: none;
+  }
+
   .stroller-diagnosis__option {
     grid-template-columns: 32px minmax(0, 1fr);
-    min-height: 74px;
-    padding: 13px 12px;
+    min-height: 96px;
+    padding: 14px 14px;
+    scroll-snap-align: start;
+  }
+
+  .stroller-marquee {
+    margin: 4px auto 30px;
+  }
+
+  .stroller-marquee--divider {
+    margin: 34px auto;
   }
 
   .stroller-diagnosis__result-grid,
@@ -599,8 +734,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stroller-diagnosis__panel.is-active,
-  .stroller-diagnosis__loader {
+  .stroller-diagnosis__loader,
+  .stroller-marquee__track,
+  .stroller-marquee__track--reverse {
     animation: none;
+  }
+
+  .stroller-diagnosis__stage {
+    opacity: 1;
+    transform: none;
   }
 
   .stroller-diagnosis__progress-track span,
