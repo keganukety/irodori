@@ -65,6 +65,9 @@ const productCatchCopies: Record<string, string> = {
   'sirona-gi-i-size': '新生児から使える安心の回転式シート。',
 };
 
+// ブランド専用テーマを持つスラッグ。該当時は専用レンダラーへ分岐する。
+const APRICA_THEME_SLUG = 'aprica';
+
 const appElement = document.querySelector<HTMLDivElement>('#brand-app');
 if (!appElement) throw new Error('#brand-app was not found.');
 const app: HTMLDivElement = appElement;
@@ -83,20 +86,27 @@ async function renderBrandPage(): Promise<void> {
   app.innerHTML = '<main class="brand-showcase"><p class="brand-state">ブランド情報を読み込んでいます。</p></main>';
 
   const { data, error } = await supabase.from('brands').select('*').eq('slug', slug).maybeSingle();
-  if (error) {
+  if (error && slug !== APRICA_THEME_SLUG) {
     console.error('Failed to load brand:', error);
     renderEmpty('ブランド情報は準備中です。');
     return;
   }
+  if (error) console.error('Failed to load brand:', error);
 
-  const brand = data as Brand | null;
+  let brand = data as Brand | null;
   if (!brand) {
-    renderEmpty('ブランド情報はまだ登録されていません。');
-    return;
+    // Aprica専用テーマは試験実装のため、ブランド未登録でもフォールバックで表示する。
+    if (slug === APRICA_THEME_SLUG) brand = createApricaFallbackBrand();
+    else {
+      renderEmpty('ブランド情報はまだ登録されていません。');
+      return;
+    }
   }
 
   const [productsResult, logo, hero] = await Promise.all([
-    supabase.from('products').select('*').eq('brand_id', brand.id).order('rank_no', { ascending: true, nullsFirst: false }),
+    brand.id
+      ? supabase.from('products').select('*').eq('brand_id', brand.id).order('rank_no', { ascending: true, nullsFirst: false })
+      : Promise.resolve({ data: [] as Product[], error: null }),
     loadBrandAsset(brand, 'logo'),
     loadBrandAsset(brand, 'hero'),
   ]);
@@ -112,6 +122,31 @@ async function renderBrandPage(): Promise<void> {
   const heroImage = getBrandHeroImage(hero, showcaseProducts);
   updateMetadata(brand);
 
+  if (slug === APRICA_THEME_SLUG) {
+    const { renderApricaBrandPage } = await import('./brand-aprica');
+    renderApricaBrandPage(app, {
+      brandName: brand.display_name,
+      brandSlug: brand.slug,
+      description: getText(brand.description || brand.short_description, ''),
+      heroImage,
+      logoImage: logo?.desktop_image_url ?? '',
+      logoAlt: logo?.alt_text || `${brand.display_name} ロゴ`,
+      products: showcaseProducts.map(({ product, image }) => {
+        const name = getProductName(product);
+        return {
+          id: String(product.id),
+          name,
+          subtitle: getProductSubtitle(product, name),
+          catchCopy: getFirstText(product, ['feature_heading', 'catch_copy', 'catchphrase', 'headline']),
+          price: formatPrice(product.price_yen),
+          image,
+        };
+      }),
+      youtubeEmbedUrl: getYouTubeEmbedUrl(brand.youtube_url),
+    });
+    return;
+  }
+
   app.innerHTML = `
     <main class="brand-showcase">
       <nav class="brand-breadcrumb brand-showcase__breadcrumb" aria-label="パンくず"><a href="/">トップ</a><span>/</span><span>${escapeHtml(brand.display_name)}</span></nav>
@@ -123,6 +158,26 @@ async function renderBrandPage(): Promise<void> {
     </main>
   `;
   applyFadeUpAnimations(app);
+}
+
+function createApricaFallbackBrand(): Brand {
+  const now = new Date().toISOString();
+  return {
+    id: '',
+    slug: APRICA_THEME_SLUG,
+    display_name: 'Aprica',
+    short_description: '赤ちゃんの発達と暮らしに寄り添うベビー用品ブランド。',
+    description: '',
+    official_url: null,
+    logo_asset_key: null,
+    hero_asset_key: null,
+    youtube_url: null,
+    seo_title: '',
+    seo_description: '',
+    is_published: true,
+    created_at: now,
+    updated_at: now,
+  };
 }
 
 async function loadBrandAsset(brand: Brand, kind: 'logo' | 'hero'): Promise<BrandAsset | null> {
