@@ -1,7 +1,13 @@
 // Aprica専用ブランドページ。
 // マークアップ・演出ともに .brand-page--aprica 配下に閉じ、共通UIには手を入れない。
-// スクロール演出は .js-aprica-anime + data-anime を IntersectionObserver で監視し、
-// 画面に入ったら is-animated を付与する方式（BOTANIST LPと同じ考え方のiLy.実装）。
+//
+// 構造(BOTANIST 26spring LPの構造の考え方をiLy.用に再設計):
+// - PC: 左ペイン(.aprica-pane)にブランドタイトルをsticky固定し、右列(.aprica-flow)の
+//   シーン進行に応じてペイン背景と透かし英字をopacityクロスフェードで切り替える。
+// - SP: ペインは先頭の帯となり、以降は全幅シーン帯が縦に続く。
+// - シーン検出は IntersectionObserver(中央帯)で行い、<main> の data-active-scene を更新。
+// - 要素単位の演出は .js-aprica-anime + data-anime を IntersectionObserver で監視し、
+//   画面に入ったら is-animated を付与する方式。scroll イベントは使わない。
 import './brand-aprica.css';
 
 export type ApricaProductView = {
@@ -22,6 +28,17 @@ export type ApricaPageContext = {
   logoAlt: string;
   products: ApricaProductView[];
   youtubeEmbedUrl: string;
+};
+
+type ApricaScene = 'hero' | 'concept' | 'promise' | 'reason' | 'lineup' | 'closing';
+
+const apricaSceneWatermarks: Record<ApricaScene, string> = {
+  hero: 'FOR BABY',
+  concept: 'GENTLE',
+  promise: 'PROTECT',
+  reason: 'CLEAN',
+  lineup: 'LINE UP',
+  closing: 'WITH YOU',
 };
 
 type ApricaPromise = {
@@ -58,143 +75,218 @@ const apricaPromises: ApricaPromise[] = [
   },
 ];
 
+type ApricaReason = {
+  number: string;
+  en: string;
+  title: string;
+  body: string;
+};
+
+const apricaReasons: ApricaReason[] = [
+  {
+    number: '01',
+    en: 'MEDICAL EYES',
+    title: '赤ちゃん医学の視点',
+    body: '生まれたばかりのからだはまだ発達の途中。姿勢や呼吸を妨げないことを起点に、ひとつずつかたちを検討しています。',
+  },
+  {
+    number: '02',
+    en: 'WASHABLE',
+    title: '清潔を保つ工夫',
+    body: '肌にふれる部分は取り外して洗えるように。汗やよごれをその日のうちにリセットして、いつも気持ちよく使えます。',
+  },
+  {
+    number: '03',
+    en: 'FIT JAPAN LIFE',
+    title: '日本の暮らしに合わせて',
+    body: 'コンパクトな玄関、電車での移動、小さな車。日本の住まいと移動の事情に合わせた、軽さと扱いやすさを追求します。',
+  },
+];
+
 export function renderApricaBrandPage(app: HTMLElement, context: ApricaPageContext): void {
   app.innerHTML = `
-    <main class="brand-page brand-page--aprica">
-      <nav class="brand-breadcrumb aprica-breadcrumb" aria-label="パンくず">
-        <a href="/">トップ</a><span>/</span><span>${escapeHtml(context.brandName)}</span>
-      </nav>
-      ${renderHero(context)}
-      ${renderConcept(context)}
-      ${renderPromises()}
-      ${renderLineup(context)}
-      ${renderFinalAction(context)}
-      ${renderVideo(context.youtubeEmbedUrl)}
+    <main class="brand-page brand-page--aprica" data-active-scene="hero">
+      <div class="aprica-stage">
+        ${renderPane(context)}
+        <div class="aprica-flow">
+          ${renderHeroScene(context)}
+          ${renderConceptScene(context)}
+          ${renderPromiseScene()}
+          ${renderReasonScene()}
+          ${renderLineupScene(context)}
+          ${renderClosingScene(context)}
+        </div>
+      </div>
     </main>
   `;
+  initApricaSceneSync(app);
   applyApricaScrollAnimations(app);
 }
 
-function renderHero(context: ApricaPageContext): string {
+function renderPane(context: ApricaPageContext): string {
+  const scenes = Object.keys(apricaSceneWatermarks) as ApricaScene[];
   return `
-    <section class="aprica-hero" aria-labelledby="aprica-hero-title">
-      <div class="aprica-hero__media js-aprica-anime" data-anime="image-reveal">
-        ${context.heroImage
-          ? `<img src="${escapeAttr(context.heroImage)}" alt="${escapeAttr(`${context.brandName} ブランドイメージ`)}">`
-          : `<span class="aprica-hero__placeholder" aria-hidden="true">${escapeHtml(context.brandName)}</span>`}
+    <div class="aprica-pane">
+      <div class="aprica-pane__backdrop" aria-hidden="true">
+        ${scenes.map((scene) => `
+          <div class="aprica-pane__bg" data-scene="${scene}">
+            ${scene === 'hero' && context.heroImage ? `<img src="${escapeAttr(context.heroImage)}" alt="">` : ''}
+          </div>`).join('')}
       </div>
-      <div class="aprica-hero__copy">
-        <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">APRICA</p>
+      <div class="aprica-pane__watermarks" aria-hidden="true">
+        ${scenes.map((scene) => `<span class="aprica-pane__watermark" data-scene="${scene}">${escapeHtml(apricaSceneWatermarks[scene])}</span>`).join('')}
+      </div>
+      <div class="aprica-pane__title">
+        <p class="aprica-pane__eyebrow js-aprica-anime" data-anime="fadein-up">APRICA</p>
+        <h1 id="aprica-hero-title" class="js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 90ms">
+          赤ちゃんの毎日を、<br>やさしく守るために。
+        </h1>
+        <p class="aprica-pane__lead js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 180ms">
+          まもる。やさしい。清潔。暮らしに合う。
+        </p>
+      </div>
+    </div>`;
+}
+
+function renderHeroScene(context: ApricaPageContext): string {
+  return `
+    <section class="aprica-scene aprica-scene--hero" data-scene="hero" aria-labelledby="aprica-hero-title">
+      <div class="aprica-scene__inner">
+        <nav class="brand-breadcrumb aprica-breadcrumb" aria-label="パンくず">
+          <a href="/">トップ</a><span>/</span><span>${escapeHtml(context.brandName)}</span>
+        </nav>
         ${context.logoImage
           ? `<img class="aprica-hero__logo js-aprica-anime" data-anime="fadein-up" src="${escapeAttr(context.logoImage)}" alt="${escapeAttr(context.logoAlt)}">`
           : ''}
-        <h1 id="aprica-hero-title" class="aprica-hero__title js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 90ms">
-          赤ちゃんの毎日を、<br>やさしく守るために。
-        </h1>
-        <p class="aprica-hero__lead js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 180ms">
+        <p class="aprica-hero__lead js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 90ms">
           生まれたばかりのからだは、とてもデリケート。${escapeHtml(context.brandName)}は、赤ちゃんの発達と家族の暮らしやすさを見つめながら、毎日の育児にそっと寄り添うものづくりを続けています。
+        </p>
+        <div class="aprica-hero__media js-aprica-anime" data-anime="image-reveal">
+          ${context.heroImage
+            ? `<img src="${escapeAttr(context.heroImage)}" alt="${escapeAttr(`${context.brandName} ブランドイメージ`)}">`
+            : `<span class="aprica-hero__placeholder" aria-hidden="true">${escapeHtml(context.brandName)}</span>`}
+        </div>
+        <p class="aprica-scroll-cue js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 260ms" aria-hidden="true">
+          <span class="aprica-scroll-cue__label">SCROLL</span><span class="aprica-scroll-cue__line"></span>
         </p>
       </div>
     </section>`;
 }
 
-function renderConcept(context: ApricaPageContext): string {
+function renderConceptScene(context: ApricaPageContext): string {
   const lead = context.description
     || '赤ちゃんにとっての心地よさは、からだを正しく守ることから始まります。姿勢・温度・振動といった赤ちゃんを取り巻く環境をひとつずつ見つめ、医学的な視点を大切にしたものづくりを行っています。';
   return `
-    <section class="aprica-concept" aria-labelledby="aprica-concept-title">
-      <div class="aprica-concept__copy">
+    <section class="aprica-scene aprica-scene--concept" data-scene="concept" aria-labelledby="aprica-concept-title">
+      <div class="aprica-scene__inner">
         <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">CONCEPT</p>
-        <h2 id="aprica-concept-title" class="js-aprica-anime" data-anime="fadein-up">「守る」から生まれる、<br>心地よさ。</h2>
+        <h2 id="aprica-concept-title" class="js-aprica-anime" data-anime="text-reveal"><span class="aprica-reveal">「守る」から生まれる、<br>心地よさ。</span></h2>
         <p class="js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 100ms">${formatMultiline(lead)}</p>
         <p class="js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 180ms">清潔に保てること。暮らしの中で無理なく使えること。家族の毎日に自然と馴染むやさしさを、かたちにしています。</p>
-      </div>
-      <div class="aprica-concept__media js-aprica-anime" data-anime="image-reveal">
-        ${context.heroImage
-          ? `<img src="${escapeAttr(context.heroImage)}" alt="" loading="lazy">`
-          : '<span class="aprica-concept__placeholder" aria-hidden="true"></span>'}
+        <div class="aprica-concept__media js-aprica-anime" data-anime="image-reveal">
+          ${context.heroImage
+            ? `<img src="${escapeAttr(context.heroImage)}" alt="" loading="lazy">`
+            : '<span class="aprica-concept__placeholder" aria-hidden="true"></span>'}
+        </div>
       </div>
     </section>`;
 }
 
-function renderPromises(): string {
+function renderPromiseScene(): string {
   return `
-    <section class="aprica-promise" aria-labelledby="aprica-promise-title">
-      <header class="aprica-section-header">
+    <section class="aprica-scene aprica-scene--promise" data-scene="promise" aria-labelledby="aprica-promise-title">
+      <div class="aprica-scene__inner">
         <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">PROMISE</p>
-        <h2 id="aprica-promise-title" class="js-aprica-anime" data-anime="fadein-up">アップリカがいちばんに考える、4つのこと。</h2>
-      </header>
-      <ul class="aprica-promise__grid" data-anime-stagger role="list">
-        ${apricaPromises.map((item) => `
-          <li class="aprica-promise-card js-aprica-anime" data-anime="fadein-up">
-            <span class="aprica-promise-card__icon" aria-hidden="true">${renderIcon(item.icon)}</span>
-            <p class="aprica-promise-card__en">${escapeHtml(item.en)}</p>
-            <h3>${escapeHtml(item.title)}</h3>
-            <p class="aprica-promise-card__body">${escapeHtml(item.body)}</p>
-          </li>`).join('')}
-      </ul>
+        <h2 id="aprica-promise-title" class="js-aprica-anime" data-anime="text-reveal"><span class="aprica-reveal">アップリカがいちばんに考える、<br>4つのこと。</span></h2>
+        <ul class="aprica-promise__grid" data-anime-stagger role="list">
+          ${apricaPromises.map((item) => `
+            <li class="aprica-promise-card js-aprica-anime" data-anime="fadein-up">
+              <span class="aprica-promise-card__icon" aria-hidden="true">${renderIcon(item.icon)}</span>
+              <p class="aprica-promise-card__en">${escapeHtml(item.en)}</p>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p class="aprica-promise-card__body">${escapeHtml(item.body)}</p>
+            </li>`).join('')}
+        </ul>
+      </div>
     </section>`;
 }
 
-function renderLineup(context: ApricaPageContext): string {
-  if (context.products.length === 0) {
-    return `
-      <section class="aprica-lineup" aria-labelledby="aprica-lineup-title">
-        <header class="aprica-section-header">
-          <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">LINE UP</p>
-          <h2 id="aprica-lineup-title" class="js-aprica-anime" data-anime="fadein-up">${escapeHtml(context.brandName)}のラインナップ</h2>
-        </header>
-        <p class="aprica-lineup__empty js-aprica-anime" data-anime="fadein-up">商品情報は現在準備中です。</p>
-      </section>`;
-  }
+function renderReasonScene(): string {
   return `
-    <section class="aprica-lineup" aria-labelledby="aprica-lineup-title">
-      <header class="aprica-section-header">
+    <section class="aprica-scene aprica-scene--reason" data-scene="reason" aria-labelledby="aprica-reason-title">
+      <div class="aprica-scene__inner">
+        <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">REASON</p>
+        <h2 id="aprica-reason-title" class="js-aprica-anime" data-anime="text-reveal"><span class="aprica-reveal">毎日の安心を支える、<br>3つの理由。</span></h2>
+        <ul class="aprica-reason__list" data-anime-stagger role="list">
+          ${apricaReasons.map((item) => `
+            <li class="aprica-reason-card js-aprica-anime" data-anime="fadein-up">
+              <span class="aprica-reason-card__number" aria-hidden="true">${escapeHtml(item.number)}</span>
+              <p class="aprica-reason-card__en">${escapeHtml(item.en)}</p>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p class="aprica-reason-card__body">${escapeHtml(item.body)}</p>
+            </li>`).join('')}
+        </ul>
+      </div>
+    </section>`;
+}
+
+function renderLineupScene(context: ApricaPageContext): string {
+  return `
+    <section class="aprica-scene aprica-scene--lineup" data-scene="lineup" aria-labelledby="aprica-lineup-title">
+      <div class="aprica-scene__inner">
         <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">LINE UP</p>
-        <h2 id="aprica-lineup-title" class="js-aprica-anime" data-anime="fadein-up">${escapeHtml(context.brandName)}のラインナップ</h2>
-      </header>
-      <ul class="aprica-lineup__grid" data-anime-stagger role="list">
-        ${context.products.map((product) => `
-          <li class="aprica-lineup-card js-aprica-anime" data-anime="fadein-up">
-            <a href="/product.html?id=${encodeURIComponent(product.id)}">
-              <span class="aprica-lineup-card__image">
-                ${product.image
-                  ? `<img src="${escapeAttr(product.image)}" alt="${escapeAttr(product.name)}" loading="lazy">`
-                  : `<span class="aprica-lineup-card__noimage" aria-hidden="true">${escapeHtml(product.name)}</span>`}
-              </span>
-              <span class="aprica-lineup-card__body">
-                ${product.catchCopy ? `<span class="aprica-lineup-card__catch">${escapeHtml(product.catchCopy)}</span>` : ''}
-                <span class="aprica-lineup-card__name">${escapeHtml(product.name)}</span>
-                ${product.subtitle ? `<span class="aprica-lineup-card__subtitle">${escapeHtml(product.subtitle)}</span>` : ''}
-                <span class="aprica-lineup-card__price">${escapeHtml(product.price)}</span>
-              </span>
-            </a>
-          </li>`).join('')}
-      </ul>
+        <h2 id="aprica-lineup-title" class="js-aprica-anime" data-anime="text-reveal"><span class="aprica-reveal">${escapeHtml(context.brandName)}のラインナップ</span></h2>
+        ${context.products.length === 0
+          ? '<p class="aprica-lineup__empty js-aprica-anime" data-anime="fadein-up">商品情報は現在準備中です。</p>'
+          : `
+        <ul class="aprica-lineup__grid" data-anime-stagger role="list">
+          ${context.products.map((product) => `
+            <li class="aprica-lineup-card js-aprica-anime" data-anime="fadein-up">
+              <a href="/product.html?id=${encodeURIComponent(product.id)}">
+                <span class="aprica-lineup-card__image">
+                  ${product.image
+                    ? `<img src="${escapeAttr(product.image)}" alt="${escapeAttr(product.name)}" loading="lazy">`
+                    : `<span class="aprica-lineup-card__noimage" aria-hidden="true">${escapeHtml(product.name)}</span>`}
+                </span>
+                <span class="aprica-lineup-card__body">
+                  ${product.catchCopy ? `<span class="aprica-lineup-card__catch">${escapeHtml(product.catchCopy)}</span>` : ''}
+                  <span class="aprica-lineup-card__name">${escapeHtml(product.name)}</span>
+                  ${product.subtitle ? `<span class="aprica-lineup-card__subtitle">${escapeHtml(product.subtitle)}</span>` : ''}
+                  <span class="aprica-lineup-card__price">${escapeHtml(product.price)}</span>
+                </span>
+              </a>
+            </li>`).join('')}
+        </ul>`}
+      </div>
     </section>`;
 }
 
-function renderFinalAction(context: ApricaPageContext): string {
+function renderClosingScene(context: ApricaPageContext): string {
   return `
-    <section class="aprica-cta">
-      <a class="aprica-cta__button js-aprica-anime" data-anime="fadein-up" href="/products.html?brand=${encodeURIComponent(context.brandSlug)}">
-        ${escapeHtml(context.brandName)}の商品一覧を見る
-      </a>
+    <section class="aprica-scene aprica-scene--closing" data-scene="closing" aria-labelledby="aprica-closing-title">
+      <div class="aprica-scene__inner">
+        <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">MESSAGE</p>
+        <h2 id="aprica-closing-title" class="js-aprica-anime" data-anime="text-reveal"><span class="aprica-reveal">今日も、家族の毎日に<br>安心を。</span></h2>
+        <p class="js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 100ms">
+          はじめての抱っこも、はじめてのお出かけも。${escapeHtml(context.brandName)}は、赤ちゃんと家族の「はじめて」に安心を添えていきます。
+        </p>
+        <a class="aprica-cta__button js-aprica-anime" data-anime="fadein-up" style="--aprica-anime-delay: 180ms" href="/products.html?brand=${encodeURIComponent(context.brandSlug)}">
+          ${escapeHtml(context.brandName)}の商品一覧を見る
+        </a>
+        ${renderVideo(context.youtubeEmbedUrl)}
+      </div>
     </section>`;
 }
 
 function renderVideo(embedUrl: string): string {
   if (!embedUrl) return '';
   return `
-    <section class="aprica-video" aria-label="ブランドムービー">
-      <header class="aprica-section-header">
-        <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">MOVIE</p>
-        <h2 class="js-aprica-anime" data-anime="fadein-up">ブランドムービー</h2>
-      </header>
+    <div class="aprica-video">
+      <p class="aprica-eyebrow js-aprica-anime" data-anime="fadein-up">MOVIE</p>
       <div class="aprica-video__frame js-aprica-anime" data-anime="image-reveal">
         <iframe src="${escapeAttr(embedUrl)}" title="ブランドムービー" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </div>
-    </section>`;
+    </div>`;
 }
 
 function renderIcon(name: string): string {
@@ -206,6 +298,28 @@ function renderIcon(name: string): string {
   };
   const path = paths[name] ?? paths.shield;
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">${path}</svg>`;
+}
+
+// 右列のシーンが画面中央帯に入ったら data-active-scene を更新し、
+// 左ペインの背景・透かし・タイトル色をCSS側でクロスフェードさせる。
+function initApricaSceneSync(root: ParentNode): void {
+  const stageRoot = root.querySelector<HTMLElement>('.brand-page--aprica');
+  const scenes = Array.from(root.querySelectorAll<HTMLElement>('.aprica-scene'));
+  if (!stageRoot || scenes.length === 0) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const scene = (entry.target as HTMLElement).dataset.scene;
+        if (scene) stageRoot.dataset.activeScene = scene;
+      });
+    },
+    { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+  );
+
+  scenes.forEach((scene) => observer.observe(scene));
 }
 
 function applyApricaScrollAnimations(root: ParentNode): void {
