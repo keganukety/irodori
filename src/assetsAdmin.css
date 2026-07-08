@@ -764,6 +764,152 @@ label {
   font-size: 12px;
 }
 
+.asset-key-bulk-panel {
+  margin: 0 0 14px;
+  border: 1px solid #d4dae1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.asset-key-bulk-panel[hidden] {
+  display: none;
+}
+
+.asset-key-bulk-form {
+  display: grid;
+  gap: 12px;
+}
+
+.asset-key-bulk-header,
+.asset-key-bulk-controls,
+.asset-key-bulk-summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.asset-key-bulk-header strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.asset-key-bulk-header span,
+.asset-key-bulk-summary,
+.asset-key-bulk-empty {
+  color: #65707d;
+  font-size: 12px;
+}
+
+.asset-key-bulk-controls label {
+  flex: 1 1 260px;
+}
+
+.asset-key-bulk-controls button {
+  flex: 0 0 auto;
+}
+
+.asset-key-bulk-warning {
+  margin: 0;
+  border-left: 3px solid #d19a34;
+  background: #fff8ea;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.asset-key-bulk-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.asset-key-bulk-summary {
+  justify-content: flex-start;
+}
+
+.asset-key-bulk-summary code {
+  border: 1px solid #dbe1e7;
+  border-radius: 4px;
+  background: #f7f9fa;
+  padding: 1px 5px;
+  color: #25313d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.asset-key-bulk-empty {
+  margin: 0;
+}
+
+.asset-key-bulk-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asset-key-bulk-list li {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border: 1px solid #e0e5ea;
+  border-radius: 6px;
+  background: #f9fbfc;
+  padding: 8px;
+}
+
+.asset-key-bulk-list img {
+  width: 72px;
+  height: 54px;
+  border: 1px solid #dce1e6;
+  border-radius: 4px;
+  background: #ffffff;
+  object-fit: contain;
+}
+
+.asset-key-bulk-row-body {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.asset-key-bulk-current,
+.asset-key-bulk-row-body strong {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.asset-key-bulk-current {
+  color: #697582;
+}
+
+.asset-key-bulk-arrow {
+  color: #9aa3ad;
+}
+
+.asset-key-bulk-row-body strong {
+  color: #176b4c;
+}
+
+.asset-key-bulk-row-body strong.is-unchanged {
+  color: #697582;
+}
+
+.asset-key-bulk-message {
+  min-height: 18px;
+  margin: 0;
+  font-size: 12px;
+}
+
 /* フォルダカード（Googleドライブ風の整理UI） */
 .folder-cards {
   display: grid;
@@ -1169,6 +1315,28 @@ label {
   .asset-move-bar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .asset-key-bulk-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .asset-key-bulk-controls button {
+    width: 100%;
+  }
+
+  .asset-key-bulk-list {
+    max-height: 360px;
+  }
+
+  .asset-key-bulk-list li {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .asset-key-bulk-list img {
+    width: 58px;
+    height: 48px;
   }
 
   .asset-move-bar__controls {

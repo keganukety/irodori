@@ -104,6 +104,19 @@ const quickPreviewUrls = new Set<string>();
 const selectedIconIds = new Set<string>();
 const selectedAssetIds = new Set<string>();
 let draggingAssetIds: string[] = [];
+let bulkAssetKeyBase = '';
+
+type BulkAssetKeyPlanItem = {
+  asset: SiteAsset;
+  newAssetKey: string;
+  number: number;
+};
+
+type BulkAssetKeyPlan = {
+  base: string;
+  items: BulkAssetKeyPlanItem[];
+  bumped: boolean;
+};
 
 void init();
 
@@ -233,6 +246,7 @@ async function renderAdmin() {
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
           <label>フォルダ<select id="asset-folder-filter">${renderFolderOptions(folderFilter, true)}</select></label>
         </div>
+        <div id="asset-key-bulk-panel" class="asset-key-bulk-panel" hidden></div>
         <div id="icon-bulk-actions" class="icon-bulk-actions" hidden></div>
         <div id="asset-move-bar" class="asset-move-bar" hidden></div>
         <p id="page-message" class="page-message" aria-live="polite">読み込み中...</p>
@@ -760,14 +774,9 @@ async function loadAssets() {
   assets = (data ?? []) as SiteAsset[];
 }
 
-function renderAssetList() {
-  const list = document.querySelector<HTMLElement>('#asset-list');
-  const count = document.querySelector<HTMLElement>('#library-count');
-  const message = document.querySelector<HTMLElement>('#page-message');
-  if (!list || !count || !message) return;
-
+function getVisibleAssets() {
   const normalizedQuery = query.trim().toLowerCase();
-  const visibleAssets = assets.filter((asset) => {
+  return assets.filter((asset) => {
     const matchesType = typeFilter === 'all' || asset.asset_type === typeFilter;
     const folderLabel = getFolderLabel(asset.folder_id);
     const matchesFolder = folderFilter === 'all'
@@ -775,6 +784,15 @@ function renderAssetList() {
     const matchesQuery = !normalizedQuery || `${asset.asset_key} ${asset.title} ${folderLabel}`.toLowerCase().includes(normalizedQuery);
     return matchesType && matchesFolder && matchesQuery;
   });
+}
+
+function renderAssetList() {
+  const list = document.querySelector<HTMLElement>('#asset-list');
+  const count = document.querySelector<HTMLElement>('#library-count');
+  const message = document.querySelector<HTMLElement>('#page-message');
+  if (!list || !count || !message) return;
+
+  const visibleAssets = getVisibleAssets();
   const currentIconIds = new Set(assets.filter((asset) => asset.asset_type === 'icon').map((asset) => asset.id));
   selectedIconIds.forEach((id) => {
     if (!currentIconIds.has(id)) selectedIconIds.delete(id);
@@ -785,9 +803,9 @@ function renderAssetList() {
     if (!visibleIconIds.has(id)) selectedIconIds.delete(id);
   });
   const isIconGrid = visibleAssets.length > 0 && visibleAssets.every((asset) => asset.asset_type === 'icon');
-  const visibleMoveIds = new Set(visibleAssets.filter((asset) => asset.asset_type !== 'icon').map((asset) => asset.id));
+  const visibleSelectableIds = new Set(visibleAssets.filter((asset) => asset.asset_type !== 'icon').map((asset) => asset.id));
   selectedAssetIds.forEach((id) => {
-    if (!visibleMoveIds.has(id)) selectedAssetIds.delete(id);
+    if (!visibleSelectableIds.has(id)) selectedAssetIds.delete(id);
   });
 
   count.textContent = `${visibleAssets.length}件`;
@@ -795,14 +813,16 @@ function renderAssetList() {
   list.classList.toggle('asset-list--icons', isIconGrid);
   list.innerHTML = visibleAssets.map(renderAssetCard).join('');
   renderFolderCards();
+  renderAssetKeyBulkPanel(visibleAssets);
   renderIconBulkActions(visibleIconAssets);
   renderAssetMoveBar();
   bindFolderCards();
   bindAssetCards();
+  bindAssetKeyBulkPanel(visibleAssets);
   bindIconBulkActions(visibleIconAssets);
   bindAssetMoveBar();
-  updateIconSelectionUi();
-  updateAssetSelectionUi();
+  updateIconSelectionUi(false);
+  updateAssetSelectionUi(false);
 }
 
 function renderAssetCard(asset: SiteAsset) {
@@ -810,8 +830,9 @@ function renderAssetCard(asset: SiteAsset) {
   const selectedBrandId = getBrandIdForAsset(asset);
   const isIcon = asset.asset_type === 'icon';
   const isSelected = selectedIconIds.has(asset.id);
-  const canMove = !isIcon && assetFoldersAvailable;
-  const isMoveSelected = canMove && selectedAssetIds.has(asset.id);
+  const canSelect = !isIcon;
+  const canMove = canSelect && assetFoldersAvailable;
+  const isMoveSelected = canSelect && selectedAssetIds.has(asset.id);
   const mobileUrl = asset.mobile_image_url || asset.desktop_image_url;
   const mobileDimensions = asset.mobile_width && asset.mobile_height
     ? `${asset.mobile_width}×${asset.mobile_height}`
@@ -824,7 +845,7 @@ function renderAssetCard(asset: SiteAsset) {
       </label>
     `
     : '';
-  const moveSelectMarkup = canMove
+  const moveSelectMarkup = canSelect
     ? `
       <label class="asset-select-control">
         <input type="checkbox" data-asset-select value="${escapeAttr(asset.id)}" ${isMoveSelected ? 'checked' : ''} aria-label="${escapeAttr(asset.asset_key)}を選択" />
@@ -1065,7 +1086,214 @@ function bindIconBulkActions(visibleIconAssets: SiteAsset[]) {
   container.querySelector<HTMLButtonElement>('[data-action="delete-selected-icons"]')?.addEventListener('click', () => void handleDeleteSelectedIcons());
 }
 
-function updateIconSelectionUi() {
+function getSelectedAssetsInDisplayOrder(visibleAssets = getVisibleAssets()) {
+  return visibleAssets.filter((asset) =>
+    asset.asset_type === 'icon'
+      ? selectedIconIds.has(asset.id)
+      : selectedAssetIds.has(asset.id)
+  );
+}
+
+function renderAssetKeyBulkPanel(visibleAssets = getVisibleAssets()) {
+  const panel = document.querySelector<HTMLElement>('#asset-key-bulk-panel');
+  if (!panel) return;
+
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  if (selectedAssets.length === 0) {
+    panel.hidden = true;
+    panel.innerHTML = '';
+    return;
+  }
+
+  const riskyAssets = selectedAssets.filter(isDirectDisplayAssetKeyRisk);
+  panel.hidden = false;
+  panel.innerHTML = `
+    <form class="asset-key-bulk-form" data-bulk-asset-key-form>
+      <div class="asset-key-bulk-header">
+        <div>
+          <strong>asset_key 一括変更</strong>
+          <span>${selectedAssets.length}件選択中。現在の一覧表示順で連番を割り当てます。</span>
+        </div>
+        <button type="button" class="quiet-button" data-action="clear-all-selection">選択解除</button>
+      </div>
+      ${riskyAssets.length > 0 ? renderDirectDisplayWarning(riskyAssets) : ''}
+      <div class="asset-key-bulk-controls">
+        <label>asset_key ベース名<input data-bulk-asset-key-base name="bulk_asset_key_base" value="${escapeAttr(bulkAssetKeyBase)}" placeholder="aprica_luxuna" autocomplete="off" /></label>
+        <button type="submit" class="primary-action" data-action="bulk-update-asset-keys"${normalizeBulkAssetKeyBase(bulkAssetKeyBase) ? '' : ' disabled'}>プレビュー内容で更新</button>
+      </div>
+      <div class="asset-key-bulk-preview" data-bulk-asset-key-preview>
+        ${renderBulkAssetKeyPreview(selectedAssets, bulkAssetKeyBase)}
+      </div>
+      <p class="asset-key-bulk-message" aria-live="polite"></p>
+    </form>
+  `;
+}
+
+function bindAssetKeyBulkPanel(visibleAssets = getVisibleAssets()) {
+  const panel = document.querySelector<HTMLElement>('#asset-key-bulk-panel');
+  if (!panel || panel.hidden) return;
+
+  const form = panel.querySelector<HTMLFormElement>('[data-bulk-asset-key-form]');
+  const input = panel.querySelector<HTMLInputElement>('[data-bulk-asset-key-base]');
+  if (!form || !input) return;
+
+  input.addEventListener('input', () => {
+    bulkAssetKeyBase = input.value;
+    syncAssetKeyBulkPreview(panel, visibleAssets);
+  });
+
+  form.addEventListener('submit', (event) => void handleBulkAssetKeyUpdate(event, visibleAssets));
+  panel.querySelector<HTMLButtonElement>('[data-action="clear-all-selection"]')?.addEventListener('click', () => {
+    selectedAssetIds.clear();
+    selectedIconIds.clear();
+    updateIconSelectionUi();
+    updateAssetSelectionUi();
+  });
+}
+
+function syncAssetKeyBulkPreview(panel: HTMLElement, visibleAssets = getVisibleAssets()) {
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  const preview = panel.querySelector<HTMLElement>('[data-bulk-asset-key-preview]');
+  if (preview) preview.innerHTML = renderBulkAssetKeyPreview(selectedAssets, bulkAssetKeyBase);
+
+  const submitButton = panel.querySelector<HTMLButtonElement>('[data-action="bulk-update-asset-keys"]');
+  if (submitButton) submitButton.disabled = selectedAssets.length === 0 || !normalizeBulkAssetKeyBase(bulkAssetKeyBase);
+}
+
+function refreshAssetKeyBulkPanel() {
+  const visibleAssets = getVisibleAssets();
+  renderAssetKeyBulkPanel(visibleAssets);
+  bindAssetKeyBulkPanel(visibleAssets);
+}
+
+function renderDirectDisplayWarning(riskyAssets: SiteAsset[]) {
+  const keys = riskyAssets.slice(0, 5).map((asset) => asset.asset_key).join(' / ');
+  const suffix = riskyAssets.length > 5 ? ` ほか${riskyAssets.length - 5}件` : '';
+  return `
+    <p class="asset-key-bulk-warning" data-tone="warning">
+      この asset_key はサイト表示条件に使われている可能性があります。変更すると画像が表示されなくなる場合があります。
+      対象: ${escapeText(keys)}${escapeText(suffix)}
+    </p>
+  `;
+}
+
+function renderBulkAssetKeyPreview(selectedAssets: SiteAsset[], rawBase: string) {
+  if (selectedAssets.length === 0) return '';
+  if (!rawBase.trim()) {
+    return '<p class="asset-key-bulk-empty">ベース名を入力すると、変更後の asset_key を確認できます。</p>';
+  }
+
+  const base = normalizeBulkAssetKeyBase(rawBase);
+  if (!base) {
+    return '<p class="asset-key-bulk-empty" data-tone="error">安全化後のベース名が空です。半角英数字を含む名前を入力してください。</p>';
+  }
+
+  const plan = buildBulkAssetKeyPlan(selectedAssets, rawBase);
+  return `
+    <div class="asset-key-bulk-summary">
+      <span>安全化後: <code>${escapeText(plan.base)}</code></span>
+      ${plan.bumped ? '<span data-tone="warning">既存キーとの重複を避けて、利用可能な番号へ自動で繰り上げます。</span>' : ''}
+    </div>
+    <ul class="asset-key-bulk-list">
+      ${plan.items.map((item) => renderBulkAssetKeyPreviewItem(item)).join('')}
+    </ul>
+  `;
+}
+
+function renderBulkAssetKeyPreviewItem(item: BulkAssetKeyPlanItem) {
+  const unchanged = item.asset.asset_key === item.newAssetKey;
+  return `
+    <li>
+      <img src="${escapeAttr(item.asset.desktop_image_url)}" alt="" loading="lazy" />
+      <div class="asset-key-bulk-row-body">
+        <span class="type-badge">${escapeText(assetTypeLabels[item.asset.asset_type])}</span>
+        <span class="asset-key-bulk-current">${escapeText(item.asset.asset_key)}</span>
+        <span class="asset-key-bulk-arrow">→</span>
+        <strong class="${unchanged ? 'is-unchanged' : ''}">${escapeText(item.newAssetKey)}</strong>
+      </div>
+    </li>
+  `;
+}
+
+function buildBulkAssetKeyPlan(selectedAssets: SiteAsset[], rawBase: string): BulkAssetKeyPlan {
+  const base = normalizeBulkAssetKeyBase(rawBase);
+  if (!base) throw new Error('asset_key ベース名を入力してください。');
+
+  const reservedKeys = new Set(assets.map((asset) => asset.asset_key));
+  const items: BulkAssetKeyPlanItem[] = [];
+  let nextNumber = 1;
+  let bumped = false;
+
+  selectedAssets.forEach((asset) => {
+    let number = nextNumber;
+    let candidate = `${base}_${number}`;
+    while (reservedKeys.has(candidate) && candidate !== asset.asset_key) {
+      number += 1;
+      candidate = `${base}_${number}`;
+      bumped = true;
+    }
+    reservedKeys.delete(asset.asset_key);
+    reservedKeys.add(candidate);
+    items.push({ asset, newAssetKey: candidate, number });
+    nextNumber = number + 1;
+  });
+
+  return { base, items, bumped };
+}
+
+function normalizeBulkAssetKeyBase(value: string) {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function isDirectDisplayAssetKeyRisk(asset: SiteAsset) {
+  if (asset.asset_type === 'hero' || asset.asset_type === 'category' || asset.asset_type === 'brand_logo' || asset.asset_type === 'brand_hero') return true;
+  const key = asset.asset_key.toLowerCase();
+  const fixedDisplayKeys = new Set([
+    'site_logo',
+    'site_logo_ily',
+    'ily_logo',
+    'logo_ily',
+    'brand_logo_ily',
+    'brand_logo_ily2',
+    'brand_ily_logo',
+    'icon_ily',
+    'icon_stroller_rakuten',
+    'icon_stroller_amazon',
+    'icon_stroller_yahoo',
+    'category_stroller',
+    'category_babycar',
+    'category_baby_car',
+    'category_carrier',
+    'category_baby_carrier',
+    'category_babycarrier',
+    'category_child_seat',
+    'category_carseat',
+    'category_car_seat',
+    'category_hipseat',
+    'category_hip_seat',
+  ]);
+  if (fixedDisplayKeys.has(key)) return true;
+  if (
+    key.startsWith('home_main_hero')
+    || key.startsWith('home_hero')
+    || key.startsWith('top_hero')
+    || key.startsWith('main_hero')
+    || key.startsWith('category_hero')
+    || key.startsWith('brand_logo_')
+    || key.startsWith('brand_hero_')
+  ) {
+    return true;
+  }
+  return brands.some((brand) => brand.logo_asset_key === asset.asset_key || brand.hero_asset_key === asset.asset_key);
+}
+
+function updateIconSelectionUi(refreshBulkPanel = true) {
   document.querySelectorAll<HTMLElement>('.asset-card--icon').forEach((card) => {
     const id = card.dataset.assetId ?? '';
     const selected = selectedIconIds.has(id);
@@ -1081,6 +1309,7 @@ function updateIconSelectionUi() {
   document.querySelectorAll<HTMLButtonElement>('[data-action="delete-selected-icons"]').forEach((button) => {
     button.disabled = selectedCount === 0;
   });
+  if (refreshBulkPanel) refreshAssetKeyBulkPanel();
 }
 
 const folderCardIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.4c0-.83.67-1.5 1.5-1.5h3.86c.4 0 .78.16 1.06.44l1.1 1.1c.28.28.66.44 1.06.44h6.96c.83 0 1.5.67 1.5 1.5v9.28c0 .83-.67 1.5-1.5 1.5H5c-.83 0-1.5-.67-1.5-1.5z"/></svg>';
@@ -1215,7 +1444,7 @@ function bindAssetMoveBar() {
   });
 }
 
-function updateAssetSelectionUi() {
+function updateAssetSelectionUi(refreshBulkPanel = true) {
   document.querySelectorAll<HTMLElement>('.asset-card').forEach((card) => {
     if (card.classList.contains('asset-card--icon')) return;
     const id = card.dataset.assetId ?? '';
@@ -1226,15 +1455,86 @@ function updateAssetSelectionUi() {
   });
 
   const bar = document.querySelector<HTMLElement>('#asset-move-bar');
-  if (!bar || !assetFoldersAvailable) return;
-  const disabled = selectedAssetIds.size === 0;
-  bar.hidden = disabled;
-  bar.querySelectorAll<HTMLElement>('[data-move-count]').forEach((element) => {
-    element.textContent = `${selectedAssetIds.size}件選択中`;
+  if (bar && assetFoldersAvailable) {
+    const disabled = selectedAssetIds.size === 0;
+    bar.hidden = disabled;
+    bar.querySelectorAll<HTMLElement>('[data-move-count]').forEach((element) => {
+      element.textContent = `${selectedAssetIds.size}件選択中`;
+    });
+    bar.querySelectorAll<HTMLButtonElement>('[data-action="move-selected"], [data-action="clear-asset-selection"]').forEach((button) => {
+      button.disabled = disabled;
+    });
+  }
+  if (refreshBulkPanel) refreshAssetKeyBulkPanel();
+}
+
+async function handleBulkAssetKeyUpdate(event: SubmitEvent, visibleAssets = getVisibleAssets()) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement)) return;
+
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  if (selectedAssets.length === 0) {
+    setAssetKeyBulkMessage(form, '更新する素材を選択してください。', 'error');
+    return;
+  }
+
+  let plan: BulkAssetKeyPlan;
+  try {
+    plan = buildBulkAssetKeyPlan(selectedAssets, bulkAssetKeyBase);
+  } catch (error) {
+    setAssetKeyBulkMessage(form, getErrorMessage(error), 'error');
+    return;
+  }
+
+  const riskyAssets = selectedAssets.filter(isDirectDisplayAssetKeyRisk);
+  if (riskyAssets.length > 0) {
+    const confirmed = window.confirm('この asset_key はサイト表示条件に使われている可能性があります。変更すると画像が表示されなくなる場合があります。更新しますか？');
+    if (!confirmed) return;
+  }
+
+  setFormBusy(form, true);
+  setAssetKeyBulkMessage(form, `${plan.items.length}件の asset_key を更新しています...`, 'normal');
+
+  const updatedIds: string[] = [];
+  const skippedIds: string[] = [];
+  const failures: string[] = [];
+
+  for (const item of plan.items) {
+    if (item.asset.asset_key === item.newAssetKey) {
+      skippedIds.push(item.asset.id);
+      continue;
+    }
+
+    try {
+      const { error } = await supabase.rpc('update_site_asset', buildExistingAssetPayload(item.asset, { assetKey: item.newAssetKey }));
+      if (error) throw error;
+      updatedIds.push(item.asset.id);
+    } catch (error) {
+      failures.push(`${item.asset.asset_key}: ${getErrorMessage(error)}`);
+    }
+  }
+
+  [...updatedIds, ...skippedIds].forEach((id) => {
+    selectedAssetIds.delete(id);
+    selectedIconIds.delete(id);
   });
-  bar.querySelectorAll<HTMLButtonElement>('[data-action="move-selected"], [data-action="clear-asset-selection"]').forEach((button) => {
-    button.disabled = disabled;
-  });
+  await loadAssets();
+  renderAssetList();
+
+  if (failures.length > 0) {
+    showPageMessage(`asset_key更新 ${updatedIds.length}件 / 変更なし ${skippedIds.length}件 / 失敗 ${failures.length}件。${failures.slice(0, 2).join(' ')}`, 'warning');
+    return;
+  }
+
+  showPageMessage(`asset_keyを更新しました。更新 ${updatedIds.length}件 / 変更なし ${skippedIds.length}件`, 'success');
+}
+
+function setAssetKeyBulkMessage(form: HTMLFormElement, text: string, tone: 'normal' | 'success' | 'error' | 'warning') {
+  const message = form.querySelector<HTMLElement>('.asset-key-bulk-message');
+  if (!message) return;
+  message.textContent = text;
+  message.dataset.tone = tone;
 }
 
 async function moveAssetsToFolder(assetIds: string[], targetFolderId: string) {
@@ -1269,9 +1569,16 @@ async function moveAssetsToFolder(assetIds: string[], targetFolderId: string) {
 }
 
 function buildMovePayload(asset: SiteAsset, folderId: string | null) {
-  return {
+  return buildExistingAssetPayload(asset, { folderId });
+}
+
+function buildExistingAssetPayload(asset: SiteAsset, overrides: { assetKey?: string; folderId?: string | null } = {}) {
+  const folderId = Object.prototype.hasOwnProperty.call(overrides, 'folderId')
+    ? overrides.folderId ?? null
+    : asset.folder_id;
+  const payload = {
     p_asset_id: asset.id,
-    p_asset_key: asset.asset_key,
+    p_asset_key: overrides.assetKey ?? asset.asset_key,
     p_asset_type: asset.asset_type,
     p_title: asset.title,
     p_alt_text: asset.alt_text,
@@ -1291,8 +1598,11 @@ function buildMovePayload(asset: SiteAsset, folderId: string | null) {
     p_is_published: asset.is_published,
     p_starts_at: asset.starts_at,
     p_ends_at: asset.ends_at,
-    p_folder_id: folderId,
   };
+
+  return assetFoldersAvailable
+    ? { ...payload, p_folder_id: folderId }
+    : payload;
 }
 
 function bindFolderAddForm() {
