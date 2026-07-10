@@ -6,7 +6,10 @@ import {
   siteAssetTypes,
   type ImageMetadata,
   type SiteAsset,
+  type SiteAssetImageMimeType,
+  type SiteAssetMediaType,
   type SiteAssetMimeType,
+  type SiteAssetVideoMimeType,
   type SiteAssetType,
   type StoredImage,
   type UpdateSiteAssetResult,
@@ -20,13 +23,20 @@ if (!appElement) {
 
 const app: HTMLDivElement = appElement;
 const storageBucket = 'site-assets';
-const maxFileSize = 5 * 1024 * 1024;
+const maxImageFileSize = 5 * 1024 * 1024;
+const maxVideoFileSize = 30 * 1024 * 1024;
+const maxFileSize = maxImageFileSize;
 const maxOptimizableSourceSize = 20 * 1024 * 1024;
-const maxFileSizeLabel = '5MB';
+const maxImageFileSizeLabel = '5MB';
+const maxVideoFileSizeLabel = '30MB';
+const maxFileSizeLabel = maxImageFileSizeLabel;
 const maxOptimizableSourceSizeLabel = '20MB';
 const maxIconZipEntries = 100;
-const allowedMimeTypes: SiteAssetMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml'];
-const uploadAccept = 'image/avif,image/webp,image/png,image/jpeg,image/svg+xml,.avif,.webp,.png,.jpg,.jpeg,.svg';
+const allowedImageMimeTypes: SiteAssetImageMimeType[] = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/svg+xml'];
+const allowedVideoMimeTypes: SiteAssetVideoMimeType[] = ['video/mp4', 'video/webm'];
+const allowedMimeTypes: SiteAssetMimeType[] = [...allowedImageMimeTypes, ...allowedVideoMimeTypes];
+const imageUploadAccept = 'image/avif,image/webp,image/png,image/jpeg,image/svg+xml,.avif,.webp,.png,.jpg,.jpeg,.svg';
+const uploadAccept = `${imageUploadAccept},video/mp4,video/webm,.mp4,.webm`;
 const iconZipAccept = 'application/zip,application/x-zip-compressed,.zip';
 const ASSET_KEY_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 const CREATE_DRAFT_STORAGE_KEY = 'irodori_site_asset_create_draft';
@@ -73,6 +83,11 @@ const assetTypeLabels: Record<SiteAssetType, string> = {
   icon: 'アイコン',
 };
 
+const mediaTypeLabels: Record<SiteAssetMediaType, string> = {
+  image: '画像',
+  video: '動画',
+};
+
 const sizeRecommendations: Record<SiteAssetType, string> = {
   hero: 'PC 1600×600 / スマホ 750×900',
   campaign: 'PC 1200×400 / スマホ 750×600',
@@ -104,6 +119,19 @@ const quickPreviewUrls = new Set<string>();
 const selectedIconIds = new Set<string>();
 const selectedAssetIds = new Set<string>();
 let draggingAssetIds: string[] = [];
+let bulkAssetKeyBase = '';
+
+type BulkAssetKeyPlanItem = {
+  asset: SiteAsset;
+  newAssetKey: string;
+  number: number;
+};
+
+type BulkAssetKeyPlan = {
+  base: string;
+  items: BulkAssetKeyPlanItem[];
+  bumped: boolean;
+};
 
 void init();
 
@@ -136,7 +164,7 @@ function renderLogin() {
   app.innerHTML = `
     <main class="auth-page">
       <section class="auth-panel">
-        <h1>サイト画像素材管理</h1>
+        <h1>サイト素材管理</h1>
         <p>管理者アカウントでログインしてください。</p>
         <form id="login-form" class="auth-form">
           <label>メールアドレス<input name="email" type="email" required autocomplete="email" /></label>
@@ -190,8 +218,8 @@ async function renderAdmin() {
   app.innerHTML = `
     <header class="admin-header">
       <div>
-        <h1>サイト画像素材管理</h1>
-        <p>バナー、カテゴリ画像、記事画像、ブランド画像を管理します。</p>
+        <h1>サイト素材管理</h1>
+        <p>バナー、カテゴリ画像、記事画像、ブランド画像、背景動画を管理します。</p>
       </div>
       <div class="header-actions">
         <a href="/admin.html">商品画像管理</a>
@@ -233,6 +261,7 @@ async function renderAdmin() {
           <label>用途<select id="asset-type-filter"><option value="all">すべて</option>${renderTypeOptions(typeFilter)}</select></label>
           <label>フォルダ<select id="asset-folder-filter">${renderFolderOptions(folderFilter, true)}</select></label>
         </div>
+        <div id="asset-key-bulk-panel" class="asset-key-bulk-panel" hidden></div>
         <div id="icon-bulk-actions" class="icon-bulk-actions" hidden></div>
         <div id="asset-move-bar" class="asset-move-bar" hidden></div>
         <p id="page-message" class="page-message" aria-live="polite">読み込み中...</p>
@@ -260,6 +289,7 @@ function renderAssetForm() {
       <div class="field-grid identity-grid">
         <label class="asset-key-field">asset_key<input name="asset_key" required placeholder="home_main_hero" /><small data-asset-key-suggestion>候補: home_main_hero</small></label>
         <label>用途<select name="asset_type">${renderTypeOptions('hero')}</select></label>
+        <label>メディア<select name="media_type">${renderMediaTypeOptions('image')}</select></label>
         ${renderFolderField()}
         ${renderBrandField()}
         <label>並び順<input name="display_order" type="number" min="1" value="1" required /></label>
@@ -278,8 +308,8 @@ function renderAssetForm() {
         <label>公開終了<input name="ends_at" type="datetime-local" /></label>
       </div>
       <div class="upload-grid">
-        ${renderUploadField('desktop_file', 'PC画像（必須）', true, 'desktop')}
-        ${renderUploadField('mobile_file', 'スマホ画像（任意）', false, 'mobile')}
+        ${renderUploadField('desktop_file', 'PC素材（必須）', true, 'desktop')}
+        ${renderUploadField('mobile_file', 'スマホ素材（任意）', false, 'mobile')}
       </div>
       ${renderOptimizationControls()}
       <div class="form-actions"><button type="submit" class="primary-action">素材を登録</button><button type="button" class="quiet-button" data-action="clear-create-form">入力をクリア</button></div>
@@ -309,7 +339,7 @@ function renderQuickUploadForm() {
   return `
     <form id="quick-upload-form" class="quick-upload-form">
       <label class="quick-dropzone">
-        <input name="quick_files" type="file" accept="image/*" multiple />
+        <input name="quick_files" type="file" accept="${imageUploadAccept}" multiple />
         <span class="quick-dropzone__icon" aria-hidden="true">＋</span>
         <span class="quick-dropzone__title">写真を選ぶ</span>
         <span class="quick-dropzone__hint">スマホの写真フォルダから複数選べます（JPEG・PNG・WebP・AVIF・SVG）</span>
@@ -520,6 +550,7 @@ async function handleQuickUpload(event: SubmitEvent) {
       const fields = {
         assetKey,
         assetType,
+        mediaType: 'image' as SiteAssetMediaType,
         folderId,
         brandId,
         title,
@@ -748,7 +779,7 @@ function renderUploadField(name: string, label: string, required: boolean, varia
     <label class="upload-field">
       <span>${label}</span>
       <input name="${name}" type="file" accept="${uploadAccept}" ${required ? 'required' : ''} />
-      <span class="file-note">JPEG・PNG・WebP・AVIF・SVG / 最終${maxFileSizeLabel}以下（最適化ONのJPEG・PNG・WebPは元画像${maxOptimizableSourceSizeLabel}まで）</span>
+      <span class="file-note" data-file-note="${variant}">画像: JPEG・PNG・WebP・AVIF・SVG / 最終${maxImageFileSizeLabel}以下。動画: MP4・WebM / ${maxVideoFileSizeLabel}以下。</span>
       <span class="image-preview" data-preview="${variant}"><span>プレビュー未選択</span></span>
     </label>
   `;
@@ -760,14 +791,9 @@ async function loadAssets() {
   assets = (data ?? []) as SiteAsset[];
 }
 
-function renderAssetList() {
-  const list = document.querySelector<HTMLElement>('#asset-list');
-  const count = document.querySelector<HTMLElement>('#library-count');
-  const message = document.querySelector<HTMLElement>('#page-message');
-  if (!list || !count || !message) return;
-
+function getVisibleAssets() {
   const normalizedQuery = query.trim().toLowerCase();
-  const visibleAssets = assets.filter((asset) => {
+  return assets.filter((asset) => {
     const matchesType = typeFilter === 'all' || asset.asset_type === typeFilter;
     const folderLabel = getFolderLabel(asset.folder_id);
     const matchesFolder = folderFilter === 'all'
@@ -775,6 +801,15 @@ function renderAssetList() {
     const matchesQuery = !normalizedQuery || `${asset.asset_key} ${asset.title} ${folderLabel}`.toLowerCase().includes(normalizedQuery);
     return matchesType && matchesFolder && matchesQuery;
   });
+}
+
+function renderAssetList() {
+  const list = document.querySelector<HTMLElement>('#asset-list');
+  const count = document.querySelector<HTMLElement>('#library-count');
+  const message = document.querySelector<HTMLElement>('#page-message');
+  if (!list || !count || !message) return;
+
+  const visibleAssets = getVisibleAssets();
   const currentIconIds = new Set(assets.filter((asset) => asset.asset_type === 'icon').map((asset) => asset.id));
   selectedIconIds.forEach((id) => {
     if (!currentIconIds.has(id)) selectedIconIds.delete(id);
@@ -785,9 +820,9 @@ function renderAssetList() {
     if (!visibleIconIds.has(id)) selectedIconIds.delete(id);
   });
   const isIconGrid = visibleAssets.length > 0 && visibleAssets.every((asset) => asset.asset_type === 'icon');
-  const visibleMoveIds = new Set(visibleAssets.filter((asset) => asset.asset_type !== 'icon').map((asset) => asset.id));
+  const visibleSelectableIds = new Set(visibleAssets.filter((asset) => asset.asset_type !== 'icon').map((asset) => asset.id));
   selectedAssetIds.forEach((id) => {
-    if (!visibleMoveIds.has(id)) selectedAssetIds.delete(id);
+    if (!visibleSelectableIds.has(id)) selectedAssetIds.delete(id);
   });
 
   count.textContent = `${visibleAssets.length}件`;
@@ -795,23 +830,27 @@ function renderAssetList() {
   list.classList.toggle('asset-list--icons', isIconGrid);
   list.innerHTML = visibleAssets.map(renderAssetCard).join('');
   renderFolderCards();
+  renderAssetKeyBulkPanel(visibleAssets);
   renderIconBulkActions(visibleIconAssets);
   renderAssetMoveBar();
   bindFolderCards();
   bindAssetCards();
+  bindAssetKeyBulkPanel(visibleAssets);
   bindIconBulkActions(visibleIconAssets);
   bindAssetMoveBar();
-  updateIconSelectionUi();
-  updateAssetSelectionUi();
+  updateIconSelectionUi(false);
+  updateAssetSelectionUi(false);
 }
 
 function renderAssetCard(asset: SiteAsset) {
   const publication = getPublicationState(asset);
   const selectedBrandId = getBrandIdForAsset(asset);
   const isIcon = asset.asset_type === 'icon';
+  const mediaType = getAssetMediaType(asset);
   const isSelected = selectedIconIds.has(asset.id);
-  const canMove = !isIcon && assetFoldersAvailable;
-  const isMoveSelected = canMove && selectedAssetIds.has(asset.id);
+  const canSelect = !isIcon;
+  const canMove = canSelect && assetFoldersAvailable;
+  const isMoveSelected = canSelect && selectedAssetIds.has(asset.id);
   const mobileUrl = asset.mobile_image_url || asset.desktop_image_url;
   const mobileDimensions = asset.mobile_width && asset.mobile_height
     ? `${asset.mobile_width}×${asset.mobile_height}`
@@ -824,7 +863,7 @@ function renderAssetCard(asset: SiteAsset) {
       </label>
     `
     : '';
-  const moveSelectMarkup = canMove
+  const moveSelectMarkup = canSelect
     ? `
       <label class="asset-select-control">
         <input type="checkbox" data-asset-select value="${escapeAttr(asset.id)}" ${isMoveSelected ? 'checked' : ''} aria-label="${escapeAttr(asset.asset_key)}を選択" />
@@ -835,16 +874,13 @@ function renderAssetCard(asset: SiteAsset) {
   const previewMarkup = isIcon
     ? `
       <div class="current-previews current-previews--icon">
-        <figure>
-          <div class="preview-frame icon-frame"><img src="${escapeAttr(asset.desktop_image_url)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div>
-          <figcaption>${asset.desktop_width}×${asset.desktop_height}</figcaption>
-        </figure>
+        ${renderStoredAssetPreview(asset.desktop_image_url, asset.desktop_mime_type, asset.alt_text, `${asset.desktop_width}×${asset.desktop_height}`, 'icon')}
       </div>
     `
     : `
       <div class="current-previews">
-        <figure><div class="preview-frame desktop-frame"><img src="${escapeAttr(asset.desktop_image_url)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>PC ${asset.desktop_width}×${asset.desktop_height}</figcaption></figure>
-        <figure><div class="preview-frame mobile-frame"><img src="${escapeAttr(mobileUrl)}" alt="${escapeAttr(asset.alt_text)}" loading="lazy" /></div><figcaption>スマホ ${mobileDimensions}</figcaption></figure>
+        ${renderStoredAssetPreview(asset.desktop_image_url, asset.desktop_mime_type, asset.alt_text, `PC ${asset.desktop_width}×${asset.desktop_height}`, 'desktop')}
+        ${renderStoredAssetPreview(mobileUrl, asset.mobile_mime_type || asset.desktop_mime_type, asset.alt_text, `スマホ ${mobileDimensions}`, 'mobile')}
       </div>
     `;
 
@@ -852,7 +888,7 @@ function renderAssetCard(asset: SiteAsset) {
     <article class="asset-card asset-card--${escapeAttr(asset.asset_type)}${isMoveSelected ? ' is-selected' : ''}" data-asset-id="${escapeAttr(asset.id)}"${canMove ? ' draggable="true"' : ''}>
       <div class="asset-card-head">
         <div>
-          <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
+          <div class="asset-meta"><span class="type-badge">${escapeText(assetTypeLabels[asset.asset_type])}</span><span class="media-badge media-badge--${escapeAttr(mediaType)}">${escapeText(mediaTypeLabels[mediaType])}</span><span class="status-badge ${publication.className}">${publication.label}</span></div>
           <div class="asset-folder-line">${escapeText(getFolderLabel(asset.folder_id))}</div>
           <h3>${escapeText(asset.asset_key)}</h3>
           <p>${escapeText(asset.title || 'タイトル未設定')}</p>
@@ -869,6 +905,7 @@ function renderAssetCard(asset: SiteAsset) {
         <div class="field-grid identity-grid">
           <label>asset_key<input name="asset_key" value="${escapeAttr(asset.asset_key)}" required /></label>
           <label>用途<select name="asset_type">${renderTypeOptions(asset.asset_type)}</select></label>
+          <label>メディア<select name="media_type">${renderMediaTypeOptions(mediaType)}</select></label>
           ${renderFolderField(asset.folder_id ?? '')}
           ${renderBrandField(selectedBrandId)}
           <label>並び順<input name="display_order" type="number" min="1" value="${asset.display_order}" required /></label>
@@ -887,10 +924,10 @@ function renderAssetCard(asset: SiteAsset) {
           <label>公開終了<input name="ends_at" type="datetime-local" value="${escapeAttr(toDatetimeLocal(asset.ends_at))}" /></label>
         </div>
         <div class="upload-grid compact-upload-grid">
-          ${renderReplacementField('desktop_file', 'PC画像を差し替え', 'desktop', asset.desktop_image_url, `${asset.desktop_width}×${asset.desktop_height}`)}
-          ${renderReplacementField('mobile_file', 'スマホ画像を差し替え', 'mobile', mobileUrl, mobileDimensions)}
+          ${renderReplacementField('desktop_file', `PC${mediaTypeLabels[mediaType]}を差し替え`, 'desktop', asset.desktop_image_url, asset.desktop_mime_type, `${asset.desktop_width}×${asset.desktop_height}`)}
+          ${renderReplacementField('mobile_file', `スマホ${mediaTypeLabels[mediaType]}を差し替え`, 'mobile', mobileUrl, asset.mobile_mime_type || asset.desktop_mime_type, mobileDimensions)}
         </div>
-        <label class="remove-mobile"><input name="remove_mobile" type="checkbox" ${asset.mobile_image_url ? '' : 'disabled'} />現在のスマホ画像を削除し、PC画像を使用する</label>
+        <label class="remove-mobile"><input name="remove_mobile" type="checkbox" ${asset.mobile_image_url ? '' : 'disabled'} />現在のスマホ素材を削除し、PC素材を使用する</label>
         <div class="form-actions">
           <button type="submit" class="primary-action">更新</button>
           <button type="button" class="danger-action" data-action="delete">削除</button>
@@ -901,13 +938,42 @@ function renderAssetCard(asset: SiteAsset) {
   `;
 }
 
-function renderReplacementField(name: string, label: string, variant: 'desktop' | 'mobile', url: string, dimensions: string) {
+function renderStoredAssetPreview(
+  url: string,
+  mimeType: SiteAssetMimeType | null,
+  altText: string,
+  caption: string,
+  frame: 'desktop' | 'mobile' | 'icon',
+) {
+  const frameClass = frame === 'icon' ? 'icon-frame' : `${frame}-frame`;
+  const media = mimeType && isVideoMimeType(mimeType)
+    ? `<video src="${escapeAttr(url)}" controls muted playsinline preload="metadata"></video>`
+    : `<img src="${escapeAttr(url)}" alt="${escapeAttr(altText)}" loading="lazy" />`;
+  return `
+    <figure>
+      <div class="preview-frame ${frameClass}">${media}</div>
+      <figcaption>${escapeText(caption)}</figcaption>
+    </figure>
+  `;
+}
+
+function renderReplacementField(
+  name: string,
+  label: string,
+  variant: 'desktop' | 'mobile',
+  url: string,
+  mimeType: SiteAssetMimeType | null,
+  dimensions: string,
+) {
+  const preview = mimeType && isVideoMimeType(mimeType)
+    ? `<video src="${escapeAttr(url)}" controls muted playsinline preload="metadata"></video>`
+    : `<img src="${escapeAttr(url)}" alt="" />`;
   return `
     <label class="upload-field">
       <span>${label}</span>
       <input name="${name}" type="file" accept="${uploadAccept}" />
-      <span class="file-note">未選択なら現在の画像を維持</span>
-      <span class="image-preview" data-preview="${variant}"><img src="${escapeAttr(url)}" alt="" /><small>${escapeText(dimensions)}</small></span>
+      <span class="file-note" data-file-note="${variant}">未選択なら現在の素材を維持</span>
+      <span class="image-preview" data-preview="${variant}">${preview}<small>${escapeText(dimensions)}</small></span>
     </label>
   `;
 }
@@ -923,6 +989,7 @@ function bindCreateForm() {
   if (!form) return;
   restoreCreateDraft(form);
   bindAssetTypeRecommendation(form);
+  bindMediaTypeControls(form);
   bindFilePreview(form, 'desktop_file', 'desktop');
   bindFilePreview(form, 'mobile_file', 'mobile');
   form.addEventListener('input', () => saveCreateDraft(form));
@@ -937,6 +1004,7 @@ function bindCreateForm() {
     setOptimizationSummary(form, []);
     setFormMessage(form, '入力内容をクリアしました。', 'normal');
     syncIconControls(form);
+    syncMediaControls(form);
   });
   form.addEventListener('submit', (event) => void handleCreate(event));
 }
@@ -975,6 +1043,7 @@ function bindAssetCards() {
       toggle.setAttribute('aria-expanded', String(!form.hidden));
     });
     bindAssetTypeRecommendation(form);
+    bindMediaTypeControls(form);
     bindFilePreview(form, 'desktop_file', 'desktop');
     bindFilePreview(form, 'mobile_file', 'mobile');
 
@@ -1065,7 +1134,220 @@ function bindIconBulkActions(visibleIconAssets: SiteAsset[]) {
   container.querySelector<HTMLButtonElement>('[data-action="delete-selected-icons"]')?.addEventListener('click', () => void handleDeleteSelectedIcons());
 }
 
-function updateIconSelectionUi() {
+function getSelectedAssetsInDisplayOrder(visibleAssets = getVisibleAssets()) {
+  return visibleAssets.filter((asset) =>
+    asset.asset_type === 'icon'
+      ? selectedIconIds.has(asset.id)
+      : selectedAssetIds.has(asset.id)
+  );
+}
+
+function renderAssetKeyBulkPanel(visibleAssets = getVisibleAssets()) {
+  const panel = document.querySelector<HTMLElement>('#asset-key-bulk-panel');
+  if (!panel) return;
+
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  if (selectedAssets.length === 0) {
+    panel.hidden = true;
+    panel.innerHTML = '';
+    return;
+  }
+
+  const riskyAssets = selectedAssets.filter(isDirectDisplayAssetKeyRisk);
+  panel.hidden = false;
+  panel.innerHTML = `
+    <form class="asset-key-bulk-form" data-bulk-asset-key-form>
+      <div class="asset-key-bulk-header">
+        <div>
+          <strong>asset_key 一括変更</strong>
+          <span>${selectedAssets.length}件選択中。現在の一覧表示順で連番を割り当てます。</span>
+        </div>
+        <button type="button" class="quiet-button" data-action="clear-all-selection">選択解除</button>
+      </div>
+      ${riskyAssets.length > 0 ? renderDirectDisplayWarning(riskyAssets) : ''}
+      <div class="asset-key-bulk-controls">
+        <label>asset_key ベース名<input data-bulk-asset-key-base name="bulk_asset_key_base" value="${escapeAttr(bulkAssetKeyBase)}" placeholder="aprica_luxuna" autocomplete="off" /></label>
+        <button type="submit" class="primary-action" data-action="bulk-update-asset-keys"${normalizeBulkAssetKeyBase(bulkAssetKeyBase) ? '' : ' disabled'}>プレビュー内容で更新</button>
+      </div>
+      <div class="asset-key-bulk-preview" data-bulk-asset-key-preview>
+        ${renderBulkAssetKeyPreview(selectedAssets, bulkAssetKeyBase)}
+      </div>
+      <p class="asset-key-bulk-message" aria-live="polite"></p>
+    </form>
+  `;
+}
+
+function bindAssetKeyBulkPanel(visibleAssets = getVisibleAssets()) {
+  const panel = document.querySelector<HTMLElement>('#asset-key-bulk-panel');
+  if (!panel || panel.hidden) return;
+
+  const form = panel.querySelector<HTMLFormElement>('[data-bulk-asset-key-form]');
+  const input = panel.querySelector<HTMLInputElement>('[data-bulk-asset-key-base]');
+  if (!form || !input) return;
+
+  input.addEventListener('input', () => {
+    bulkAssetKeyBase = input.value;
+    syncAssetKeyBulkPreview(panel, visibleAssets);
+  });
+
+  form.addEventListener('submit', (event) => void handleBulkAssetKeyUpdate(event, visibleAssets));
+  panel.querySelector<HTMLButtonElement>('[data-action="clear-all-selection"]')?.addEventListener('click', () => {
+    selectedAssetIds.clear();
+    selectedIconIds.clear();
+    updateIconSelectionUi();
+    updateAssetSelectionUi();
+  });
+}
+
+function syncAssetKeyBulkPreview(panel: HTMLElement, visibleAssets = getVisibleAssets()) {
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  const preview = panel.querySelector<HTMLElement>('[data-bulk-asset-key-preview]');
+  if (preview) preview.innerHTML = renderBulkAssetKeyPreview(selectedAssets, bulkAssetKeyBase);
+
+  const submitButton = panel.querySelector<HTMLButtonElement>('[data-action="bulk-update-asset-keys"]');
+  if (submitButton) submitButton.disabled = selectedAssets.length === 0 || !normalizeBulkAssetKeyBase(bulkAssetKeyBase);
+}
+
+function refreshAssetKeyBulkPanel() {
+  const visibleAssets = getVisibleAssets();
+  renderAssetKeyBulkPanel(visibleAssets);
+  bindAssetKeyBulkPanel(visibleAssets);
+}
+
+function renderDirectDisplayWarning(riskyAssets: SiteAsset[]) {
+  const keys = riskyAssets.slice(0, 5).map((asset) => asset.asset_key).join(' / ');
+  const suffix = riskyAssets.length > 5 ? ` ほか${riskyAssets.length - 5}件` : '';
+  return `
+    <p class="asset-key-bulk-warning" data-tone="warning">
+      この asset_key はサイト表示条件に使われている可能性があります。変更すると画像が表示されなくなる場合があります。
+      対象: ${escapeText(keys)}${escapeText(suffix)}
+    </p>
+  `;
+}
+
+function renderBulkAssetKeyPreview(selectedAssets: SiteAsset[], rawBase: string) {
+  if (selectedAssets.length === 0) return '';
+  if (!rawBase.trim()) {
+    return '<p class="asset-key-bulk-empty">ベース名を入力すると、変更後の asset_key を確認できます。</p>';
+  }
+
+  const base = normalizeBulkAssetKeyBase(rawBase);
+  if (!base) {
+    return '<p class="asset-key-bulk-empty" data-tone="error">安全化後のベース名が空です。半角英数字を含む名前を入力してください。</p>';
+  }
+
+  const plan = buildBulkAssetKeyPlan(selectedAssets, rawBase);
+  return `
+    <div class="asset-key-bulk-summary">
+      <span>安全化後: <code>${escapeText(plan.base)}</code></span>
+      ${plan.bumped ? '<span data-tone="warning">既存キーとの重複を避けて、利用可能な番号へ自動で繰り上げます。</span>' : ''}
+    </div>
+    <ul class="asset-key-bulk-list">
+      ${plan.items.map((item) => renderBulkAssetKeyPreviewItem(item)).join('')}
+    </ul>
+  `;
+}
+
+function renderBulkAssetKeyPreviewItem(item: BulkAssetKeyPlanItem) {
+  const unchanged = item.asset.asset_key === item.newAssetKey;
+  return `
+    <li>
+      ${renderBulkPreviewMedia(item.asset)}
+      <div class="asset-key-bulk-row-body">
+        <span class="type-badge">${escapeText(assetTypeLabels[item.asset.asset_type])}</span>
+        <span class="asset-key-bulk-current">${escapeText(item.asset.asset_key)}</span>
+        <span class="asset-key-bulk-arrow">→</span>
+        <strong class="${unchanged ? 'is-unchanged' : ''}">${escapeText(item.newAssetKey)}</strong>
+      </div>
+    </li>
+  `;
+}
+
+function renderBulkPreviewMedia(asset: SiteAsset) {
+  return isVideoMimeType(asset.desktop_mime_type)
+    ? `<video src="${escapeAttr(asset.desktop_image_url)}" muted playsinline preload="metadata"></video>`
+    : `<img src="${escapeAttr(asset.desktop_image_url)}" alt="" loading="lazy" />`;
+}
+
+function buildBulkAssetKeyPlan(selectedAssets: SiteAsset[], rawBase: string): BulkAssetKeyPlan {
+  const base = normalizeBulkAssetKeyBase(rawBase);
+  if (!base) throw new Error('asset_key ベース名を入力してください。');
+
+  const reservedKeys = new Set(assets.map((asset) => asset.asset_key));
+  const items: BulkAssetKeyPlanItem[] = [];
+  let nextNumber = 1;
+  let bumped = false;
+
+  selectedAssets.forEach((asset) => {
+    let number = nextNumber;
+    let candidate = `${base}_${number}`;
+    while (reservedKeys.has(candidate) && candidate !== asset.asset_key) {
+      number += 1;
+      candidate = `${base}_${number}`;
+      bumped = true;
+    }
+    reservedKeys.delete(asset.asset_key);
+    reservedKeys.add(candidate);
+    items.push({ asset, newAssetKey: candidate, number });
+    nextNumber = number + 1;
+  });
+
+  return { base, items, bumped };
+}
+
+function normalizeBulkAssetKeyBase(value: string) {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function isDirectDisplayAssetKeyRisk(asset: SiteAsset) {
+  if (asset.asset_type === 'hero' || asset.asset_type === 'category' || asset.asset_type === 'brand_logo' || asset.asset_type === 'brand_hero') return true;
+  const key = asset.asset_key.toLowerCase();
+  const fixedDisplayKeys = new Set([
+    'site_logo',
+    'site_logo_ily',
+    'ily_logo',
+    'logo_ily',
+    'brand_logo_ily',
+    'brand_logo_ily2',
+    'brand_ily_logo',
+    'icon_ily',
+    'icon_stroller_rakuten',
+    'icon_stroller_amazon',
+    'icon_stroller_yahoo',
+    'category_stroller',
+    'category_babycar',
+    'category_baby_car',
+    'category_carrier',
+    'category_baby_carrier',
+    'category_babycarrier',
+    'category_child_seat',
+    'category_carseat',
+    'category_car_seat',
+    'category_hipseat',
+    'category_hip_seat',
+  ]);
+  if (fixedDisplayKeys.has(key)) return true;
+  if (
+    key.startsWith('home_main_hero')
+    || key.startsWith('home_hero')
+    || key.startsWith('top_hero')
+    || key.startsWith('main_hero')
+    || key.startsWith('category_hero')
+    || key.startsWith('brand_logo_')
+    || key.startsWith('brand_hero_')
+  ) {
+    return true;
+  }
+  return brands.some((brand) => brand.logo_asset_key === asset.asset_key || brand.hero_asset_key === asset.asset_key);
+}
+
+function updateIconSelectionUi(refreshBulkPanel = true) {
   document.querySelectorAll<HTMLElement>('.asset-card--icon').forEach((card) => {
     const id = card.dataset.assetId ?? '';
     const selected = selectedIconIds.has(id);
@@ -1081,6 +1363,7 @@ function updateIconSelectionUi() {
   document.querySelectorAll<HTMLButtonElement>('[data-action="delete-selected-icons"]').forEach((button) => {
     button.disabled = selectedCount === 0;
   });
+  if (refreshBulkPanel) refreshAssetKeyBulkPanel();
 }
 
 const folderCardIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 6.4c0-.83.67-1.5 1.5-1.5h3.86c.4 0 .78.16 1.06.44l1.1 1.1c.28.28.66.44 1.06.44h6.96c.83 0 1.5.67 1.5 1.5v9.28c0 .83-.67 1.5-1.5 1.5H5c-.83 0-1.5-.67-1.5-1.5z"/></svg>';
@@ -1215,7 +1498,7 @@ function bindAssetMoveBar() {
   });
 }
 
-function updateAssetSelectionUi() {
+function updateAssetSelectionUi(refreshBulkPanel = true) {
   document.querySelectorAll<HTMLElement>('.asset-card').forEach((card) => {
     if (card.classList.contains('asset-card--icon')) return;
     const id = card.dataset.assetId ?? '';
@@ -1226,15 +1509,86 @@ function updateAssetSelectionUi() {
   });
 
   const bar = document.querySelector<HTMLElement>('#asset-move-bar');
-  if (!bar || !assetFoldersAvailable) return;
-  const disabled = selectedAssetIds.size === 0;
-  bar.hidden = disabled;
-  bar.querySelectorAll<HTMLElement>('[data-move-count]').forEach((element) => {
-    element.textContent = `${selectedAssetIds.size}件選択中`;
+  if (bar && assetFoldersAvailable) {
+    const disabled = selectedAssetIds.size === 0;
+    bar.hidden = disabled;
+    bar.querySelectorAll<HTMLElement>('[data-move-count]').forEach((element) => {
+      element.textContent = `${selectedAssetIds.size}件選択中`;
+    });
+    bar.querySelectorAll<HTMLButtonElement>('[data-action="move-selected"], [data-action="clear-asset-selection"]').forEach((button) => {
+      button.disabled = disabled;
+    });
+  }
+  if (refreshBulkPanel) refreshAssetKeyBulkPanel();
+}
+
+async function handleBulkAssetKeyUpdate(event: SubmitEvent, visibleAssets = getVisibleAssets()) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement)) return;
+
+  const selectedAssets = getSelectedAssetsInDisplayOrder(visibleAssets);
+  if (selectedAssets.length === 0) {
+    setAssetKeyBulkMessage(form, '更新する素材を選択してください。', 'error');
+    return;
+  }
+
+  let plan: BulkAssetKeyPlan;
+  try {
+    plan = buildBulkAssetKeyPlan(selectedAssets, bulkAssetKeyBase);
+  } catch (error) {
+    setAssetKeyBulkMessage(form, getErrorMessage(error), 'error');
+    return;
+  }
+
+  const riskyAssets = selectedAssets.filter(isDirectDisplayAssetKeyRisk);
+  if (riskyAssets.length > 0) {
+    const confirmed = window.confirm('この asset_key はサイト表示条件に使われている可能性があります。変更すると画像が表示されなくなる場合があります。更新しますか？');
+    if (!confirmed) return;
+  }
+
+  setFormBusy(form, true);
+  setAssetKeyBulkMessage(form, `${plan.items.length}件の asset_key を更新しています...`, 'normal');
+
+  const updatedIds: string[] = [];
+  const skippedIds: string[] = [];
+  const failures: string[] = [];
+
+  for (const item of plan.items) {
+    if (item.asset.asset_key === item.newAssetKey) {
+      skippedIds.push(item.asset.id);
+      continue;
+    }
+
+    try {
+      const { error } = await supabase.rpc('update_site_asset', buildExistingAssetPayload(item.asset, { assetKey: item.newAssetKey }));
+      if (error) throw error;
+      updatedIds.push(item.asset.id);
+    } catch (error) {
+      failures.push(`${item.asset.asset_key}: ${getErrorMessage(error)}`);
+    }
+  }
+
+  [...updatedIds, ...skippedIds].forEach((id) => {
+    selectedAssetIds.delete(id);
+    selectedIconIds.delete(id);
   });
-  bar.querySelectorAll<HTMLButtonElement>('[data-action="move-selected"], [data-action="clear-asset-selection"]').forEach((button) => {
-    button.disabled = disabled;
-  });
+  await loadAssets();
+  renderAssetList();
+
+  if (failures.length > 0) {
+    showPageMessage(`asset_key更新 ${updatedIds.length}件 / 変更なし ${skippedIds.length}件 / 失敗 ${failures.length}件。${failures.slice(0, 2).join(' ')}`, 'warning');
+    return;
+  }
+
+  showPageMessage(`asset_keyを更新しました。更新 ${updatedIds.length}件 / 変更なし ${skippedIds.length}件`, 'success');
+}
+
+function setAssetKeyBulkMessage(form: HTMLFormElement, text: string, tone: 'normal' | 'success' | 'error' | 'warning') {
+  const message = form.querySelector<HTMLElement>('.asset-key-bulk-message');
+  if (!message) return;
+  message.textContent = text;
+  message.dataset.tone = tone;
 }
 
 async function moveAssetsToFolder(assetIds: string[], targetFolderId: string) {
@@ -1269,9 +1623,16 @@ async function moveAssetsToFolder(assetIds: string[], targetFolderId: string) {
 }
 
 function buildMovePayload(asset: SiteAsset, folderId: string | null) {
-  return {
+  return buildExistingAssetPayload(asset, { folderId });
+}
+
+function buildExistingAssetPayload(asset: SiteAsset, overrides: { assetKey?: string; folderId?: string | null } = {}) {
+  const folderId = Object.prototype.hasOwnProperty.call(overrides, 'folderId')
+    ? overrides.folderId ?? null
+    : asset.folder_id;
+  const payload = {
     p_asset_id: asset.id,
-    p_asset_key: asset.asset_key,
+    p_asset_key: overrides.assetKey ?? asset.asset_key,
     p_asset_type: asset.asset_type,
     p_title: asset.title,
     p_alt_text: asset.alt_text,
@@ -1291,8 +1652,11 @@ function buildMovePayload(asset: SiteAsset, folderId: string | null) {
     p_is_published: asset.is_published,
     p_starts_at: asset.starts_at,
     p_ends_at: asset.ends_at,
-    p_folder_id: folderId,
   };
+
+  return assetFoldersAvailable
+    ? { ...payload, p_folder_id: folderId }
+    : payload;
 }
 
 function bindFolderAddForm() {
@@ -1385,6 +1749,7 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
     syncAssetKeySuggestion(form, true);
     syncBrandControls(form, true);
     syncIconControls(form);
+    syncMediaControls(form);
   });
   const brandSelect = form.elements.namedItem('brand_id');
   if (brandSelect instanceof HTMLSelectElement) {
@@ -1416,6 +1781,7 @@ function bindAssetTypeRecommendation(form: HTMLFormElement) {
   syncAssetKeySuggestion(form, false);
   bindIconFileInputs(form);
   syncIconControls(form);
+  syncMediaControls(form);
 }
 
 function bindIconFileInputs(form: HTMLFormElement) {
@@ -1448,6 +1814,41 @@ function bindIconFileInputs(form: HTMLFormElement) {
   });
 }
 
+function bindMediaTypeControls(form: HTMLFormElement) {
+  const mediaSelect = form.elements.namedItem('media_type');
+  if (mediaSelect instanceof HTMLSelectElement) {
+    mediaSelect.addEventListener('change', () => syncMediaControls(form));
+  }
+}
+
+function syncMediaControls(form: HTMLFormElement) {
+  const typeSelect = form.elements.namedItem('asset_type');
+  const mediaSelect = form.elements.namedItem('media_type');
+  const optimizationControls = form.querySelector<HTMLElement>('[data-optimization-controls]');
+  const isIcon = typeSelect instanceof HTMLSelectElement && typeSelect.value === 'icon';
+  const selectedMediaType = isIcon ? 'image' : getSelectedMediaType(form);
+  const fileAccept = selectedMediaType === 'video'
+    ? 'video/mp4,video/webm,.mp4,.webm'
+    : imageUploadAccept;
+
+  if (mediaSelect instanceof HTMLSelectElement) {
+    mediaSelect.value = selectedMediaType;
+    mediaSelect.disabled = isIcon;
+  }
+
+  form.querySelectorAll<HTMLInputElement>('input[type="file"][name="desktop_file"], input[type="file"][name="mobile_file"]').forEach((input) => {
+    input.accept = fileAccept;
+  });
+
+  form.querySelectorAll<HTMLElement>('[data-file-note]').forEach((note) => {
+    note.textContent = selectedMediaType === 'video'
+      ? `MP4・WebM / ${maxVideoFileSizeLabel}以下。背景動画は10秒程度・10MB前後までの圧縮がおすすめです。`
+      : `JPEG・PNG・WebP・AVIF・SVG / 最終${maxImageFileSizeLabel}以下（最適化ONのJPEG・PNG・WebPは元画像${maxOptimizableSourceSizeLabel}まで）`;
+  });
+
+  if (optimizationControls) optimizationControls.hidden = isIcon || selectedMediaType === 'video';
+}
+
 function syncIconControls(form: HTMLFormElement) {
   const typeSelect = form.elements.namedItem('asset_type');
   const assetKeyInput = form.elements.namedItem('asset_key');
@@ -1471,7 +1872,7 @@ function syncIconControls(form: HTMLFormElement) {
   if (desktopInput) desktopInput.required = isCreateForm && !isIcon;
   if (mobileInput) mobileInput.required = false;
   if (removeMobile) removeMobile.hidden = isIcon;
-  if (optimizationControls) optimizationControls.hidden = isIcon;
+  if (optimizationControls) optimizationControls.hidden = isIcon || getSelectedMediaType(form) === 'video';
 
   form.querySelectorAll<HTMLElement>('[data-brand-field]').forEach((field) => {
     if (isIcon) field.hidden = true;
@@ -1602,7 +2003,7 @@ function getSuggestedAlt(form: HTMLFormElement) {
 function saveCreateDraft(form: HTMLFormElement) {
   const draft: Record<string, string | boolean> = {};
   const fieldNames = [
-    'asset_key', 'asset_type', 'folder_id', 'brand_id', 'display_order', 'is_published',
+    'asset_key', 'asset_type', 'media_type', 'folder_id', 'brand_id', 'display_order', 'is_published',
     'title', 'alt_text', 'link_url', 'caption', 'starts_at', 'ends_at',
     'optimize_images', 'optimization_level',
   ];
@@ -1672,10 +2073,17 @@ function bindFilePreview(form: HTMLFormElement, inputName: string, variant: 'des
     const file = input.files?.[0];
     if (!file) return;
     try {
-      const metadata = await readImageMetadata(file, getPreviewMetadataOptions(form, file));
+      const metadata = await readMediaMetadata(file, getPreviewMetadataOptions(form, file));
+      if (inputName === 'desktop_file') {
+        setSelectedMediaType(form, metadata.mediaType);
+        syncMediaControls(form);
+      }
       const url = URL.createObjectURL(file);
       previewUrls.add(url);
-      preview.innerHTML = `<img src="${escapeAttr(url)}" alt="" /><small>${metadata.width}×${metadata.height} / ${escapeText(formatBytes(file.size))}</small>`;
+      const mediaPreview = metadata.mediaType === 'video'
+        ? `<video src="${escapeAttr(url)}" controls muted playsinline preload="metadata"></video>`
+        : `<img src="${escapeAttr(url)}" alt="" />`;
+      preview.innerHTML = `${mediaPreview}<small>${metadata.width}×${metadata.height} / ${escapeText(formatBytes(file.size))}</small>`;
     } catch (error) {
       input.value = '';
       setFormMessage(form, getErrorMessage(error), 'error');
@@ -1689,6 +2097,13 @@ function getPreviewMetadataOptions(form: HTMLFormElement, file: File) {
     ? readOptimizationSettings(form)
     : { enabled: false, level: 'medium' as OptimizationLevel };
   const mimeType = getSupportedMimeType(file);
+  const mediaType = mimeType ? getMediaTypeFromMimeType(mimeType) : null;
+  if (mediaType === 'video') {
+    return {
+      maxSizeBytes: maxVideoFileSize,
+      sizeErrorMessage: `動画サイズは${maxVideoFileSizeLabel}以下にしてください。`,
+    };
+  }
   const canOptimize = Boolean(settings.enabled && mimeType && isOptimizableMimeType(mimeType));
   return {
     maxSizeBytes: canOptimize ? maxOptimizableSourceSize : maxFileSize,
@@ -1741,21 +2156,23 @@ async function handleCreate(event: SubmitEvent) {
   const uploadedPaths: string[] = [];
   setFormBusy(form, true);
   try {
-    setFormMessage(form, '画像を確認しています...', 'normal');
+    const expectedMediaType = isIcon ? 'image' : fields.mediaType;
+    setFormMessage(form, `${mediaTypeLabels[expectedMediaType]}を確認しています...`, 'normal');
     setOptimizationSummary(form, []);
     const optimizationSettings = isIcon ? { enabled: false, level: 'medium' as OptimizationLevel } : readOptimizationSettings(form);
-    const desktopResult = await prepareImageForUpload(desktopFile, optimizationSettings, 'PC画像');
-    const mobileResult = mobileFile ? await prepareImageForUpload(mobileFile, optimizationSettings, 'スマホ画像') : null;
+    const desktopResult = await prepareMediaForUpload(desktopFile, optimizationSettings, `PC${mediaTypeLabels[expectedMediaType]}`, expectedMediaType);
+    const actualMediaType = desktopResult.metadata.mediaType;
+    const mobileResult = mobileFile ? await prepareMediaForUpload(mobileFile, optimizationSettings, `スマホ${mediaTypeLabels[actualMediaType]}`, actualMediaType) : null;
     const summaries = [desktopResult.summary, mobileResult?.summary].filter((summary): summary is ImageOptimizationSummary => Boolean(summary));
     setOptimizationSummary(form, summaries);
 
-    setFormMessage(form, 'PC画像をアップロードしています...', 'normal');
+    setFormMessage(form, `PC${mediaTypeLabels[actualMediaType]}をアップロードしています...`, 'normal');
     const desktopImage = await uploadImage(desktopResult.metadata, fields.assetKey, 'desktop');
     uploadedPaths.push(desktopImage.storagePath);
 
     let mobileImage: StoredImage | null = null;
     if (mobileResult) {
-      setFormMessage(form, 'スマホ画像をアップロードしています...', 'normal');
+      setFormMessage(form, `スマホ${mediaTypeLabels[actualMediaType]}をアップロードしています...`, 'normal');
       mobileImage = await uploadImage(mobileResult.metadata, fields.assetKey, 'mobile');
       uploadedPaths.push(mobileImage.storagePath);
     }
@@ -1776,6 +2193,7 @@ async function handleCreate(event: SubmitEvent) {
     if (recommendation) recommendation.textContent = sizeRecommendations.hero;
     syncBrandControls(form, false);
     syncIconControls(form);
+    syncMediaControls(form);
     setFormMessage(form, brandLinkWarning || '登録しました。', brandLinkWarning ? 'warning' : 'success');
   } catch (error) {
     const rollbackWarning = await rollbackUploads(uploadedPaths);
@@ -2001,19 +2419,28 @@ async function handleUpdate(event: SubmitEvent) {
   setFormBusy(form, true);
   try {
     const currentDesktopImage = storedImageFromAsset(asset, 'desktop');
-    if (!currentDesktopImage) throw new Error('現在のPC画像情報を読み込めませんでした。');
+    if (!currentDesktopImage) throw new Error('現在のPC素材情報を読み込めませんでした。');
     let desktopImage = currentDesktopImage;
     let mobileImage = storedImageFromAsset(asset, 'mobile');
+    let effectiveMediaType = currentDesktopImage.mediaType;
+
+    if (!desktopFile && fields.mediaType !== currentDesktopImage.mediaType) {
+      throw new Error(`メディア種別を${mediaTypeLabels[fields.mediaType]}に変える場合は、PC素材も差し替えてください。`);
+    }
 
     if (desktopFile) {
-      setFormMessage(form, '新しいPC画像をアップロードしています...', 'normal');
-      desktopImage = await uploadImage(await readImageMetadata(desktopFile), fields.assetKey, 'desktop');
+      setFormMessage(form, `新しいPC${mediaTypeLabels[fields.mediaType]}をアップロードしています...`, 'normal');
+      const desktopResult = await prepareMediaForUpload(desktopFile, { enabled: false, level: 'medium' }, `PC${mediaTypeLabels[fields.mediaType]}`, fields.mediaType);
+      desktopImage = await uploadImage(desktopResult.metadata, fields.assetKey, 'desktop');
+      effectiveMediaType = desktopImage.mediaType;
       uploadedPaths.push(desktopImage.storagePath);
+      if (mobileImage && mobileImage.mediaType !== effectiveMediaType) mobileImage = null;
     }
 
     if (mobileFile) {
-      setFormMessage(form, '新しいスマホ画像をアップロードしています...', 'normal');
-      mobileImage = await uploadImage(await readImageMetadata(mobileFile), fields.assetKey, 'mobile');
+      setFormMessage(form, `新しいスマホ${mediaTypeLabels[effectiveMediaType]}をアップロードしています...`, 'normal');
+      const mobileResult = await prepareMediaForUpload(mobileFile, { enabled: false, level: 'medium' }, `スマホ${mediaTypeLabels[effectiveMediaType]}`, effectiveMediaType);
+      mobileImage = await uploadImage(mobileResult.metadata, fields.assetKey, 'mobile');
       uploadedPaths.push(mobileImage.storagePath);
     } else if (removeMobile) {
       mobileImage = null;
@@ -2135,6 +2562,7 @@ function readAssetKeyAtSubmit(form: HTMLFormElement) {
 function readFormFields(form: HTMLFormElement, assetKey: string) {
   const values = new FormData(form);
   const assetType = String(values.get('asset_type') ?? '') as SiteAssetType;
+  const mediaType = getSelectedMediaType(form);
   const linkUrl = validateLinkUrl(String(values.get('link_url') ?? ''));
   const displayOrder = Number(values.get('display_order'));
   const startsAt = parseDatetime(String(values.get('starts_at') ?? ''));
@@ -2143,6 +2571,7 @@ function readFormFields(form: HTMLFormElement, assetKey: string) {
   const folderId = assetFoldersAvailable ? String(values.get('folder_id') ?? '').trim() || null : null;
 
   if (!siteAssetTypes.includes(assetType)) throw new Error('用途が正しくありません。');
+  if (assetType === 'icon' && mediaType !== 'image') throw new Error('アイコンは画像として登録してください。');
   if (folderId && !folders.some((folder) => folder.id === folderId)) throw new Error('フォルダが正しくありません。');
   if ((assetType === 'brand_logo' || assetType === 'brand_hero') && !brandId) throw new Error('ブランドを選択してください。');
   if (!Number.isInteger(displayOrder) || displayOrder < 1) throw new Error('並び順は1以上の整数で入力してください。');
@@ -2151,6 +2580,7 @@ function readFormFields(form: HTMLFormElement, assetKey: string) {
   return {
     assetKey,
     assetType,
+    mediaType,
     folderId,
     brandId,
     title: String(values.get('title') ?? '').trim(),
@@ -2234,6 +2664,9 @@ async function prepareImageForUpload(
   label: string,
 ): Promise<{ metadata: ImageMetadata; summary: ImageOptimizationSummary }> {
   const mimeType = getSupportedMimeType(file);
+  if (mimeType && isVideoMimeType(mimeType)) {
+    throw new Error('クイックアップロードでは動画を登録できません。通常の素材登録フォームで動画を選択してください。');
+  }
   const canOptimize = Boolean(mimeType && isOptimizableMimeType(mimeType));
   const sourceMaxSize = settings.enabled && canOptimize ? maxOptimizableSourceSize : maxFileSize;
   const originalMetadata = await readImageMetadata(file, {
@@ -2273,6 +2706,33 @@ async function prepareImageForUpload(
       reason: optimized.reason,
     },
   };
+}
+
+async function prepareMediaForUpload(
+  file: File,
+  settings: ImageOptimizationSettings,
+  label: string,
+  expectedMediaType: SiteAssetMediaType,
+): Promise<{ metadata: ImageMetadata; summary: ImageOptimizationSummary | null }> {
+  const mimeType = getSupportedMimeType(file);
+  if (!mimeType) {
+    throwUnsupportedFileType(file);
+  }
+  const actualMediaType = getMediaTypeFromMimeType(mimeType);
+  if (actualMediaType !== expectedMediaType) {
+    throw new Error(`${label}には${mediaTypeLabels[expectedMediaType]}ファイルを選択してください。`);
+  }
+
+  if (actualMediaType === 'video') {
+    const metadata = await readMediaMetadata(file, {
+      maxSizeBytes: maxVideoFileSize,
+      sizeErrorMessage: `動画サイズは${maxVideoFileSizeLabel}以下にしてください。`,
+    });
+    return { metadata, summary: null };
+  }
+
+  const result = await prepareImageForUpload(file, settings, label);
+  return { metadata: result.metadata, summary: result.summary };
 }
 
 async function optimizeImageForUpload(
@@ -2390,18 +2850,34 @@ async function readImageMetadata(
   file: File,
   options: { maxSizeBytes?: number; sizeErrorMessage?: string } = {},
 ): Promise<ImageMetadata> {
-  const mimeType = getSupportedMimeType(file);
-  if (!mimeType) {
-    if (isHeicFile(file)) {
-      throw new Error('HEIC画像は未対応です。JPEG/PNG/WebPに変換してからアップロードしてください。');
-    }
+  const metadata = await readMediaMetadata(file, options);
+  if (metadata.mediaType !== 'image') {
     throw new Error('JPEG・PNG・WebP・AVIF・SVG形式の画像を選択してください。');
   }
-  const maxSizeBytes = options.maxSizeBytes ?? maxFileSize;
-  if (file.size <= 0) throw new Error('画像ファイルを選択してください。');
-  if (file.size > maxSizeBytes) throw new Error(options.sizeErrorMessage ?? '画像サイズは5MB以下にしてください。');
+  return metadata;
+}
+
+async function readMediaMetadata(
+  file: File,
+  options: { maxSizeBytes?: number; sizeErrorMessage?: string } = {},
+): Promise<ImageMetadata> {
+  const mimeType = getSupportedMimeType(file);
+  if (!mimeType) {
+    throwUnsupportedFileType(file);
+  }
+  const mediaType = getMediaTypeFromMimeType(mimeType);
+  const maxSizeBytes = options.maxSizeBytes ?? (mediaType === 'video' ? maxVideoFileSize : maxFileSize);
+  if (file.size <= 0) throw new Error('ファイルを選択してください。');
+  if (file.size > maxSizeBytes) {
+    throw new Error(options.sizeErrorMessage ?? (mediaType === 'video'
+      ? `動画サイズは${maxVideoFileSizeLabel}以下にしてください。`
+      : `画像サイズは${maxImageFileSizeLabel}以下にしてください。`));
+  }
   if (mimeType === 'image/svg+xml') {
-    return { file, ...(await readSvgMetadata(file)), mimeType };
+    return { file, ...(await readSvgMetadata(file)), mimeType, mediaType };
+  }
+  if (mediaType === 'video') {
+    return { file, ...(await readVideoMetadata(file)), mimeType, mediaType };
   }
 
   const objectUrl = URL.createObjectURL(file);
@@ -2413,10 +2889,17 @@ async function readImageMetadata(
       image.src = objectUrl;
     });
     if (!dimensions.width || !dimensions.height) throw new Error('画像サイズを取得できませんでした。');
-    return { file, ...dimensions, mimeType };
+    return { file, ...dimensions, mimeType, mediaType };
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+function throwUnsupportedFileType(file: File): never {
+  if (isHeicFile(file)) {
+    throw new Error('HEIC画像は未対応です。JPEG/PNG/WebPに変換してからアップロードしてください。');
+  }
+  throw new Error('JPEG・PNG・WebP・AVIF・SVG・MP4・WebM形式のファイルを選択してください。');
 }
 
 async function readSvgMetadata(file: File): Promise<{ width: number; height: number }> {
@@ -2438,6 +2921,27 @@ async function readSvgMetadata(file: File): Promise<{ width: number; height: num
   return { width: 48, height: 48 };
 }
 
+async function readVideoMetadata(file: File): Promise<{ width: number; height: number }> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    return await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+      video.onloadedmetadata = () => {
+        const width = Math.round(video.videoWidth || 16);
+        const height = Math.round(video.videoHeight || 9);
+        resolve({ width, height });
+      };
+      video.onerror = () => reject(new Error('動画ファイルを読み込めませんでした。'));
+      video.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function parseSvgLength(value: string | null) {
   if (!value) return 0;
   const number = Number.parseFloat(value);
@@ -2451,6 +2955,8 @@ async function uploadImage(metadata: ImageMetadata, assetKey: string, variant: '
     'image/webp': 'webp',
     'image/avif': 'avif',
     'image/svg+xml': 'svg',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
   };
   const storagePath = `${assetKey}/${variant}/${Date.now()}-${crypto.randomUUID()}.${extension[metadata.mimeType]}`;
   const { error } = await supabase.storage.from(storageBucket).upload(storagePath, metadata.file, {
@@ -2467,7 +2973,32 @@ function getSupportedMimeType(file: File): SiteAssetMimeType | null {
   if (allowedMimeTypes.includes(file.type as SiteAssetMimeType)) return file.type as SiteAssetMimeType;
   if (/\.avif$/i.test(file.name)) return 'image/avif';
   if (/\.svg$/i.test(file.name)) return 'image/svg+xml';
+  if (/\.mp4$/i.test(file.name)) return 'video/mp4';
+  if (/\.webm$/i.test(file.name)) return 'video/webm';
   return null;
+}
+
+function isVideoMimeType(mimeType: SiteAssetMimeType): mimeType is SiteAssetVideoMimeType {
+  return allowedVideoMimeTypes.includes(mimeType as SiteAssetVideoMimeType);
+}
+
+function getMediaTypeFromMimeType(mimeType: SiteAssetMimeType): SiteAssetMediaType {
+  return isVideoMimeType(mimeType) ? 'video' : 'image';
+}
+
+function getSelectedMediaType(form: HTMLFormElement): SiteAssetMediaType {
+  const mediaSelect = form.elements.namedItem('media_type');
+  return mediaSelect instanceof HTMLSelectElement && mediaSelect.value === 'video' ? 'video' : 'image';
+}
+
+function setSelectedMediaType(form: HTMLFormElement, mediaType: SiteAssetMediaType) {
+  const mediaSelect = form.elements.namedItem('media_type');
+  if (mediaSelect instanceof HTMLSelectElement) mediaSelect.value = mediaType;
+}
+
+function getAssetMediaType(asset: SiteAsset): SiteAssetMediaType {
+  if (asset.media_type === 'video') return 'video';
+  return isVideoMimeType(asset.desktop_mime_type) ? 'video' : 'image';
 }
 
 function isHeicFile(file: File): boolean {
@@ -2482,6 +3013,7 @@ function storedImageFromAsset(asset: SiteAsset, variant: 'desktop' | 'mobile'): 
       publicUrl: asset.mobile_image_url,
       storagePath: asset.mobile_storage_path,
       mimeType: asset.mobile_mime_type,
+      mediaType: getMediaTypeFromMimeType(asset.mobile_mime_type),
       width: asset.mobile_width,
       height: asset.mobile_height,
     };
@@ -2491,6 +3023,7 @@ function storedImageFromAsset(asset: SiteAsset, variant: 'desktop' | 'mobile'): 
     publicUrl: asset.desktop_image_url,
     storagePath: asset.desktop_storage_path,
     mimeType: asset.desktop_mime_type,
+    mediaType: getAssetMediaType(asset),
     width: asset.desktop_width,
     height: asset.desktop_height,
   };
@@ -2573,6 +3106,12 @@ function getPublicationState(asset: SiteAsset) {
 
 function renderTypeOptions(selected: 'all' | SiteAssetType) {
   return siteAssetTypes.map((type) => `<option value="${type}" ${selected === type ? 'selected' : ''}>${escapeText(assetTypeLabels[type])}</option>`).join('');
+}
+
+function renderMediaTypeOptions(selected: SiteAssetMediaType) {
+  return (Object.keys(mediaTypeLabels) as SiteAssetMediaType[])
+    .map((type) => `<option value="${type}" ${selected === type ? 'selected' : ''}>${escapeText(mediaTypeLabels[type])}</option>`)
+    .join('');
 }
 
 function getFileInput(form: HTMLFormElement, name: string) {

@@ -1,12 +1,16 @@
 export const siteAssetTypes = ['hero', 'campaign', 'feature', 'diagnosis', 'category', 'article', 'brand_logo', 'brand_hero', 'icon'] as const;
 
 export type SiteAssetType = (typeof siteAssetTypes)[number];
-export type SiteAssetMimeType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif' | 'image/svg+xml';
+export type SiteAssetMediaType = 'image' | 'video';
+export type SiteAssetImageMimeType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif' | 'image/svg+xml';
+export type SiteAssetVideoMimeType = 'video/mp4' | 'video/webm';
+export type SiteAssetMimeType = SiteAssetImageMimeType | SiteAssetVideoMimeType;
 
 export type SiteAsset = {
   id: string;
   asset_key: string;
   asset_type: SiteAssetType;
+  media_type: SiteAssetMediaType;
   folder_id: string | null;
   title: string;
   alt_text: string;
@@ -46,6 +50,7 @@ export type ImageMetadata = {
   width: number;
   height: number;
   mimeType: SiteAssetMimeType;
+  mediaType: SiteAssetMediaType;
 };
 
 export type StoredImage = ImageMetadata & {
