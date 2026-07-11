@@ -530,14 +530,16 @@ async function loadGuideAffiliateImages(productIds: string[]): Promise<Map<strin
     });
 
     grouped.forEach((images, productId) => {
-      const src = [...images]
+      const srcs = [...images]
         .sort((a, b) =>
           Number(Boolean(b.is_primary)) - Number(Boolean(a.is_primary))
           || Number(a.sort_order ?? a.display_order ?? 999) - Number(b.sort_order ?? b.display_order ?? 999),
         )
         .map((image) => normalizeImageUrl(image.image_url) || extractImageSrc(image.rakuten_image_html))
-        .find(Boolean);
+        .filter(Boolean);
 
+      // 登録画像の2枚目を優先し、無ければ1枚目にフォールバックする
+      const src = srcs[1] ?? srcs[0];
       if (src) imageMap.set(productId, src);
     });
   } catch (error) {
@@ -567,15 +569,17 @@ async function loadGuideUploadedImages(productIds: string[]): Promise<Map<string
     });
 
     grouped.forEach((images, productId) => {
-      const src = [...images]
+      const srcs = [...images]
         .sort((a, b) =>
           Number(b.role === 'main') - Number(a.role === 'main')
           || Number(Boolean(b.is_primary)) - Number(Boolean(a.is_primary))
           || Number(a.display_order ?? 999) - Number(b.display_order ?? 999),
         )
         .map((image) => normalizeImageUrl(image.public_url))
-        .find(Boolean);
+        .filter(Boolean);
 
+      // 登録画像の2枚目を優先し、無ければ1枚目にフォールバックする
+      const src = srcs[1] ?? srcs[0];
       if (src) imageMap.set(productId, src);
     });
   } catch (error) {
