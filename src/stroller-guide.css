@@ -1,61 +1,407 @@
 .stroller-guide-page {
-  overflow-x: clip;
-  background: #fff;
-  color: var(--ily-text);
-  padding: clamp(28px, 4vw, 48px) 0 88px;
-}
+  --sg-tone-cream: #f8f5ef;
+  --sg-tone-sakura: #f9edf0;
+  --sg-tone-blue: #edf3f6;
+  --sg-tone-sage: #eef3ee;
+  --sg-tone-lavender: #f2eff5;
+  --sg-tone-white: #ffffff;
 
-.stroller-guide {
-  width: min(100% - 48px, 1120px);
-  max-width: 1120px;
-  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  overflow-x: clip;
+  /* styles.css 側の .stroller-guide-page { padding: 48px 20px 96px } を打ち消して全面ブリードにする */
   padding: 0;
   background: #fff;
   color: var(--ily-text);
+  /* head のインライン critical CSS(visibility:hidden)を解除して表示する */
+  visibility: visible;
 }
 
-.stroller-guide__intro {
-  width: min(100%, 840px);
-  margin: 0 auto 44px;
-  padding: 0 0 34px;
-  border-bottom: 0;
-  border-radius: 0;
+/* ---------------------------------- */
+/* 左: 固定ビジュアルパネル            */
+/* ---------------------------------- */
+
+.stroller-guide-panel {
+  position: sticky;
+  top: 0;
+  display: grid;
+  height: 100vh;
+  height: 100dvh;
+  align-content: center;
+  justify-items: center;
+  overflow: hidden;
+  background: var(--sg-tone-cream);
+  text-align: center;
+  transition: background-color 1100ms var(--ily-ease-smooth, ease);
+}
+
+.stroller-guide-panel__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.stroller-guide-panel__media:empty {
+  display: none;
+}
+
+.stroller-guide-panel__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(248, 245, 239, 0.86), rgba(248, 245, 239, 0.62));
+}
+
+.stroller-guide-panel__picture,
+.stroller-guide-panel__picture img,
+.stroller-guide-panel__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stroller-guide-panel__picture img,
+.stroller-guide-panel__video {
+  object-fit: cover;
+}
+
+.stroller-guide-panel__video {
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+.stroller-guide-panel.has-hero-video .stroller-guide-panel__video {
+  opacity: 1;
+}
+
+.stroller-guide-panel[data-tone='cream'] {
+  background: var(--sg-tone-cream);
+}
+
+.stroller-guide-panel[data-tone='sakura'] {
+  background: var(--sg-tone-sakura);
+}
+
+.stroller-guide-panel[data-tone='blue'] {
+  background: var(--sg-tone-blue);
+}
+
+.stroller-guide-panel[data-tone='sage'] {
+  background: var(--sg-tone-sage);
+}
+
+.stroller-guide-panel[data-tone='lavender'] {
+  background: var(--sg-tone-lavender);
+}
+
+.stroller-guide-panel[data-tone='white'] {
+  background: var(--sg-tone-white);
+}
+
+.stroller-guide-panel__inner {
+  position: relative;
+  z-index: 2;
+  padding: 0 clamp(24px, 4vw, 64px);
+}
+
+.stroller-guide-panel__eyebrow {
+  margin: 0 0 26px;
+  color: #8a8378;
+  font-family: var(--ily-font-en);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+}
+
+.stroller-guide-panel__title {
+  margin: 0;
+  font-weight: 400;
+}
+
+.stroller-guide-panel__title-en {
+  display: block;
+  color: #333;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(34px, 3.6vw, 56px);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.stroller-guide-panel__title-ja {
+  display: block;
+  margin-top: 18px;
+  color: #777;
+  font-family: var(--ily-heading-ja);
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  line-height: 1.8;
+}
+
+.stroller-guide-panel__copy {
+  margin: 34px 0 0;
+  color: #555;
+  font-family: var(--ily-heading-ja);
+  font-size: clamp(14px, 1.15vw, 16px);
+  letter-spacing: 0.1em;
+  line-height: 2.3;
+}
+
+.stroller-guide-panel__indicator {
+  position: absolute;
+  left: clamp(24px, 3vw, 44px);
+  bottom: clamp(24px, 4vh, 40px);
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.stroller-guide-panel__indicator-num {
+  color: #333;
+  font-family: var(--ily-heading-en);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+.stroller-guide-panel__indicator-label {
+  color: #8a8378;
+  font-family: var(--ily-font-en);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+/* 花びら: ごく小さく、ゆっくり漂う */
+
+.stroller-guide-panel__petals {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 回転する円形テキストバッジ(ゆっくり・小さく) */
+
+.stroller-guide-panel__badge {
+  position: absolute;
+  right: clamp(20px, 3vw, 40px);
+  bottom: clamp(20px, 4vh, 36px);
+  z-index: 2;
+  width: clamp(76px, 7vw, 96px);
+  height: auto;
+  animation: stroller-guide-badge-spin 44s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+.stroller-guide-panel__badge text {
+  fill: #8a8378;
+  font-family: var(--ily-font-en);
+  font-size: 8.6px;
+  letter-spacing: 0.08em;
+}
+
+@keyframes stroller-guide-badge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 静かな点在アクセント(花びら) */
+.stroller-guide-panel__petal {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  fill: rgba(216, 170, 182, 0.4);
+}
+
+.stroller-guide-panel__petal--1 {
+  top: 18%;
+  left: 22%;
+  transform: rotate(-18deg);
+}
+
+.stroller-guide-panel__petal--2 {
+  top: 30%;
+  right: 18%;
+  width: 10px;
+  height: 10px;
+  fill: rgba(178, 196, 188, 0.42);
+  transform: rotate(24deg);
+}
+
+.stroller-guide-panel__petal--3 {
+  bottom: 22%;
+  left: 34%;
+  width: 11px;
+  height: 11px;
+  fill: rgba(196, 186, 208, 0.4);
+  transform: rotate(9deg);
+}
+
+/* ---------------------------------- */
+/* 右: スクロールカラム                */
+/* ---------------------------------- */
+
+.stroller-guide {
+  display: grid;
+  gap: clamp(96px, 13vh, 170px);
+  /* styles.css のレガシー .stroller-guide (width/max-width/margin) を打ち消す */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(72px, 11vh, 140px) clamp(28px, 5vw, 92px) clamp(88px, 12vh, 150px);
   background: #fff;
+  color: var(--ily-text);
+}
+
+.stroller-guide__section {
+  width: min(100%, 640px);
+  margin: 0 auto;
+}
+
+/* Diagnosis はページの主役。少し広く・見出しを大きく・パネルを浮かせて強調 */
+.stroller-guide__section--featured {
+  width: min(100%, 720px);
+}
+
+.stroller-guide__heading-badge {
+  display: inline-block;
+  margin-bottom: 2px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: rgba(48, 113, 96, 0.1);
+  color: var(--ily-dark-green, #307160);
+  font-family: var(--ily-font-en);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+}
+
+.stroller-guide__heading--featured .stroller-guide__heading-en {
+  font-size: clamp(30px, 3.6vw, 44px);
+}
+
+.stroller-guide__section--featured .stroller-diagnosis__panel {
+  border-color: rgba(48, 113, 96, 0.26);
+  box-shadow: 0 20px 50px -34px rgba(48, 113, 96, 0.5);
+}
+
+.stroller-guide__section--featured .stroller-diagnosis__panel[data-diagnosis-screen='start'] .stroller-diagnosis__primary {
+  min-height: 50px;
+  padding: 0 40px;
+}
+
+/* styles.css の .stroller-guide h2 (0,1,1) より強い詳細度にする */
+.stroller-guide .stroller-guide__heading {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 0 0 34px;
+  padding: 0;
+  background: transparent;
+  color: inherit !important;
   text-align: center;
 }
 
-.stroller-guide__eyebrow {
-  margin: 0 0 10px;
-  color: #333 !important;
-  font-family: var(--ily-heading-en) !important;
-  font-size: clamp(24px, 3vw, 34px) !important;
-  font-weight: 400 !important;
-  letter-spacing: .01em !important;
-  line-height: 1.25 !important;
-  text-transform: none !important;
+.stroller-guide__heading-num {
+  color: #b7ad9e;
+  font-family: var(--ily-heading-en);
+  font-size: 15px;
+  letter-spacing: 0.16em;
 }
 
-.stroller-guide__intro h1 {
-  margin: 0;
-  color: #666 !important;
-  font-family: var(--ily-heading-ja) !important;
-  font-size: clamp(13px, 1.1vw, 15px) !important;
-  font-weight: 400 !important;
-  letter-spacing: .04em !important;
-  line-height: 1.8 !important;
+.stroller-guide__heading-en {
+  color: #333;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
 }
 
-.stroller-guide__intro p:last-child {
-  max-width: 640px;
-  margin: 18px auto 0;
-  color: #666;
+.stroller-guide__heading small {
+  color: #777;
+  font-family: var(--ily-heading-ja);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.7;
+}
+
+.stroller-guide__prologue {
+  color: #555;
+  font-family: var(--ily-heading-ja);
   font-size: 14px;
-  line-height: 2;
+  letter-spacing: 0.06em;
+  line-height: 2.4;
+  text-align: center;
 }
+
+/*
+ * 物語コピーはファーストビュー内に置かれるため、スクロール連動の
+ * テキストフィル演出だと塗り始める前(=薄色)で固まり読めなくなる。
+ * 白背景の可読性を優先し、通常テキストで表示する。
+ */
+
+.stroller-guide__prologue p {
+  margin: 0;
+}
+
+.stroller-guide__prologue p + p {
+  margin-top: 2.2em;
+}
+
+.stroller-guide__outro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 44px;
+}
+
+/* マーキー: セリフ体の輪郭文字がゆっくり流れる帯 */
+
+.stroller-guide__marquee {
+  width: 100%;
+  overflow: hidden;
+}
+
+.stroller-guide__marquee-track {
+  display: flex;
+  width: max-content;
+  animation: stroller-guide-marquee 46s linear infinite;
+}
+
+.stroller-guide__marquee-group {
+  white-space: nowrap;
+  color: #e9e3d8;
+  font-family: var(--ily-heading-en);
+  font-size: clamp(30px, 3.2vw, 44px);
+  line-height: 1.2;
+}
+
+@supports (-webkit-text-stroke: 1px #000) {
+  .stroller-guide__marquee-group {
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(88, 79, 70, 0.34);
+  }
+}
+
+@keyframes stroller-guide-marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* ---------------------------------- */
+/* 診断                                */
+/* ---------------------------------- */
 
 .stroller-diagnosis {
-  width: min(100%, 820px);
-  margin: 0 auto 64px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .stroller-diagnosis__panel {
@@ -78,35 +424,33 @@
 }
 
 .stroller-diagnosis__kicker {
-  margin: 0 0 12px;
-  color: #a6a6a6;
+  margin: 0 0 8px;
+  color: #b7ad9e;
   font-family: var(--ily-heading-en);
-  font-size: clamp(10px, 1vw, 12px);
+  font-size: 15px;
   font-weight: 400;
-  letter-spacing: .24em;
-  line-height: 1.4;
+  letter-spacing: 0.16em;
+  line-height: 1.25;
   text-align: center;
-  text-transform: uppercase;
 }
 
-.stroller-diagnosis h2,
-.stroller-diagnosis__panel--question h2 {
+.stroller-diagnosis h3 {
   margin: 0;
   color: #333;
   font-family: var(--ily-heading-ja);
-  font-size: clamp(16px, 1.4vw + 8px, 21px);
+  font-size: clamp(16px, 1.6vw, 19px);
   font-weight: 400;
-  letter-spacing: .05em;
-  line-height: 1.7;
+  letter-spacing: 0.06em;
+  line-height: 1.8;
   text-align: center;
 }
 
-.stroller-diagnosis__panel--question h2 {
+.stroller-diagnosis__panel--question h3 {
   display: block;
   min-height: 0;
   margin-top: 28px;
   color: #333;
-  font-size: clamp(18px, 2.2vw, 23px);
+  font-size: clamp(18px, 2.2vw, 22px);
   line-height: 1.65;
 }
 
@@ -131,9 +475,9 @@
   font: inherit;
   font-size: 12px;
   font-weight: 400;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-decoration: none;
-  transition: border-color .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
 }
 
 .stroller-diagnosis__primary {
@@ -159,12 +503,30 @@
 .stroller-diagnosis__secondary:hover,
 .stroller-diagnosis__secondary:focus-visible {
   border-color: #333;
-  opacity: .82;
+  opacity: 0.82;
 }
 
-.stroller-diagnosis a::after {
+.stroller-diagnosis a::after,
+.stroller-guide__outro-actions a::after {
   content: none;
   display: none;
+}
+
+/*
+ * styles.css の .stroller-guide a { display: inline-block; color: inherit }(詳細度0,1,1)に負けて
+ * リンク版ボタンが中央揃えのflexを失い、文字色も背景と同色になって消えるのを防ぐ
+ */
+.stroller-guide a.stroller-diagnosis__primary,
+.stroller-guide a.stroller-diagnosis__secondary {
+  display: inline-flex;
+}
+
+.stroller-guide a.stroller-diagnosis__primary {
+  color: #fff;
+}
+
+.stroller-guide a.stroller-diagnosis__secondary {
+  color: #333;
 }
 
 .stroller-diagnosis__progress {
@@ -174,7 +536,7 @@
   margin-bottom: 10px;
   color: #777;
   font-size: 11px;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
 .stroller-diagnosis__progress-track {
@@ -210,7 +572,7 @@
   color: #333;
   padding: 14px 16px;
   text-align: left;
-  transition: border-color .18s ease, background .18s ease;
+  transition: border-color 0.18s ease, background 0.18s ease;
 }
 
 .stroller-diagnosis__option:hover,
@@ -252,7 +614,7 @@
   color: #333;
   font-size: 14px;
   font-weight: 400;
-  letter-spacing: .03em;
+  letter-spacing: 0.03em;
   line-height: 1.55;
 }
 
@@ -261,7 +623,7 @@
   margin-top: 4px;
   color: #777;
   font-size: 12px;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
   line-height: 1.6;
 }
 
@@ -303,13 +665,13 @@
   padding-top: 16px;
 }
 
-.stroller-diagnosis__result-box h3,
-.stroller-diagnosis__models h3 {
+.stroller-diagnosis__result-box h4,
+.stroller-diagnosis__models h4 {
   margin: 0 0 12px;
   color: #333;
   font-size: 13px;
   font-weight: 400;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   line-height: 1.6;
 }
 
@@ -349,7 +711,7 @@
 .stroller-diagnosis__model span {
   color: #888;
   font-size: 10px;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
 }
 
 .stroller-diagnosis__model b {
@@ -357,7 +719,7 @@
   color: #333;
   font-size: 13px;
   font-weight: 400;
-  letter-spacing: .03em;
+  letter-spacing: 0.03em;
   line-height: 1.5;
 }
 
@@ -369,39 +731,11 @@
   margin-top: 32px;
 }
 
-.stroller-guide__block {
-  margin-top: 52px;
-}
+/* ---------------------------------- */
+/* Type Guide / Facing / Check Point   */
+/* ---------------------------------- */
 
-.stroller-guide__block > h2 {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 22px;
-  padding: 0;
-  background: transparent;
-  color: inherit !important;
-}
-
-.stroller-guide__block > h2 span {
-  color: #333;
-  font-family: var(--ily-heading-en);
-  font-size: clamp(22px, 2.6vw, 31px);
-  font-weight: 400;
-  letter-spacing: .01em;
-  line-height: 1.25;
-}
-
-.stroller-guide__block > h2 small {
-  color: #777;
-  font-family: var(--ily-heading-ja);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: .04em;
-  line-height: 1.7;
-}
-
-.stroller-guide__type-grid,
-.stroller-guide__choice-grid {
+.stroller-guide__type-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
@@ -413,58 +747,97 @@
   gap: 14px;
 }
 
-.stroller-guide-card,
-.stroller-guide-mini-card,
-.stroller-guide__choice-grid details {
+.stroller-guide-mini-card {
   min-width: 0;
+  padding: 20px;
   border: 1px solid var(--ily-border-light);
   border-radius: var(--ily-radius-sm);
   background: #fff;
-  box-shadow: none;
 }
 
-.stroller-guide-card,
-.stroller-guide-mini-card {
-  padding: 20px;
-}
-
-.stroller-guide-card__image {
-  display: none;
-  width: 150px;
-  height: 150px;
-  margin: 0 auto 18px;
-  object-fit: contain;
-}
-
-.stroller-guide-card__image.is-loaded {
-  display: block;
-}
-
-.stroller-guide-card h3,
 .stroller-guide-mini-card h3 {
   margin: 0 0 10px;
   color: #333;
   font-size: 16px;
   font-weight: 400;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   line-height: 1.6;
 }
 
-.stroller-guide-card p,
-.stroller-guide-mini-card p,
-.stroller-guide__choice-grid p {
+.stroller-guide-mini-card p {
   margin: 0;
   color: #666;
   font-size: 13px;
   line-height: 1.85;
 }
 
+/* ---- Type Guide: 画像フルのズームアコーディオン ---- */
+
+.stroller-guide-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-sm);
+  background: #fff;
+}
+
+.stroller-guide-card__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--sg-tone-cream);
+}
+
+.stroller-guide-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 600ms ease, transform 900ms var(--ily-ease-smooth);
+}
+
+.stroller-guide-card__image.is-loaded {
+  opacity: 1;
+}
+
+.stroller-guide-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+}
+
+.stroller-guide-card h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+
+.stroller-guide-card p {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.85;
+}
+
+.stroller-guide-card__detail > p:first-child {
+  margin-top: 10px;
+}
+
 .stroller-guide-card__label {
-  margin-top: 16px !important;
+  margin-top: 14px !important;
   color: #777 !important;
   font-size: 11px;
   font-weight: 400;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 
 .stroller-guide-card ul {
@@ -475,139 +848,136 @@
   line-height: 1.85;
 }
 
-.stroller-guide__choice-grid details {
-  overflow: hidden;
-}
-
-.stroller-guide__choice-grid summary {
-  cursor: pointer;
-  padding: 15px 18px;
-  background: #fff;
-  color: #333;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: .04em;
-  line-height: 1.7;
-}
-
-.stroller-guide__choice-grid summary:hover,
-.stroller-guide__choice-grid summary:focus-visible {
-  background: #fafafa;
-}
-
-.stroller-guide__choice-grid details[open] summary {
-  margin-bottom: 0;
-  border-bottom: 1px solid var(--ily-border-light);
-}
-
-.stroller-guide__choice-grid details p {
-  padding: 14px 18px 18px;
-}
-
-/* --- A. 控えめなキネティック・タイポグラフィ（ゆっくり横ループ） --- */
-.stroller-marquee {
-  width: 100vw;
-  max-width: 100%;
-  margin: 8px auto 40px;
-  overflow: hidden;
-  border-top: 1px solid var(--ily-border-light);
-  border-bottom: 1px solid var(--ily-border-light);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-}
-
-.stroller-marquee--divider {
-  margin: 48px auto;
-}
-
-.stroller-marquee__track {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  will-change: transform;
-  animation: stroller-marquee-scroll 48s linear infinite;
-}
-
-.stroller-marquee__track--reverse {
-  animation-duration: 56s;
-  animation-direction: reverse;
-}
-
-.stroller-marquee:hover .stroller-marquee__track,
-.stroller-marquee:focus-within .stroller-marquee__track {
-  animation-play-state: paused;
-}
-
-.stroller-marquee__group {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.stroller-marquee__item {
-  display: inline-flex;
-  align-items: center;
-  padding: 13px 0;
-  color: #bdbdbd;
-  font-family: var(--ily-heading-en);
-  font-size: clamp(12px, 1.3vw, 15px);
-  font-weight: 400;
-  letter-spacing: .12em;
-  line-height: 1.4;
-}
-
-.stroller-marquee__item::after {
-  margin: 0 clamp(20px, 3vw, 40px);
-  color: #dcdcdc;
-  content: '\2022';
-}
-
-@keyframes stroller-marquee-scroll {
-  from {
-    transform: translateX(0);
+@media (hover: hover) and (min-width: 760px) {
+  .stroller-guide__type-grid {
+    display: flex;
+    gap: 10px;
+    height: 460px;
   }
 
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-/* --- E. 没入演出：診断カードがスクロールで奥から手前に近づく（1箇所のみ・CSSのみ） --- */
-.stroller-diagnosis__stage {
-  transform-origin: center top;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .stroller-diagnosis__stage {
-      animation: stroller-stage-dive linear both;
-      animation-timeline: view();
-      animation-range: entry 5% cover 30%;
-    }
-  }
-}
-
-@keyframes stroller-stage-dive {
-  from {
-    opacity: .72;
-    transform: scale(.965);
+  .stroller-guide-card {
+    flex: 1 1 0%;
+    cursor: pointer;
+    transition: flex-grow 640ms var(--ily-ease-smooth), border-color 0.2s ease;
   }
 
-  to {
+  .stroller-guide-card:hover {
+    flex-grow: 3.6;
+    border-color: rgba(88, 79, 70, 0.3);
+  }
+
+  .stroller-guide-card__media {
+    position: absolute;
+    inset: 0;
+    aspect-ratio: auto;
+    height: 100%;
+  }
+
+  .stroller-guide-card__image {
+    transform: scale(1.05);
+  }
+
+  .stroller-guide-card:hover .stroller-guide-card__image {
+    transform: scale(1.14);
+  }
+
+  /* ホバー時にカード全体をぼかし・半透明の白でおおい、テキストの視認性を上げる */
+  .stroller-guide-card__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    transition: background-color 420ms ease, backdrop-filter 420ms ease, -webkit-backdrop-filter 420ms ease;
+  }
+
+  .stroller-guide-card:hover .stroller-guide-card__media::after {
+    background: rgba(255, 255, 255, 0.58);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .stroller-guide-card__body {
+    position: relative;
+    z-index: 1;
+    justify-content: flex-end;
+    padding: 22px;
+    background: linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0.86) 26%,
+      rgba(255, 255, 255, 0.4) 52%,
+      rgba(255, 255, 255, 0) 80%
+    );
+  }
+
+  .stroller-guide-card h3 {
+    white-space: nowrap;
+    font-size: 17px;
+  }
+
+  .stroller-guide-card__detail {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 560ms var(--ily-ease-smooth), opacity 420ms ease, margin-top 420ms ease;
+  }
+
+  .stroller-guide-card:hover .stroller-guide-card__detail {
+    max-height: 260px;
+    margin-top: 10px;
     opacity: 1;
-    transform: scale(1);
+  }
+
+  .stroller-guide-card__detail > p:first-child {
+    margin-top: 0;
   }
 }
 
-/* --- D. セクション・スタッキング：見出しをstickyで軽く重ねる --- */
-@media (min-width: 761px) {
-  .stroller-guide__block > h2 {
-    position: sticky;
-    top: 76px;
-    z-index: 2;
-    padding: 10px 0;
-    background: #fff;
-  }
+/* ---- Check Point: 3つの視点カード ---- */
+
+.stroller-guide__checkpoints {
+  display: grid;
+  gap: 14px;
+}
+
+.stroller-guide-checkpoint {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 20px;
+  row-gap: 6px;
+  align-items: baseline;
+  padding: 24px 26px;
+  border: 1px solid var(--ily-border-light);
+  border-radius: var(--ily-radius-sm);
+  background: #fff;
+}
+
+.stroller-guide-checkpoint__num {
+  grid-row: 1 / 3;
+  color: #b7ad9e;
+  font-family: var(--ily-heading-en);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.stroller-guide-checkpoint h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+.stroller-guide-checkpoint p {
+  margin: 0;
+  color: #666;
+  font-size: 13.5px;
+  line-height: 1.95;
 }
 
 @keyframes stroller-guide-panel-in {
@@ -628,34 +998,72 @@
   }
 }
 
+/* ---------------------------------- */
+/* レスポンシブ                        */
+/* ---------------------------------- */
+
+@media (max-width: 1023px) {
+  .stroller-guide-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stroller-guide-panel {
+    /* バッジ等のabsolute配置の基準を保つためstaticではなくrelativeで解除する */
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: 0;
+    padding: clamp(72px, 14vw, 120px) 24px clamp(88px, 16vw, 130px);
+  }
+
+  .stroller-guide-panel__media::after {
+    background: rgba(248, 245, 239, 0.74);
+  }
+
+  .stroller-guide-panel__indicator {
+    display: none;
+  }
+
+  .stroller-guide {
+    gap: clamp(80px, 14vw, 120px);
+    padding: clamp(64px, 12vw, 100px) 24px clamp(80px, 14vw, 120px);
+  }
+}
+
+/* Facing Style: SPは横スワイプ+スクロールスナップで見比べる */
 @media (max-width: 900px) {
   .stroller-guide__facing-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    gap: 12px;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .stroller-guide__facing-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stroller-guide-mini-card {
+    flex: 0 0 76%;
+    scroll-snap-align: center;
   }
 }
 
 @media (max-width: 760px) {
-  .stroller-guide-page {
-    padding: 24px 0 72px;
-  }
-
   .stroller-guide {
-    width: min(100% - 28px, 1120px);
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  .stroller-guide__intro {
-    margin-bottom: 32px;
-    padding-bottom: 26px;
+  .stroller-guide__heading {
+    margin-bottom: 28px;
   }
 
-  .stroller-guide__intro p:last-child {
+  .stroller-guide__prologue {
     font-size: 13px;
-    line-height: 1.9;
-    text-align: center;
-  }
-
-  .stroller-diagnosis {
-    margin-bottom: 50px;
+    line-height: 2.3;
   }
 
   .stroller-diagnosis__panel {
@@ -667,53 +1075,25 @@
     text-align: center;
   }
 
-  .stroller-diagnosis__panel--question h2 {
+  .stroller-diagnosis__panel--question h3 {
     margin-top: 24px;
     font-size: 18px;
   }
 
-  /* --- C. ドラッガブル・サイズセレクター：スマホは横スクロール＋スナップ --- */
-  .stroller-diagnosis__options {
-    grid-auto-flow: column;
-    grid-auto-columns: 80%;
-    gap: 12px;
-    margin-inline: -16px;
-    padding-inline: 16px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-padding-left: 16px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-  }
-
-  .stroller-diagnosis__options::-webkit-scrollbar {
-    display: none;
-  }
-
   .stroller-diagnosis__option {
     grid-template-columns: 32px minmax(0, 1fr);
-    min-height: 96px;
-    padding: 14px 14px;
-    scroll-snap-align: start;
-  }
-
-  .stroller-marquee {
-    margin: 4px auto 30px;
-  }
-
-  .stroller-marquee--divider {
-    margin: 34px auto;
+    min-height: 74px;
+    padding: 13px 12px;
   }
 
   .stroller-diagnosis__result-grid,
   .stroller-diagnosis__model-list,
-  .stroller-guide__type-grid,
-  .stroller-guide__choice-grid {
+  .stroller-guide__type-grid {
     grid-template-columns: 1fr;
   }
 
-  .stroller-diagnosis__actions {
+  .stroller-diagnosis__actions,
+  .stroller-guide__outro-actions {
     display: grid;
   }
 
@@ -722,33 +1102,35 @@
     width: 100%;
   }
 
-  .stroller-guide__block {
-    margin-top: 42px;
-  }
-
-  .stroller-guide-card,
   .stroller-guide-mini-card {
     padding: 18px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stroller-diagnosis__panel.is-active,
-  .stroller-diagnosis__loader,
-  .stroller-marquee__track,
-  .stroller-marquee__track--reverse {
-    animation: none;
+  .stroller-guide-panel {
+    transition: none;
   }
 
-  .stroller-diagnosis__stage {
-    opacity: 1;
-    transform: none;
+  .stroller-guide-panel__video {
+    display: none;
+  }
+
+  .stroller-diagnosis__panel.is-active,
+  .stroller-diagnosis__loader,
+  .stroller-guide-panel__badge,
+  .stroller-guide__marquee-track {
+    animation: none;
   }
 
   .stroller-diagnosis__progress-track span,
   .stroller-diagnosis__option,
   .stroller-diagnosis__primary,
-  .stroller-diagnosis__secondary {
+  .stroller-diagnosis__secondary,
+  .stroller-guide-card,
+  .stroller-guide-card__image,
+  .stroller-guide-card__media::after,
+  .stroller-guide-card__detail {
     transition: none;
   }
 }

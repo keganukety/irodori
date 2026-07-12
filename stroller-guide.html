@@ -10,172 +10,245 @@
     <meta property="og:site_name" content="iLy." />
     <meta name="twitter:title" content="ベビーカー診断 | iLy." />
     <meta name="twitter:description" content="移動手段、住まい、重視したいことから暮らしに合うベビーカータイプを整理できます。" />
+    <style>
+      /* スタイル適用前の生レイアウトが一瞬見えるのを防ぐ(stroller-guide.css で visible に戻す) */
+      .stroller-guide-page { visibility: hidden; }
+    </style>
+    <noscript>
+      <style>.stroller-guide-page { visibility: visible !important; }</style>
+    </noscript>
   </head>
   <body>
     <main class="stroller-guide-page">
-      <section class="stroller-guide" aria-labelledby="stroller-guide-title">
-        <div class="stroller-guide__intro">
-          <p class="stroller-guide__eyebrow">STROLLER FINDER</p>
-          <h1 id="stroller-guide-title">ベビーカー診断</h1>
-          <p>
-            移動手段、収納場所、押す人の使いやすさを整理しましょう。
-            <br />
-            診断結果から、そのまま商品一覧の条件検索へ進めますよ。
+      <aside class="stroller-guide-panel" data-guide-panel data-tone="cream">
+        <div class="stroller-guide-panel__media" data-guide-media aria-hidden="true"></div>
+        <div class="stroller-guide-panel__petals" aria-hidden="true">
+          <svg class="stroller-guide-panel__petal stroller-guide-panel__petal--1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7 7 6 13 12 22c6-9 5-15 0-20Z" /></svg>
+          <svg class="stroller-guide-panel__petal stroller-guide-panel__petal--2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7 7 6 13 12 22c6-9 5-15 0-20Z" /></svg>
+          <svg class="stroller-guide-panel__petal stroller-guide-panel__petal--3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C7 7 6 13 12 22c6-9 5-15 0-20Z" /></svg>
+        </div>
+        <div class="stroller-guide-panel__inner">
+          <p class="stroller-guide-panel__eyebrow">iLy. Stroller Guide</p>
+          <h1 class="stroller-guide-panel__title" id="stroller-guide-title">
+            <span class="stroller-guide-panel__title-en" aria-hidden="true">First Stroll,<br />First Story.</span>
+            <span class="stroller-guide-panel__title-ja">ベビーカー診断</span>
+          </h1>
+          <p class="stroller-guide-panel__copy">
+            最初の一台は、<br />
+            はじめての景色になる。
           </p>
         </div>
-
-        <div class="stroller-marquee" aria-hidden="true">
-          <div class="stroller-marquee__track">
-            <span class="stroller-marquee__group">
-              <span class="stroller-marquee__item">STROLLER FINDER</span>
-              <span class="stroller-marquee__item">暮らしに合う一台を</span>
-              <span class="stroller-marquee__item">軽さ</span>
-              <span class="stroller-marquee__item">走行性</span>
-              <span class="stroller-marquee__item">収納のしやすさ</span>
-              <span class="stroller-marquee__item">新生児から長く</span>
-            </span>
-            <span class="stroller-marquee__group">
-              <span class="stroller-marquee__item">STROLLER FINDER</span>
-              <span class="stroller-marquee__item">暮らしに合う一台を</span>
-              <span class="stroller-marquee__item">軽さ</span>
-              <span class="stroller-marquee__item">走行性</span>
-              <span class="stroller-marquee__item">収納のしやすさ</span>
-              <span class="stroller-marquee__item">新生児から長く</span>
-            </span>
-          </div>
+        <div class="stroller-guide-panel__indicator" aria-hidden="true">
+          <span class="stroller-guide-panel__indicator-num" data-guide-indicator-num>&mdash;</span>
+          <span class="stroller-guide-panel__indicator-label" data-guide-indicator-label>Introduction</span>
         </div>
+        <svg class="stroller-guide-panel__badge" viewBox="0 0 100 100" aria-hidden="true">
+          <defs>
+            <path id="stroller-guide-badge-circle" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
+          </defs>
+          <text>
+            <textPath href="#stroller-guide-badge-circle" textLength="238" lengthAdjust="spacing">First Stroll&#8202;&#183;&#8202;First Story&#8202;&#183;&#8202;iLy.&#8202;&#183;&#8202;</textPath>
+          </text>
+        </svg>
+      </aside>
 
-        <section class="stroller-diagnosis" id="stroller-diagnosis" aria-labelledby="stroller-diagnosis-title">
-          <div class="stroller-diagnosis__stage">
-          <div class="stroller-diagnosis__panel" data-diagnosis-screen="start">
-            <p class="stroller-diagnosis__kicker">QUICK CHECK</p>
-            <h2 id="stroller-diagnosis-title">暮らしに合うタイプを見つける</h2>
+      <div class="stroller-guide">
+        <section
+          class="stroller-guide__section"
+          data-tone-section="sakura"
+          data-section-num="01"
+          data-section-label="Prologue"
+          aria-labelledby="stroller-prologue-title"
+        >
+          <h2 class="stroller-guide__heading" id="stroller-prologue-title">
+            <span class="stroller-guide__heading-num" aria-hidden="true">01</span>
+            <span class="stroller-guide__heading-en">Prologue</span>
+            <small>はじめてのおさんぽへ</small>
+          </h2>
+          <div class="stroller-guide__prologue">
             <p>
-              軽量・走行性・普段の移動や収納環境や、新生児期から長く使えるタイプなど<br />
-              どれが近いかを診断してみましょう。
+              ある朝、玄関の扉をあけると、<br />
+              風がすこしだけ、やわらかくなっていました。
             </p>
-            <button class="stroller-diagnosis__primary" type="button" data-diagnosis-start>診断をはじめる</button>
-          </div>
-
-          <div class="stroller-diagnosis__panel stroller-diagnosis__panel--question" data-diagnosis-screen="question" hidden>
-            <div class="stroller-diagnosis__progress" aria-live="polite">
-              <span data-diagnosis-step>Question 1/5</span>
-              <span data-diagnosis-percent>0%</span>
-            </div>
-            <div class="stroller-diagnosis__progress-track" aria-hidden="true">
-              <span data-diagnosis-progress></span>
-            </div>
-            <h2 data-diagnosis-question>質問が入ります</h2>
-            <div class="stroller-diagnosis__options" data-diagnosis-options></div>
-          </div>
-
-          <div class="stroller-diagnosis__panel stroller-diagnosis__panel--loading" data-diagnosis-screen="loading" hidden>
-            <div class="stroller-diagnosis__loader" aria-hidden="true"></div>
-            <p>あなたに合うベビーカーを整理しています。</p>
-          </div>
-
-          <div class="stroller-diagnosis__panel stroller-diagnosis__panel--result" data-diagnosis-screen="result" hidden>
-            <p class="stroller-diagnosis__kicker">RESULT</p>
-            <h2 data-diagnosis-result-title>診断結果</h2>
-            <p class="stroller-diagnosis__result-copy" data-diagnosis-result-description></p>
-
-            <div class="stroller-diagnosis__result-grid">
-              <section class="stroller-diagnosis__result-box" aria-labelledby="diagnosis-conditions-title">
-                <h3 id="diagnosis-conditions-title">重視したい条件</h3>
-                <ul data-diagnosis-conditions></ul>
-              </section>
-              <section class="stroller-diagnosis__result-box" aria-labelledby="diagnosis-cautions-title">
-                <h3 id="diagnosis-cautions-title">確認したい点</h3>
-                <ul data-diagnosis-cautions></ul>
-              </section>
-            </div>
-
-            <section class="stroller-diagnosis__models" aria-labelledby="diagnosis-models-title">
-              <h3 id="diagnosis-models-title">候補に入れたいモデル</h3>
-              <div class="stroller-diagnosis__model-list" data-diagnosis-products></div>
-            </section>
-
-            <div class="stroller-diagnosis__actions">
-              <a class="stroller-diagnosis__primary" href="/products.html" data-diagnosis-search>この条件で商品を探す</a>
-              <button class="stroller-diagnosis__secondary" type="button" data-diagnosis-restart>もう一度診断する</button>
-            </div>
-          </div>
+            <p>
+              ベビーカーは、赤ちゃんがはじめて<br />
+              外の世界とであう、ちいさな特等席。
+            </p>
+            <p>
+              毎日の道のり、住まいの間取り、押す人の手。<br />
+              暮らしをすこしずつ整理していくと、<br />
+              「うちの一台」の輪郭が見えてきます。
+            </p>
           </div>
         </section>
 
-        <div class="stroller-marquee stroller-marquee--divider" aria-hidden="true">
-          <div class="stroller-marquee__track stroller-marquee__track--reverse">
-            <span class="stroller-marquee__group">
-              <span class="stroller-marquee__item">TYPE GUIDE</span>
-              <span class="stroller-marquee__item">A型</span>
-              <span class="stroller-marquee__item">B型</span>
-              <span class="stroller-marquee__item">AB型</span>
-              <span class="stroller-marquee__item">三輪タイプ</span>
-              <span class="stroller-marquee__item">対面・背面</span>
-            </span>
-            <span class="stroller-marquee__group">
-              <span class="stroller-marquee__item">TYPE GUIDE</span>
-              <span class="stroller-marquee__item">A型</span>
-              <span class="stroller-marquee__item">B型</span>
-              <span class="stroller-marquee__item">AB型</span>
-              <span class="stroller-marquee__item">三輪タイプ</span>
-              <span class="stroller-marquee__item">対面・背面</span>
-            </span>
-          </div>
-        </div>
+        <section
+          class="stroller-guide__section stroller-guide__section--featured"
+          data-tone-section="blue"
+          data-section-num="02"
+          data-section-label="Diagnosis"
+          aria-labelledby="stroller-diagnosis-heading"
+        >
+          <h2 class="stroller-guide__heading stroller-guide__heading--featured" id="stroller-diagnosis-heading">
+            <span class="stroller-guide__heading-badge" aria-hidden="true">MAIN CONTENT</span>
+            <span class="stroller-guide__heading-num" aria-hidden="true">02</span>
+            <span class="stroller-guide__heading-en">Diagnosis</span>
+            <small>おさんぽスタイル診断</small>
+          </h2>
 
-        <div class="stroller-guide__block">
-          <h2><span>TYPE GUIDE</span><small>ベビーカーの主なタイプ</small></h2>
+          <section class="stroller-diagnosis" id="stroller-diagnosis" aria-labelledby="stroller-diagnosis-title">
+            <div class="stroller-diagnosis__panel" data-diagnosis-screen="start">
+              <p class="stroller-diagnosis__kicker">Quick Check</p>
+              <h3 id="stroller-diagnosis-title">暮らしに合うタイプを見つける</h3>
+              <p>
+                5つの質問に答えると、軽量・走行性・車移動・新生児長期の<br />
+                4タイプから、あなたの暮らしに近い一台を整理できます。
+              </p>
+              <button class="stroller-diagnosis__primary" type="button" data-diagnosis-start>診断をはじめる</button>
+            </div>
+
+            <div class="stroller-diagnosis__panel stroller-diagnosis__panel--question" data-diagnosis-screen="question" hidden>
+              <div class="stroller-diagnosis__progress" aria-live="polite">
+                <span data-diagnosis-step>Question 1/5</span>
+                <span data-diagnosis-percent>0%</span>
+              </div>
+              <div class="stroller-diagnosis__progress-track" aria-hidden="true">
+                <span data-diagnosis-progress></span>
+              </div>
+              <h3 data-diagnosis-question>質問が入ります</h3>
+              <div class="stroller-diagnosis__options" data-diagnosis-options></div>
+            </div>
+
+            <div class="stroller-diagnosis__panel stroller-diagnosis__panel--loading" data-diagnosis-screen="loading" hidden>
+              <div class="stroller-diagnosis__loader" aria-hidden="true"></div>
+              <p>あなたに合うベビーカーを整理しています。</p>
+            </div>
+
+            <div class="stroller-diagnosis__panel stroller-diagnosis__panel--result" data-diagnosis-screen="result" hidden>
+              <p class="stroller-diagnosis__kicker">Result</p>
+              <h3 data-diagnosis-result-title>診断結果</h3>
+              <p class="stroller-diagnosis__result-copy" data-diagnosis-result-description></p>
+
+              <div class="stroller-diagnosis__result-grid">
+                <section class="stroller-diagnosis__result-box" aria-labelledby="diagnosis-conditions-title">
+                  <h4 id="diagnosis-conditions-title">重視したい条件</h4>
+                  <ul data-diagnosis-conditions></ul>
+                </section>
+                <section class="stroller-diagnosis__result-box" aria-labelledby="diagnosis-cautions-title">
+                  <h4 id="diagnosis-cautions-title">確認したい点</h4>
+                  <ul data-diagnosis-cautions></ul>
+                </section>
+              </div>
+
+              <section class="stroller-diagnosis__models" aria-labelledby="diagnosis-models-title">
+                <h4 id="diagnosis-models-title">候補に入れたいモデル</h4>
+                <div class="stroller-diagnosis__model-list" data-diagnosis-products></div>
+              </section>
+
+              <div class="stroller-diagnosis__actions">
+                <a class="stroller-diagnosis__primary" href="/products.html" data-diagnosis-search>この条件で商品を探す</a>
+                <button class="stroller-diagnosis__secondary" type="button" data-diagnosis-restart>もう一度診断する</button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section
+          class="stroller-guide__section"
+          data-tone-section="sage"
+          data-section-num="03"
+          data-section-label="Type Guide"
+          aria-labelledby="stroller-type-title"
+        >
+          <h2 class="stroller-guide__heading" id="stroller-type-title">
+            <span class="stroller-guide__heading-num" aria-hidden="true">03</span>
+            <span class="stroller-guide__heading-en">Type Guide</span>
+            <small>ベビーカーの主なタイプ</small>
+          </h2>
           <div class="stroller-guide__type-grid">
             <article class="stroller-guide-card">
-              <img class="stroller-guide-card__image" data-stroller-type-image="a" width="150" height="150" alt="A型ベビーカーのイメージ" loading="lazy" />
-              <h3>A型</h3>
-              <p>生後早い時期から使いやすい、安定感を重視したタイプです。</p>
-              <p class="stroller-guide-card__label">向いている人</p>
-              <ul>
-                <li>新生児期から使いたい</li>
-                <li>乗り心地や安定感を重視したい</li>
-                <li>長時間のお出かけが多い</li>
-              </ul>
+              <div class="stroller-guide-card__media">
+                <img class="stroller-guide-card__image" data-stroller-type-image="a" width="150" height="150" alt="A型ベビーカーのイメージ" loading="lazy" />
+              </div>
+              <div class="stroller-guide-card__body">
+                <h3>A型</h3>
+                <div class="stroller-guide-card__detail">
+                  <p>生後早い時期から使いやすい、安定感を重視したタイプです。</p>
+                  <p class="stroller-guide-card__label">向いている人</p>
+                  <ul>
+                    <li>新生児期から使いたい</li>
+                    <li>乗り心地や安定感を重視したい</li>
+                    <li>長時間のお出かけが多い</li>
+                  </ul>
+                </div>
+              </div>
             </article>
             <article class="stroller-guide-card">
-              <img class="stroller-guide-card__image" data-stroller-type-image="b" width="150" height="150" alt="B型ベビーカーのイメージ" loading="lazy" />
-              <h3>B型</h3>
-              <p>腰がすわった頃から使いやすい、軽さと扱いやすさを重視したタイプです。</p>
-              <p class="stroller-guide-card__label">向いている人</p>
-              <ul>
-                <li>軽く持ち運びたい</li>
-                <li>電車や階段の移動が多い</li>
-                <li>セカンドベビーカーを探している</li>
-              </ul>
+              <div class="stroller-guide-card__media">
+                <img class="stroller-guide-card__image" data-stroller-type-image="b" width="150" height="150" alt="B型ベビーカーのイメージ" loading="lazy" />
+              </div>
+              <div class="stroller-guide-card__body">
+                <h3>B型</h3>
+                <div class="stroller-guide-card__detail">
+                  <p>腰がすわった頃から使いやすい、軽さと扱いやすさを重視したタイプです。</p>
+                  <p class="stroller-guide-card__label">向いている人</p>
+                  <ul>
+                    <li>軽く持ち運びたい</li>
+                    <li>電車や階段の移動が多い</li>
+                    <li>セカンドベビーカーを探している</li>
+                  </ul>
+                </div>
+              </div>
             </article>
             <article class="stroller-guide-card">
-              <img class="stroller-guide-card__image" data-stroller-type-image="ab" width="150" height="150" alt="AB型ベビーカーのイメージ" loading="lazy" />
-              <h3>AB型</h3>
-              <p>A型の安心感とB型の扱いやすさを両立しやすいタイプです。</p>
-              <p class="stroller-guide-card__label">向いている人</p>
-              <ul>
-                <li>1台を長く使いたい</li>
-                <li>軽さと機能のバランスを取りたい</li>
-                <li>買い替えを少なくしたい</li>
-              </ul>
+              <div class="stroller-guide-card__media">
+                <img class="stroller-guide-card__image" data-stroller-type-image="ab" width="150" height="150" alt="AB型ベビーカーのイメージ" loading="lazy" />
+              </div>
+              <div class="stroller-guide-card__body">
+                <h3>AB型</h3>
+                <div class="stroller-guide-card__detail">
+                  <p>A型の安心感とB型の扱いやすさを両立しやすいタイプです。</p>
+                  <p class="stroller-guide-card__label">向いている人</p>
+                  <ul>
+                    <li>1台を長く使いたい</li>
+                    <li>軽さと機能のバランスを取りたい</li>
+                    <li>買い替えを少なくしたい</li>
+                  </ul>
+                </div>
+              </div>
             </article>
             <article class="stroller-guide-card">
-              <img class="stroller-guide-card__image" data-stroller-type-image="threeWheel" width="150" height="150" alt="三輪タイプのベビーカーのイメージ" loading="lazy" />
-              <h3>三輪タイプ</h3>
-              <p>大きめのタイヤで、段差や路面の揺れに配慮しやすいタイプです。</p>
-              <p class="stroller-guide-card__label">向いている人</p>
-              <ul>
-                <li>走行性を重視したい</li>
-                <li>公園や屋外移動が多い</li>
-                <li>押しやすさを優先したい</li>
-              </ul>
+              <div class="stroller-guide-card__media">
+                <img class="stroller-guide-card__image" data-stroller-type-image="threeWheel" width="150" height="150" alt="三輪タイプのベビーカーのイメージ" loading="lazy" />
+              </div>
+              <div class="stroller-guide-card__body">
+                <h3>三輪タイプ</h3>
+                <div class="stroller-guide-card__detail">
+                  <p>大きめのタイヤで、段差や路面の揺れに配慮しやすいタイプです。</p>
+                  <p class="stroller-guide-card__label">向いている人</p>
+                  <ul>
+                    <li>走行性を重視したい</li>
+                    <li>公園や屋外移動が多い</li>
+                    <li>押しやすさを優先したい</li>
+                  </ul>
+                </div>
+              </div>
             </article>
           </div>
-        </div>
+        </section>
 
-        <div class="stroller-guide__block">
-          <h2><span>FACING STYLE</span><small>対面・背面・両対面の違い</small></h2>
+        <section
+          class="stroller-guide__section"
+          data-tone-section="lavender"
+          data-section-num="04"
+          data-section-label="Facing Style"
+          aria-labelledby="stroller-facing-title"
+        >
+          <h2 class="stroller-guide__heading" id="stroller-facing-title">
+            <span class="stroller-guide__heading-num" aria-hidden="true">04</span>
+            <span class="stroller-guide__heading-en">Facing Style</span>
+            <small>対面・背面・両対面の違い</small>
+          </h2>
           <div class="stroller-guide__facing-grid">
             <article class="stroller-guide-mini-card">
               <h3>対面</h3>
@@ -190,42 +263,81 @@
               <p>対面と背面を切り替えられるタイプです。成長やお出かけ先に合わせて使い分けできます。</p>
             </article>
           </div>
-        </div>
+        </section>
 
-        <div class="stroller-guide__block">
-          <h2><span>CHECK POINT</span><small>選び方の7項目</small></h2>
-          <div class="stroller-guide__choice-grid">
-            <details open>
-              <summary>1. 使い始める月齢</summary>
-              <p>新生児期から使うなら対象月齢とリクライニング角度を確認します。</p>
-            </details>
-            <details>
-              <summary>2. 重さ</summary>
-              <p>階段や電車移動が多い場合は、片手で扱える重さかを見ておきましょう。</p>
-            </details>
-            <details>
-              <summary>3. 折りたたみサイズ</summary>
-              <p>玄関、車のトランク、収納場所に収まるかを事前に確認します。</p>
-            </details>
-            <details>
-              <summary>4. 走行性</summary>
-              <p>段差や路面の揺れが気になる場合は、タイヤの大きさや安定感が大切です。</p>
-            </details>
-            <details>
-              <summary>5. 荷物の入れやすさ</summary>
-              <p>買い物や保育園の荷物が多い人は、バスケット容量も比較しましょう。</p>
-            </details>
-            <details>
-              <summary>6. 生活動線</summary>
-              <p>駅、エレベーター、車移動など、よく使う場所で扱いやすいかを考えます。</p>
-            </details>
-            <details>
-              <summary>7. 価格と使う期間</summary>
-              <p>使い始める時期と何歳頃まで使うかを合わせて、予算とのバランスを見ます。</p>
-            </details>
+        <section
+          class="stroller-guide__section"
+          data-tone-section="cream"
+          data-section-num="05"
+          data-section-label="Check Point"
+          aria-labelledby="stroller-check-title"
+        >
+          <h2 class="stroller-guide__heading" id="stroller-check-title">
+            <span class="stroller-guide__heading-num" aria-hidden="true">05</span>
+            <span class="stroller-guide__heading-en">Check Point</span>
+            <small>3つの視点でしぼり込む</small>
+          </h2>
+          <div class="stroller-guide__checkpoints">
+            <article class="stroller-guide-checkpoint">
+              <span class="stroller-guide-checkpoint__num" aria-hidden="true">01</span>
+              <h3>いつから使う？</h3>
+              <p>
+                新生児から使うならA型（生後1カ月頃〜、フラットに近いリクライニング）。
+                腰がすわる7カ月頃からなら軽いB型。1台で長く使うならAB型が目安です。
+              </p>
+            </article>
+            <article class="stroller-guide-checkpoint">
+              <span class="stroller-guide-checkpoint__num" aria-hidden="true">02</span>
+              <h3>どこで、どう運ぶ？</h3>
+              <p>
+                電車や階段が多いなら軽さと片手での折りたたみ、車移動ならトランクに収まる
+                折り畳みサイズ、段差や砂利道が多いなら大きめタイヤと走行の安定感を重視します。
+              </p>
+            </article>
+            <article class="stroller-guide-checkpoint">
+              <span class="stroller-guide-checkpoint__num" aria-hidden="true">03</span>
+              <h3>快適・安全・お手入れ</h3>
+              <p>
+                ハイシートは地面の熱やホコリを避け、5点式ベルトと深い幌が赤ちゃんを守ります。
+                シートを洗えるタイプなら、いつでも清潔に保てます。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <div class="stroller-guide__marquee" aria-hidden="true">
+          <div class="stroller-guide__marquee-track">
+            <span class="stroller-guide__marquee-group">First Stroll, First Story.&emsp;First Stroll, First Story.&emsp;First Stroll, First Story.&emsp;</span>
+            <span class="stroller-guide__marquee-group">First Stroll, First Story.&emsp;First Stroll, First Story.&emsp;First Stroll, First Story.&emsp;</span>
           </div>
         </div>
-      </section>
+
+        <section
+          class="stroller-guide__section stroller-guide__section--outro"
+          data-tone-section="white"
+          data-section-label="Epilogue"
+          aria-labelledby="stroller-outro-title"
+        >
+          <h2 class="stroller-guide__heading" id="stroller-outro-title">
+            <span class="stroller-guide__heading-en">Epilogue</span>
+            <small>さいごに</small>
+          </h2>
+          <div class="stroller-guide__prologue">
+            <p>
+              診断で見つけたタイプを手がかりに、<br />
+              実際のモデルをゆっくり見比べてみてください。
+            </p>
+            <p>
+              はじめてのおさんぽが、<br />
+              家族のいちばん好きな時間になりますように。
+            </p>
+          </div>
+          <div class="stroller-guide__outro-actions">
+            <a class="stroller-diagnosis__primary" href="/products.html">商品一覧を見る</a>
+            <a class="stroller-diagnosis__secondary" href="/compare.html">気になるモデルを比較する</a>
+          </div>
+        </section>
+      </div>
     </main>
     <script type="module" src="./src/stroller-guide.ts"></script>
   </body>
