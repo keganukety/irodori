@@ -1,4 +1,10 @@
-.stroller-guide-page {
+/*
+ * 詳細度メモ: ビルド後は styles.css がこのファイルより後に読み込まれるため、
+ * styles.css 側の同名セレクタ(.stroller-guide-page / .stroller-guide / カード類)と
+ * 競合するルールは main.stroller-guide-page / .stroller-guide-page 前置で
+ * 詳細度を上げ、読み込み順に依存せず新デザインが勝つようにしている。
+ */
+main.stroller-guide-page {
   --sg-tone-cream: #f8f5ef;
   --sg-tone-sakura: #f9edf0;
   --sg-tone-blue: #edf3f6;
@@ -245,7 +251,7 @@
 /* 右: スクロールカラム                */
 /* ---------------------------------- */
 
-.stroller-guide {
+.stroller-guide-page .stroller-guide {
   display: grid;
   gap: clamp(96px, 13vh, 170px);
   /* styles.css のレガシー .stroller-guide (width/max-width/margin) を打ち消す */
@@ -735,19 +741,19 @@
 /* Type Guide / Facing / Check Point   */
 /* ---------------------------------- */
 
-.stroller-guide__type-grid {
+.stroller-guide-page .stroller-guide__type-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
-.stroller-guide__facing-grid {
+.stroller-guide-page .stroller-guide__facing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
-.stroller-guide-mini-card {
+.stroller-guide-page .stroller-guide-mini-card {
   min-width: 0;
   padding: 20px;
   border: 1px solid var(--ily-border-light);
@@ -755,7 +761,7 @@
   background: #fff;
 }
 
-.stroller-guide-mini-card h3 {
+.stroller-guide-page .stroller-guide-mini-card h3 {
   margin: 0 0 10px;
   color: #333;
   font-size: 16px;
@@ -764,7 +770,7 @@
   line-height: 1.6;
 }
 
-.stroller-guide-mini-card p {
+.stroller-guide-page .stroller-guide-mini-card p {
   margin: 0;
   color: #666;
   font-size: 13px;
@@ -773,7 +779,7 @@
 
 /* ---- Type Guide: 画像フルのズームアコーディオン ---- */
 
-.stroller-guide-card {
+.stroller-guide-page .stroller-guide-card {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -812,7 +818,7 @@
   padding: 18px 20px 20px;
 }
 
-.stroller-guide-card h3 {
+.stroller-guide-page .stroller-guide-card h3 {
   margin: 0;
   color: #333;
   font-size: 16px;
@@ -821,7 +827,7 @@
   line-height: 1.6;
 }
 
-.stroller-guide-card p {
+.stroller-guide-page .stroller-guide-card p {
   margin: 0;
   color: #666;
   font-size: 13px;
@@ -832,7 +838,7 @@
   margin-top: 10px;
 }
 
-.stroller-guide-card__label {
+.stroller-guide-page .stroller-guide-card__label {
   margin-top: 14px !important;
   color: #777 !important;
   font-size: 11px;
@@ -840,7 +846,7 @@
   letter-spacing: 0.08em;
 }
 
-.stroller-guide-card ul {
+.stroller-guide-page .stroller-guide-card ul {
   margin: 8px 0 0;
   padding-left: 1.2em;
   color: #666;
@@ -849,7 +855,7 @@
 }
 
 @media (hover: hover) and (min-width: 760px) {
-  .stroller-guide__type-grid {
+  .stroller-guide-page .stroller-guide__type-grid {
     display: flex;
     gap: 10px;
     height: 460px;
@@ -913,7 +919,7 @@
     );
   }
 
-  .stroller-guide-card h3 {
+  .stroller-guide-page .stroller-guide-card h3 {
     white-space: nowrap;
     font-size: 17px;
   }
@@ -1003,7 +1009,7 @@
 /* ---------------------------------- */
 
 @media (max-width: 1023px) {
-  .stroller-guide-page {
+  main.stroller-guide-page {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1013,7 +1019,8 @@
     top: auto;
     height: auto;
     min-height: 0;
-    padding: clamp(72px, 14vw, 120px) 24px clamp(88px, 16vw, 130px);
+    /* 下paddingは右下の回転バッジ(高さ約96px)が本文に重ならない量を確保する */
+    padding: clamp(72px, 14vw, 120px) 24px clamp(112px, 18vw, 140px);
   }
 
   .stroller-guide-panel__media::after {
@@ -1024,7 +1031,7 @@
     display: none;
   }
 
-  .stroller-guide {
+  .stroller-guide-page .stroller-guide {
     gap: clamp(80px, 14vw, 120px);
     padding: clamp(64px, 12vw, 100px) 24px clamp(80px, 14vw, 120px);
   }
@@ -1032,7 +1039,7 @@
 
 /* Facing Style: SPは横スワイプ+スクロールスナップで見比べる */
 @media (max-width: 900px) {
-  .stroller-guide__facing-grid {
+  .stroller-guide-page .stroller-guide__facing-grid {
     display: flex;
     gap: 12px;
     padding-bottom: 8px;
@@ -1041,7 +1048,7 @@
     scrollbar-width: none;
   }
 
-  .stroller-guide__facing-grid::-webkit-scrollbar {
+  .stroller-guide-page .stroller-guide__facing-grid::-webkit-scrollbar {
     display: none;
   }
 
@@ -1052,7 +1059,7 @@
 }
 
 @media (max-width: 760px) {
-  .stroller-guide {
+  .stroller-guide-page .stroller-guide {
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -1088,7 +1095,7 @@
 
   .stroller-diagnosis__result-grid,
   .stroller-diagnosis__model-list,
-  .stroller-guide__type-grid {
+  .stroller-guide-page .stroller-guide__type-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1102,7 +1109,7 @@
     width: 100%;
   }
 
-  .stroller-guide-mini-card {
+  .stroller-guide-page .stroller-guide-mini-card {
     padding: 18px;
   }
 }
