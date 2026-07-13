@@ -3,13 +3,18 @@ import './stroller-guide.css';
 import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
 import { fallbackProducts } from './data/fallback-products';
 import { supabase } from './lib/supabase';
+import type { SiteAssetMediaType, SiteAssetMimeType } from './siteAssetTypes';
 
 mountCommonHeader('guide');
 mountStrollerDiagnosis();
+void mountStrollerHeroMedia();
 void mountStrollerTypeImages();
+mountPanelToneSync();
 applyFadeUpAnimations(document);
 
 const strollerDiagnosisResultDelay = 720;
+const strollerGuideHeroVideoAssetKey = 'stroller_guide_hero_video';
+const strollerGuideHeroFallbackImageAssetKey = 'stroller_guide_hero';
 
 const strollerTypes = {
   lightweight: 'lightweight',
@@ -82,6 +87,15 @@ type GuideUploadedImage = {
   role?: string | null;
   is_primary?: boolean | null;
   display_order?: number | null;
+};
+
+type PublishedGuideAsset = {
+  asset_key: string;
+  media_type?: SiteAssetMediaType | null;
+  desktop_image_url?: string | null;
+  desktop_mime_type?: SiteAssetMimeType | null;
+  mobile_image_url?: string | null;
+  mobile_mime_type?: SiteAssetMimeType | null;
 };
 
 const diagnosisIcons = {
@@ -472,6 +486,120 @@ function escapeAttr(value: string): string {
   return escapeHtml(value);
 }
 
+async function mountStrollerHeroMedia(): Promise<void> {
+  const panel = document.querySelector<HTMLElement>('[data-guide-panel]');
+  const mediaRoot = panel?.querySelector<HTMLElement>('[data-guide-media]');
+  if (!panel || !mediaRoot) return;
+
+  const [videoAsset, fallbackImageAsset] = await Promise.all([
+    loadPublishedGuideAsset(strollerGuideHeroVideoAssetKey),
+    loadPublishedGuideAsset(strollerGuideHeroFallbackImageAssetKey),
+  ]);
+
+  mediaRoot.textContent = '';
+
+  if (fallbackImageAsset && getPublishedAssetMediaType(fallbackImageAsset) === 'image') {
+    const picture = createHeroPicture(fallbackImageAsset);
+    if (picture) {
+      mediaRoot.append(picture);
+      panel.classList.add('has-hero-media');
+    }
+  }
+
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if (motionQuery.matches || !videoAsset || getPublishedAssetMediaType(videoAsset) !== 'video') return;
+
+  const video = createHeroVideo(videoAsset);
+  if (!video) return;
+
+  video.addEventListener('canplay', () => {
+    panel.classList.add('has-hero-media', 'has-hero-video');
+  }, { once: true });
+  video.addEventListener('error', () => {
+    panel.classList.remove('has-hero-video');
+  });
+
+  mediaRoot.append(video);
+}
+
+async function loadPublishedGuideAsset(assetKey: string): Promise<PublishedGuideAsset | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_published_site_assets', {
+      p_asset_type: null,
+      p_asset_key: assetKey,
+    });
+    if (error || !Array.isArray(data) || data.length === 0) {
+      if (error) console.info(`${assetKey} を読み込めませんでした。`, error.message);
+      return null;
+    }
+    return data[0] as PublishedGuideAsset;
+  } catch (error) {
+    console.info(`${assetKey} を読み込めませんでした。`, error);
+    return null;
+  }
+}
+
+function createHeroPicture(asset: PublishedGuideAsset): HTMLPictureElement | null {
+  const desktopSrc = normalizeImageUrl(asset.desktop_image_url);
+  if (!desktopSrc) return null;
+  const mobileSrc = normalizeImageUrl(asset.mobile_image_url);
+  const picture = document.createElement('picture');
+  picture.className = 'stroller-guide-panel__picture';
+
+  if (mobileSrc && mobileSrc !== desktopSrc) {
+    const source = document.createElement('source');
+    source.media = '(max-width: 760px)';
+    source.srcset = mobileSrc;
+    picture.append(source);
+  }
+
+  const image = document.createElement('img');
+  image.src = desktopSrc;
+  image.alt = '';
+  image.decoding = 'async';
+  image.loading = 'eager';
+  picture.append(image);
+  return picture;
+}
+
+function createHeroVideo(asset: PublishedGuideAsset): HTMLVideoElement | null {
+  const desktopSrc = normalizeImageUrl(asset.desktop_image_url);
+  if (!desktopSrc) return null;
+  const mobileSrc = normalizeImageUrl(asset.mobile_image_url);
+  const video = document.createElement('video');
+  video.className = 'stroller-guide-panel__video';
+  video.autoplay = true;
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('aria-hidden', 'true');
+
+  if (mobileSrc && mobileSrc !== desktopSrc) {
+    video.append(createVideoSource(mobileSrc, asset.mobile_mime_type, '(max-width: 760px)'));
+  }
+  video.append(createVideoSource(desktopSrc, asset.desktop_mime_type));
+  return video;
+}
+
+function createVideoSource(src: string, mimeType?: SiteAssetMimeType | null, media?: string): HTMLSourceElement {
+  const source = document.createElement('source');
+  source.src = src;
+  if (mimeType && isVideoMimeType(mimeType)) source.type = mimeType;
+  if (media) source.media = media;
+  return source;
+}
+
+function getPublishedAssetMediaType(asset: PublishedGuideAsset): SiteAssetMediaType {
+  if (asset.media_type === 'video') return 'video';
+  if (asset.desktop_mime_type && isVideoMimeType(asset.desktop_mime_type)) return 'video';
+  return 'image';
+}
+
+function isVideoMimeType(mimeType: SiteAssetMimeType): boolean {
+  return mimeType === 'video/mp4' || mimeType === 'video/webm';
+}
+
 async function mountStrollerTypeImages(): Promise<void> {
   const imageElements = Array.from(document.querySelectorAll<HTMLImageElement>('[data-stroller-type-image]'));
   if (imageElements.length === 0) return;
@@ -714,4 +842,40 @@ function extractImageSrc(html: unknown): string {
   const template = document.createElement('template');
   template.innerHTML = html;
   return normalizeImageUrl(template.content.querySelector('img')?.getAttribute('src'));
+}
+
+function mountPanelToneSync(): void {
+  const panel = document.querySelector<HTMLElement>('[data-guide-panel]');
+  const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-tone-section]'));
+  if (!panel || sections.length === 0 || !('IntersectionObserver' in window)) return;
+
+  const indicatorNum = panel.querySelector<HTMLElement>('[data-guide-indicator-num]');
+  const indicatorLabel = panel.querySelector<HTMLElement>('[data-guide-indicator-label]');
+
+  const applySection = (section: HTMLElement): void => {
+    panel.dataset.tone = section.dataset.toneSection || 'cream';
+    if (indicatorNum) indicatorNum.textContent = section.dataset.sectionNum || '—';
+    if (indicatorLabel) indicatorLabel.textContent = section.dataset.sectionLabel || '';
+  };
+
+  const visibleSections = new Set<HTMLElement>();
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const target = entry.target as HTMLElement;
+        if (entry.isIntersecting) {
+          visibleSections.add(target);
+        } else {
+          visibleSections.delete(target);
+        }
+      }
+      // ビューポート中央帯に複数かかる場合は文書順で先のセクションを優先。
+      // どのセクションもかかっていない間は直前のトーンを保つ。
+      const current = sections.find((section) => visibleSections.has(section));
+      if (current) applySection(current);
+    },
+    { rootMargin: '-45% 0px -45% 0px' },
+  );
+
+  sections.forEach((section) => observer.observe(section));
 }
