@@ -5,16 +5,18 @@ import { fallbackProducts } from './data/fallback-products';
 import { supabase } from './lib/supabase';
 import type { SiteAssetMediaType, SiteAssetMimeType } from './siteAssetTypes';
 
+// mount系より前に宣言する。mountStrollerHeroMedia は同期セグメントで
+// このアセットキー定数を参照するため、後置だとTDZのReferenceErrorで落ちる。
+const strollerDiagnosisResultDelay = 720;
+const strollerGuideHeroVideoAssetKey = 'stroller_guide_hero_video';
+const strollerGuideHeroFallbackImageAssetKey = 'stroller_guide_hero';
+
 mountCommonHeader('guide');
 mountStrollerDiagnosis();
 void mountStrollerHeroMedia();
 void mountStrollerTypeImages();
 mountPanelToneSync();
 applyFadeUpAnimations(document);
-
-const strollerDiagnosisResultDelay = 720;
-const strollerGuideHeroVideoAssetKey = 'stroller_guide_hero_video';
-const strollerGuideHeroFallbackImageAssetKey = 'stroller_guide_hero';
 
 const strollerTypes = {
   lightweight: 'lightweight',
