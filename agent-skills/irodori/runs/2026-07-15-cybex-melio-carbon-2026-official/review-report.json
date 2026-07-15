@@ -1,0 +1,82 @@
+{
+  "schema_version": "0.2.0",
+  "record_id": "rvw-2026-07-15-cybex-melio-carbon-2026-official",
+  "created_at": "2026-07-15T16:20:00+09:00",
+  "updated_at": "2026-07-15T16:20:00+09:00",
+  "review_report_id": "rvw-2026-07-15-cybex-melio-carbon-2026-official",
+  "run_id": "run-2026-07-15-cybex-melio-carbon-2026-official",
+  "summary": "CYBEX日本公式サイト・公式ダウンロードセンター・日本向け公式取扱説明書のみを使用し、CYBEX Melio Carbon 2026年モデル(日本市場)のidentity 5要素(ブランド=CYBEX、正式商品名=Melio Carbon、モデル年=2026、市場=JP、型番=526000803[Cinnamon Yellow])をidentifiedとして確定した。source_record 4件、evidence_claim 24件(うちinference 1件・conflicting 1件)、normalized_feature 14軸(値あり12軸・未確認2軸)を作成。商品説明の『from birth』表現と仕様欄・取説の『生後1ヶ月から』の矛盾を推測で解消せずconflictingとして保持した。順位・score・ranking_input/resultは作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "identification_status": "identified",
+      "source_count": 4,
+      "claim_count": 24,
+      "unconfirmed_axes": ["newborn_ready", "price"],
+      "conflicts": 1
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "契約の実行時検証(run_manifest / product_identity / source_record×4 / evidence_claim×24 / normalized_feature×14 / review_report)",
+      "result": "pass",
+      "detail": "validate-run.mjsでshared/contracts/validators.tsの各バリデーターを実行し全件pass"
+    },
+    {
+      "check_name": "ranking系3契約(ranking_definition / ranking_input / ranking_result)とreview_theme_summaryの検証",
+      "result": "not_applicable",
+      "detail": "本runでは意図的に作成していない(1商品のみ・固定ルーブリック未承認・口コミ調査は対象外)"
+    },
+    {
+      "check_name": "claim→source / claim→identity / source→identity / feature→claim(axis含む)の参照整合性",
+      "result": "pass",
+      "detail": "validate-run.mjsで全参照の存在と対象identity・axisの一致を確認"
+    },
+    {
+      "check_name": "inferenceのderived_from必須・conflict相互参照",
+      "result": "pass",
+      "detail": "inference claim(clm-melio26-024)はderived_from 2件を持ち、conflicting claim(clm-melio26-012)はclm-melio26-004/014と相互参照"
+    },
+    {
+      "check_name": "不明値が0・空文字へ変換されていないこと",
+      "result": "pass",
+      "detail": "未確認値はnull + evidence_status: unconfirmed + supporting_claims: [] + independent_source_count: 0で表現"
+    },
+    {
+      "check_name": "URLが公式ドメインのみであること",
+      "result": "pass",
+      "detail": "cybex-online.com / download.cybex-online.com / transmorpher.goodbabyprod.com(公式ダウンロードセンター直リンクの配信基盤)のみ"
+    },
+    {
+      "check_name": "実在商品のscore・順位が作られていないこと",
+      "result": "pass",
+      "detail": "runディレクトリにranking系ファイルなし。score/rankフィールド不存在をvalidate-run.mjsで機械確認"
+    },
+    {
+      "check_name": "TypeScript型チェック(agent-skills/irodori/tsconfig.json)",
+      "result": "pass",
+      "detail": "tsc -p agent-skills/irodori/tsconfig.json がエラーなし"
+    },
+    {
+      "check_name": "架空fixtureテスト(irodori-ranking-engine/tests/ranking-engine.test.mjs)",
+      "result": "pass",
+      "detail": "node --test で15件pass / 0件fail"
+    }
+  ],
+  "open_questions": [
+    "誕生直後(新生児期)の使用可否: 公式ページ商品説明は『from birth with the included Newborn Nest』、同ページ仕様欄は『From 1 month』、日本語取説は『新生児期(生後28日)を過ぎた生後1ヶ月から』。日本市場では取説が上位根拠だが、公式ページ内の矛盾としてCYBEXへの確認またはより明示的な公式資料が必要",
+    "取扱説明書の表題が『メリオ』のみで『カーボン』『2026』の明記がない(公式ダウンロードセンターのMelio Carbon (2026)日本向けページから直接リンクされていることを紐付け根拠とした。match_status: probable)",
+    "manufacturer_name(製造者の法人名)は今回の公式ページ範囲では確認できず。取説発行者はCTP JAPAN LIMITED(国内取扱)",
+    "型番526000803はCinnamon Yellowカラーの商品コード。他カラーの商品コードと色違い間の仕様同一性は未確認(色違いvariant整理は未実施)",
+    "公式商品ページに価格表示がなく、価格は未確認",
+    "site_product_id '4'の関連付けは名称・ブランド・重量(5.9kg)・モデル年の一致に基づく。ローカルDB側の実データとの突合は人間レビューが必要",
+    "included_items軸はterminologyの軸候補一覧にない追加軸。正式採用はdata-contracts.mdのバージョン管理に従い要判断"
+  ],
+  "recommended_next_actions": [
+    "人間レビュー: identity確定内容・site_product_id関連付け・from birth矛盾の扱いを確認する",
+    "色違いカラーの商品コードを収集し、variant(色違い)の整理方針を確定する",
+    "第三者レビュー・実測メディア・口コミ段階(editorial_test_media / aggregate_review_site等)の調査に進む前に、対象媒体の利用規約確認(Open Decision #19)を行う",
+    "2025年モデルのproduct_identityを別途作成し、successor_of/predecessor_of参照を張る"
+  ],
+  "publication_status": "review_required"
+}

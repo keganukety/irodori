@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.2.0",
+  "record_id": "runm-2026-07-15-cybex-melio-carbon-2026-official",
+  "created_at": "2026-07-15T15:55:00+09:00",
+  "updated_at": "2026-07-15T16:20:00+09:00",
+  "notes": "実在商品(CYBEX Melio Carbon 2026 / JP)に対する公式情報限定のパイロット調査。ランキング処理(ranking_input / ranking_result / score / 順位)は対象外であり作成していない。使用した情報源はCYBEX日本公式サイト・公式ダウンロードセンター・公式取扱説明書のみ。検索エンジンは公式ページの発見にのみ使用し、スニペットを証拠にしていない。",
+  "run_id": "run-2026-07-15-cybex-melio-carbon-2026-official",
+  "purpose": "公式情報のみでCYBEX Melio Carbon 2026(日本市場)のidentity確定・source_record保存・evidence_claim抽出・normalized_feature正規化を検証するパイロット(順位付けは行わない)",
+  "executed_by": "claude-code",
+  "started_at": "2026-07-15T15:34:09+09:00",
+  "finished_at": "2026-07-15T16:20:00+09:00",
+  "target_products": ["pid-cybex-melio-carbon-2026-jp"],
+  "steps": [
+    {
+      "skill_name": "irodori-product-research",
+      "started_at": "2026-07-15T15:34:09+09:00",
+      "finished_at": "2026-07-15T15:55:00+09:00",
+      "result": "pass"
+    },
+    {
+      "skill_name": "irodori-product-evidence-normalizer",
+      "started_at": "2026-07-15T15:55:00+09:00",
+      "finished_at": "2026-07-15T16:10:00+09:00",
+      "result": "pass"
+    },
+    {
+      "skill_name": "irodori-product-intelligence",
+      "started_at": "2026-07-15T16:10:00+09:00",
+      "finished_at": "2026-07-15T16:20:00+09:00",
+      "result": "pass"
+    }
+  ],
+  "config_refs": {
+    "ranking_definition_id": null,
+    "ranking_definition_version": null,
+    "calc_version": null,
+    "terminology_version": "0.2.0",
+    "contracts_version": "0.2.0"
+  },
+  "stop_reason": null,
+  "artifacts": [
+    "run-manifest.json",
+    "product-identity.json",
+    "sources.json",
+    "evidence-claims.json",
+    "normalized-features.json",
+    "review-report.json",
+    "research-summary.md",
+    "validate-run.mjs"
+  ]
+}

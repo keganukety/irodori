@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.2.0",
+  "record_id": "pid-cybex-melio-carbon-2026-jp",
+  "created_at": "2026-07-15T15:55:00+09:00",
+  "updated_at": "2026-07-15T15:55:00+09:00",
+  "notes": "公式表記は英語で「Melio Carbon」。日本語カタカナ表記は公式サイトの文脈では「メリオ カーボン」(取扱説明書の表題は『メリオ 取扱説明書』でシリーズ名のみ)。公式ダウンロードセンターの製品名表記は「Melio Carbon (2026)」。model_numberはCinnamon Yellowカラーの公式『商品コード』526000803であり、他カラーの商品コードは今回未確認。公式JP一覧には『Melio Carbon (2025)』(st-go-melio-carbon-5)が別商品として併載されており、本identityはそれと別のモデル年商品(後継関係はclm-melio26-024のinferenceとして記録。2025年モデルのidentityレコードは本runでは作成していないためsuccessor_ofはnull)。site_product_id '4'の関連付け根拠: ローカル候補(商品名『メリオ カーボン 2026』/ブランド『サイベックス』/重量5.9kg)が公式確定identity(Melio Carbon/CYBEX/2026年/JP/5.9kg)と全点一致。最終判断は人間レビューを要する。",
+  "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+  "official_name": "Melio Carbon",
+  "brand_name": "CYBEX",
+  "manufacturer_name": null,
+  "model_number": "526000803",
+  "model_year": 2026,
+  "market": "JP",
+  "lifecycle_status": "current",
+  "predecessor_of": null,
+  "successor_of": null,
+  "variant_of": null,
+  "variant_axis": null,
+  "category": "stroller",
+  "official_url": "https://www.cybex-online.com/en/jp/p/st-go-melio-carbon-6.html",
+  "identification_status": "identified",
+  "identification_evidence": [
+    "src-melio26-001",
+    "src-melio26-002",
+    "src-melio26-003",
+    "src-melio26-004"
+  ],
+  "unconfirmed_fields": [
+    "manufacturer_name",
+    "successor_of",
+    "model_number_other_colorways"
+  ],
+  "site_product_id": "4"
+}
