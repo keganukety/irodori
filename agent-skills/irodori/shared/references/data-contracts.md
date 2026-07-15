@@ -14,7 +14,7 @@
 
 | フィールド | 型 | 必須 | 説明 / 許容値 | 不明時 | 区分 |
 |---|---|---|---|---|---|
-| `schema_version` | string | 必須 | この契約の版(semver。現在 `"0.2.0"`) | 省略不可 | C(存在) |
+| `schema_version` | string | 必須 | この契約の版(semver。現在 `"0.3.0"`) | 省略不可 | C(存在) |
 | `record_id` | string | 必須 | レコードの一意ID。`<契約名の略>-<連番またはハッシュ>`(例 `src-0001`) | 省略不可 | P |
 | `created_at` / `updated_at` | string | 必須 | ISO 8601(JST オフセット付き。例 `"2026-07-15T10:00:00+09:00"`) | 省略不可 | P |
 | `notes` | string | 任意 | 自由記述の補足。**確定値をここに書かない**(構造化フィールドが正) | 空文字可 | P |
@@ -52,10 +52,11 @@
 | `config_refs` | object | 必須 | 使用した設定の参照 `{ranking_definition_id?, ranking_definition_version?, calc_version?, terminology_version, contracts_version}` | 該当なしは null | C |
 | `stop_reason` | string | 任意 | 途中停止した場合の理由(停止条件は intelligence の SKILL.md に定義) | 正常終了なら null | C(記録義務) |
 | `artifacts` | string[] | 必須 | 生成した成果物ファイルのパス一覧 | 空配列可(失敗時) | P |
+| `execution_environment` | object | 0.3.0以降必須 | `{node_version, typescript_version, os, platform, arch, typecheck_command, test_command, test_isolation, calculation_version, definition_version}`。実測できない値はnull | nullで推測しない | C(記録)/P(形式) |
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "runm-0001",
   "run_id": "run-20260715-001",
   "purpose": "パイロット商品1件の調査から正規化までを実行し、レビュー報告を作る",
@@ -67,9 +68,21 @@
     { "skill_name": "irodori-product-research", "started_at": "2026-07-15T10:01:00+09:00", "finished_at": "2026-07-15T11:20:00+09:00", "result": "pass" },
     { "skill_name": "irodori-product-evidence-normalizer", "started_at": "2026-07-15T11:30:00+09:00", "finished_at": null, "result": "unknown" }
   ],
-  "config_refs": { "ranking_definition_id": null, "ranking_definition_version": null, "calc_version": null, "terminology_version": "0.2.0", "contracts_version": "0.2.0" },
+  "config_refs": { "ranking_definition_id": null, "ranking_definition_version": null, "calc_version": null, "terminology_version": "0.3.0", "contracts_version": "0.3.0" },
   "stop_reason": null,
   "artifacts": ["outputs/run-20260715-001/source-records.json"],
+  "execution_environment": {
+    "node_version": "v24.16.0",
+    "typescript_version": "5.9.3",
+    "os": "Windows 11 Pro",
+    "platform": "win32",
+    "arch": "x64",
+    "typecheck_command": "tsc -p agent-skills/irodori/tsconfig.json --pretty false",
+    "test_command": "node --test --test-isolation=none agent-skills/irodori/irodori-ranking-engine/tests/ranking-engine.test.mjs",
+    "test_isolation": "none",
+    "calculation_version": null,
+    "definition_version": null
+  },
   "created_at": "2026-07-15T10:00:00+09:00",
   "updated_at": "2026-07-15T11:30:00+09:00"
 }
@@ -100,6 +113,8 @@
 | `identification_evidence` | string[] | 必須 | 同定根拠の `source_record_id` 配列 | identified なら1件以上必須 | C |
 | `unconfirmed_fields` | string[] | 必須 | 未確認フィールド名の一覧(明示) | 空配列可 | C |
 | `site_product_id` | string \| null | 任意 | 既存サイト `products.id` との対応(書き込みはしない) | null | P |
+| `site_product_match_status` | string | 0.3.0以降必須 | `confirmed` / `probable` / `unmatched` / `unverified`。site_product_idと同一性確定を分離 | `unverified` | C |
+| `variants` | object[] | 0.3.0以降必須 | `{variant_id, color_name, product_code, specification_equivalence_status, supporting_claims}`。商品コードはvariant単位 | 空配列可 | C(分離)/P(形式) |
 
 `identification_status: identified` には、ブランド・正式商品名・モデル年・対象市場・型番の
 5要素が必要 [C]。いずれかが確認できない場合は `provisional` または `unidentified` とし、
@@ -107,7 +122,7 @@
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "pid-0001",
   "product_identity_id": "pid-0001",
   "official_name": "（正式商品名）",
@@ -127,6 +142,8 @@
   "identification_evidence": [],
   "unconfirmed_fields": ["model_number", "model_year", "official_url", "lifecycle_status"],
   "site_product_id": null,
+  "site_product_match_status": "unverified",
+  "variants": [],
   "created_at": "2026-07-15T10:05:00+09:00",
   "updated_at": "2026-07-15T10:05:00+09:00"
 }
@@ -151,6 +168,7 @@
 | `target_product` | string \| null | 必須 | 対象 `product_identity_id`。同定不能なら null + `match_status: unmatched` | null可(隔離扱い) | C |
 | `product_name_as_written` | string | 必須 | 記事中の商品名表記(原文どおり・短句) | 省略不可 | P |
 | `model_number_as_written` | string \| null | 任意 | 記事中の型番表記 | null | C |
+| `variant_product_code_as_written` | string \| null | 任意 | 色・SKU等のvariant商品コード。model_numberへ入れない | null | C |
 | `model_year_as_written` | string \| null | 任意 | 記事中のモデル年表記 | null | C |
 | `market_as_written` | string | 必須 | `JP` / `overseas` / `unknown` | `unknown` | C |
 | `match_status` | string | 必須 | `matched` / `probable` / `unmatched`(→ product-identity-rules.md §3) | `unmatched` | C |
@@ -160,10 +178,13 @@
 | `external_rank_metadata` | object \| null | 任意 | 他媒体の順位・星の**参考メタデータ**(得点化禁止)。`{rank_label, rank_value, scale_note}` | null | C(禁止則)/P(形式) |
 | `acquisition_status` | string | 必須 | `acquired` / `partial` / `failed` / `skipped` | 省略不可 | C |
 | `acquisition_failure_reason` | string \| null | 条件付き必須 | `failed` / `skipped` の場合必須 | — | C |
+| `discovery_page_url` | string \| null | official_manualで0.3.0以降必須 | 直接資産へ到達した公式親ページ | null | C |
+| `direct_asset_url` | string \| null | official_manualで0.3.0以降必須 | PDF等の直接URL | null | C |
+| `discovered_via_official_page` | boolean \| null | official_manualで0.3.0以降必須 | 公式ページから直接到達した確認。trueでなければ公式資料扱いしない | null | C |
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "src-0001",
   "source_record_id": "src-0001",
   "media_name": "（媒体名）",
@@ -176,6 +197,7 @@
   "target_product": "pid-0001",
   "product_name_as_written": "（記事中の商品名表記）",
   "model_number_as_written": null,
+  "variant_product_code_as_written": null,
   "model_year_as_written": "2026年モデル",
   "market_as_written": "JP",
   "match_status": "probable",
@@ -185,6 +207,9 @@
   "external_rank_metadata": { "rank_label": "（媒体名）ベビーカー部門", "rank_value": 3, "scale_note": "媒体独自基準。IRODORI得点へ変換しない" },
   "acquisition_status": "acquired",
   "acquisition_failure_reason": null,
+  "discovery_page_url": null,
+  "direct_asset_url": null,
+  "discovered_via_official_page": null,
   "created_at": "2026-07-15T10:10:00+09:00",
   "updated_at": "2026-07-15T10:10:00+09:00"
 }
@@ -219,7 +244,7 @@
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "clm-0001",
   "evidence_claim_id": "clm-0001",
   "source_record_id": "src-0001",
@@ -264,10 +289,13 @@
 
 明示的な未確認軸は、`value: null` / `evidence_status: unconfirmed` /
 `supporting_claims: []` / `independent_source_count: 0` の組み合わせに限る [C]。
+ただし未解決矛盾により値を確定できない軸は、`value: null` /
+`evidence_status: conflicting` / 相反する `supporting_claims` 2件以上 /
+`independent_source_count >= 1` として、単純な未確認と分離する [C]。
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "nf-0001",
   "normalized_feature_id": "nf-0001",
   "product_identity_id": "pid-0001",
@@ -303,7 +331,7 @@
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "rts-0001",
   "review_theme_summary_id": "rts-0001",
   "product_identity_id": "pid-0001",
@@ -336,9 +364,11 @@
 | `axis_weights` | object[] | 必須 | `{axis_id, weight, value_status, scoring_rule}`。`scoring_rule` は numeric / dimensions / boolean / ordinal | **weight未確定は value_status: proposed** | C(構造)/O(値) |
 | `required_axes` | object | 必須 | `{axes: string[], value_status}` — これが unconfirmed の商品は評価保留 | 未確定は proposed | C(構造)/O(値) |
 | `min_data_coverage` | object | 必須 | `{value: number(0-1), value_status}` | 未確定は proposed | C(構造)/O(値) |
+| `min_weighted_data_coverage` | object | 0.3.0以降必須 | `{value: number(0-1), value_status}`。weight重要度を考慮した参加閾値 | 未確定は proposed | C(構造)/O(値) |
+| `critical_axes` | object | 0.3.0以降必須 | `{axes: string[], value_status}`。安全・適合・対象年齢等、矛盾時に常にholdする軸 | 未確定は proposed | C(構造)/O(値) |
 | `disqualification_rules` | object[] | 任意 | 失格条件 `{rule, reason_template, value_status}`。ruleは実装済みIDのみ | 空配列可 | C(構造) |
 | `tie_breaker_rules` | object | 必須 | `{ordered_rules: string[], value_status}`(候補: data_coverage / confidence / 同順位併記) | proposed | C(構造)/O(規則) |
-| `evidence_policy` | object | 必須 | accepted status / 未解決矛盾 / outdated / duplicate の決定論的扱い | proposed | C(構造)/O(値) |
+| `evidence_policy` | object | 必須 | accepted status / 未解決矛盾(`required_axis: hold`, `non_required_axis: exclude_axis`, `critical_axis: hold`) / outdated / duplicate の決定論的扱い | proposed | C(構造)/O(値) |
 | `missing_data_policy` | object | 必須 | 充足率不足と欠損軸の扱い。欠損軸はscore計算から除外 | proposed | C(構造)/O(値) |
 | `confidence_formula_ref` | string | 必須 | confidence 式ID。第2段階の試験式は `confidence-proposed-v1` | 省略不可 | P |
 | `confidence_config` | object | 必須 | coverage / 独立ソース / 一次情報 / reliability の試験重み。合計1 | proposed | P |
@@ -349,10 +379,10 @@
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "rdef-stroller-train",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.2.0",
+  "definition_version": "0.3.0",
   "name": "ベビーカー 電車移動向け（初期案）",
   "scope": "scene",
   "scene_tag": "train_commute",
@@ -373,6 +403,8 @@
   ],
   "required_axes": { "axes": ["weight_body"], "value_status": "proposed" },
   "min_data_coverage": { "value": 0.7, "value_status": "proposed" },
+  "min_weighted_data_coverage": { "value": 0.75, "value_status": "proposed" },
+  "critical_axes": { "axes": ["target_age", "newborn_ready", "max_load", "caution"], "value_status": "proposed" },
   "disqualification_rules": [
     { "rule": "require_current_lifecycle", "reason_template": "現行品ではないため対象外", "value_status": "confirmed" }
   ],
@@ -382,7 +414,11 @@
   },
   "evidence_policy": {
     "accepted_statuses": ["confirmed"],
-    "unresolved_conflict": "hold",
+    "unresolved_conflict": {
+      "required_axis": "hold",
+      "non_required_axis": "exclude_axis",
+      "critical_axis": "hold"
+    },
     "outdated": "exclude_axis",
     "duplicate_handling": "representative_only",
     "value_status": "proposed"
@@ -404,7 +440,7 @@
   },
   "sensitivity_config": { "weight_delta": 0.05, "value_status": "proposed" },
   "freshness_rule": null,
-  "calc_version": "calc-train-prototype-0.1.0",
+  "calc_version": "calc-train-prototype-0.2.0",
   "publication_status": "draft",
   "created_at": "2026-07-15T13:00:00+09:00",
   "updated_at": "2026-07-15T13:00:00+09:00"
@@ -424,26 +460,28 @@
 | `ranking_definition_id` / `definition_version` | string | 必須 | 使用する定義とその版 | 省略不可 | C |
 | `run_id` | string | 必須 | 対応する実行 | 省略不可 | C |
 | `snapshot_date` | string | 必須 | 入力を固定した日 | 省略不可 | C |
-| `candidates` | object[] | 必須 | `{product_identity_id, feature_refs: string[](nf ID), review_refs: string[](rts ID), data_coverage: number\|null}` — data_coverage は決定論的処理が計算(手前では null) | 空配列不可 | C |
+| `candidates` | object[] | 必須 | `{product_identity_id, feature_refs, review_refs, data_coverage, weighted_data_coverage}` — coverageは決定論的処理が計算(手前ではnull) | 空配列不可 | C |
 | `excluded` | object[] | 必須 | `{product_identity_id, exclusion_reason}` — 除外理由は disqualification_rules の適用結果 | 空配列可 | C |
-| `input_hash` | string \| null | 任意 | 再現性検証用のハッシュ(実装後に決定論的処理が付与) | null | P |
+| `input_hash` | string \| null | 任意 | canonical入力の64文字小文字SHA-256 hex | null | C |
+| `input_hash_algorithm` | string \| null | 任意 | `"sha256"`。hash未計算でも使用予定アルゴリズムを記録可 | null | C |
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "rin-0001",
   "ranking_input_id": "rin-0001",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.2.0",
+  "definition_version": "0.3.0",
   "run_id": "run-20260715-001",
   "snapshot_date": "2026-07-15",
   "candidates": [
-    { "product_identity_id": "pid-0001", "feature_refs": ["nf-0001"], "review_refs": ["rts-0001"], "data_coverage": null }
+    { "product_identity_id": "pid-0001", "feature_refs": ["nf-0001"], "review_refs": ["rts-0001"], "data_coverage": null, "weighted_data_coverage": null }
   ],
   "excluded": [
     { "product_identity_id": "pid-0002", "exclusion_reason": "lifecycle_status: discontinued（現行品ではない）" }
   ],
   "input_hash": null,
+  "input_hash_algorithm": "sha256",
   "created_at": "2026-07-15T13:10:00+09:00",
   "updated_at": "2026-07-15T13:10:00+09:00"
 }
@@ -460,18 +498,21 @@
 | `ranking_result_id` | string | 必須 | `rres-<連番>` | 省略不可 | C |
 | `ranking_input_id` / `ranking_definition_id` / `definition_version` / `calc_version` / `run_id` | string | 必須 | 再現に必要な参照一式 | 省略不可 | C |
 | `generated_at` | string | 必須 | 生成日時 | 省略不可 | C |
+| `input_hash` / `input_hash_algorithm` | string | 必須 | canonical入力のSHA-256と固定値`sha256` | 省略不可 | C |
 | `entries` | object[] | 必須 | 下記エントリ構造の配列(順位順) | 空配列可 | C |
 | `entries[].rank` | number | 必須 | 順位(同点規則適用後) | — | C |
 | `entries[].product_identity_id` | string | 必須 | 商品 | — | C |
-| `entries[].score` | number | 必須 | 評価済み軸のみから計算した得点 | — | C |
-| `entries[].data_coverage` | number | 必須 | 充足率(scoreと別掲) | — | C |
-| `entries[].confidence` | number | 必須 | 0〜1。試験式の結果。scoreとは分離 | — | C(分離)/P(式) |
+| `entries[].observed_score` | number | 必須 | 確認済みかつscore可能な軸だけで再正規化した得点 | — | C |
+| `entries[].score` | number | 任意 | `observed_score`と同値のdeprecated alias | 省略推奨 | C(互換) |
+| `entries[].data_coverage` | number | 必須 | 軸数ベース充足率 | — | C |
+| `entries[].weighted_data_coverage` | number | 必須 | weightベース充足率 | — | C |
+| `entries[].confidence` | number | 必須 | 0〜1。試験式の結果。observed_scoreとは分離 | — | C(分離)/P(式) |
 | `entries[].per_axis_breakdown` | object[] | 必須 | 軸値、raw score、正規化重み、寄与点、nf ID、claim IDs、source IDs | — | C |
 | `entries[].reason_text` | string | 必須 | 順位の理由(重み上位の軸と値。短文) | — | C |
 | `entries[].strengths` / `entries[].cautions` | string[] | 必須 | 得意な条件 / 苦手な条件・注意点 | 空配列可 | C |
 | `entries[].unconfirmed_axes` | string[] | 必須 | 未確認軸の明示 | 空配列可 | C |
 | `entries[].tie_note` | string \| null | 任意 | 同点処理の適用記録 | null | C |
-| `on_hold` | object[] | 必須 | 評価保留 `{product_identity_id, reason, reason_code, data_coverage, confidence}`。**下位表示ではなく分離** | 空配列可 | C |
+| `on_hold` | object[] | 必須 | 評価保留 `{product_identity_id, reason, reason_code, data_coverage, weighted_data_coverage, confidence}`。**下位表示ではなく分離** | 空配列可 | C |
 | `excluded` | object[] | 必須 | 失格。on_holdと同じ形で、計算前ならcoverage/confidenceはnull | 空配列可 | C |
 | `sensitivity_notes` | object[] | 必須 | 感度分析の結果(順位が入れ替わりうるペアと条件)。設定未確定なら空+notes | 空配列可 | C(構造)/O(幅) |
 | `publication_status` | string | 必須 | 初期値は必ず `draft` | `draft` | C |
@@ -480,21 +521,25 @@
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "rres-0001",
   "ranking_result_id": "rres-0001",
   "ranking_input_id": "rin-0001",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.2.0",
-  "calc_version": "calc-train-prototype-0.1.0",
+  "definition_version": "0.3.0",
+  "calc_version": "calc-train-prototype-0.2.0",
   "run_id": "run-20260715-001",
   "generated_at": "2026-07-15T14:00:00+09:00",
+  "input_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "input_hash_algorithm": "sha256",
   "entries": [
     {
       "rank": 1,
       "product_identity_id": "pid-0001",
+      "observed_score": 81.666667,
       "score": 81.666667,
       "data_coverage": 1,
+      "weighted_data_coverage": 1,
       "confidence": 0.78,
       "per_axis_breakdown": [
         {
@@ -538,11 +583,12 @@
 | `validation_summary` | object[] | 必須 | 検証項目ごとの `{check_name, result(validation_result), detail}`。**fail / unknown を隠さない** | 省略不可 | C |
 | `open_questions` | string[] | 必須 | ユーザー判断が必要な事項(Open Decisions への参照含む) | 空配列可 | C |
 | `recommended_next_actions` | string[] | 必須 | 次の作業の提案(実行はしない) | 空配列可 | C |
+| `editorial_notes` | object[] | 任意 | `{topic, text, evidence_status, supporting_claims}`。安全側の人間向け要約等を確定仕様値と分離 | 空配列可 | C |
 | `publication_status` | string | 必須 | 初期値 `review_required` | — | C |
 
 ```json
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "record_id": "rrep-0001",
   "review_report_id": "rrep-0001",
   "run_id": "run-20260715-001",
@@ -556,6 +602,7 @@
   ],
   "open_questions": ["試験重みとconfidence式を確定するか"],
   "recommended_next_actions": ["矛盾 clm-0009 / clm-0012 の一次情報照合"],
+  "editorial_notes": [],
   "publication_status": "review_required",
   "created_at": "2026-07-15T15:00:00+09:00",
   "updated_at": "2026-07-15T15:00:00+09:00"
@@ -570,3 +617,4 @@
 |---|---|---|
 | 2026-07-15 | 0.1.0 | 初版(10契約のフィールド案とJSON例) |
 | 2026-07-15 | 0.2.0 | TypeScript型・実行時検証・決定論的架空fixture試作に合わせて条件付き契約を具体化 |
+| 2026-07-15 | 0.3.0 | variant/site関連付け/PDF到達経路、observed_score・weighted_data_coverage・矛盾軸参加規則、SHA-256・実行環境記録を追加。score/included_itemsはdeprecated alias化 |

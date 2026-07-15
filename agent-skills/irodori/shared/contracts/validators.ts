@@ -30,6 +30,21 @@ type Allowed = string | number | boolean | null;
 const SEMVER = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 const ISO_DATE = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
 const ISO_TIMESTAMP = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$/;
+const SHA256_HEX = /^[0-9a-f]{64}$/;
+
+export const DEPRECATED_AXIS_ALIASES = {
+  included_items: "included_accessories",
+} as const;
+
+export function canonicalizeAxisId(axisId: string): string {
+  return DEPRECATED_AXIS_ALIASES[axisId as keyof typeof DEPRECATED_AXIS_ALIASES] ?? axisId;
+}
+
+function schemaAtLeast(value: unknown, major: number, minor: number): boolean {
+  if (typeof value !== "string" || !SEMVER.test(value)) return false;
+  const [actualMajor, actualMinor] = value.split(".").map(Number);
+  return actualMajor > major || (actualMajor === major && actualMinor >= minor);
+}
 
 class Collector {
   readonly issues: ValidationIssue[] = [];
@@ -249,6 +264,22 @@ export function validateRunManifest(value: unknown): ValidationReport<RunManifes
     }
     nullableString(item.stop_reason, collector, "$.stop_reason");
     stringArray(item.artifacts, collector, "$.artifacts", { unique: true });
+    const requireEnvironment = schemaAtLeast(item.schema_version, 0, 3);
+    if (item.execution_environment === undefined) {
+      if (requireEnvironment) {
+        collector.fail("$.execution_environment", "environment.required", "0.3.0以降は実行環境情報が必要です");
+      }
+    } else if (record(item.execution_environment, collector, "$.execution_environment")) {
+      const environment = item.execution_environment;
+      for (const key of ["node_version", "typescript_version", "os", "platform", "arch"] as const) {
+        nullableString(environment[key], collector, "$.execution_environment." + key);
+      }
+      for (const key of ["typecheck_command", "test_command", "test_isolation"] as const) {
+        nullableString(environment[key], collector, "$.execution_environment." + key);
+      }
+      nullableString(environment.calculation_version, collector, "$.execution_environment.calculation_version");
+      nullableString(environment.definition_version, collector, "$.execution_environment.definition_version");
+    }
   });
 }
 
@@ -276,6 +307,52 @@ export function validateProductIdentity(value: unknown): ValidationReport<Produc
     stringArray(item.identification_evidence, collector, "$.identification_evidence", { unique: true });
     stringArray(item.unconfirmed_fields, collector, "$.unconfirmed_fields", { unique: true });
     nullableString(item.site_product_id, collector, "$.site_product_id");
+    const requireV03Fields = schemaAtLeast(item.schema_version, 0, 3);
+    if (item.site_product_match_status === undefined) {
+      if (requireV03Fields) {
+        collector.fail("$.site_product_match_status", "site_match.required", "0.3.0以降は関連付け状態が必要です");
+      }
+    } else {
+      enumValue(
+        item.site_product_match_status,
+        ["confirmed", "probable", "unmatched", "unverified"] as const,
+        collector,
+        "$.site_product_match_status",
+      );
+      if (item.site_product_id === null && (item.site_product_match_status === "confirmed" || item.site_product_match_status === "probable")) {
+        collector.fail("$.site_product_match_status", "site_match.id_required", "confirmed/probableにはsite_product_idが必要です");
+      }
+    }
+    if (item.variants === undefined) {
+      if (requireV03Fields) collector.fail("$.variants", "variant.required", "0.3.0以降はvariants配列が必要です");
+    } else if (array(item.variants, collector, "$.variants")) {
+      const variantIds: string[] = [];
+      const productCodes: string[] = [];
+      item.variants.forEach((variant, index) => {
+        const path = "$.variants[" + index + "]";
+        if (!record(variant, collector, path)) return;
+        if (nonEmptyString(variant.variant_id, collector, path + ".variant_id")) variantIds.push(variant.variant_id);
+        nullableString(variant.color_name, collector, path + ".color_name");
+        if (nullableString(variant.product_code, collector, path + ".product_code") && typeof variant.product_code === "string") {
+          productCodes.push(variant.product_code);
+        }
+        enumValue(
+          variant.specification_equivalence_status,
+          ["confirmed_same", "confirmed_different", "unverified"] as const,
+          collector,
+          path + ".specification_equivalence_status",
+        );
+        stringArray(variant.supporting_claims, collector, path + ".supporting_claims", { nonEmpty: true, unique: true });
+        if (variant.notes !== undefined && typeof variant.notes !== "string") {
+          collector.fail(path + ".notes", "type.string", "notesはstringです");
+        }
+        if (variant.product_code !== null && variant.product_code === item.model_number) {
+          collector.fail(path + ".product_code", "identity.variant_code_as_model", "variantコードをmodel_numberに重複登録できません");
+        }
+      });
+      if (new Set(variantIds).size !== variantIds.length) collector.fail("$.variants", "variant.duplicate_id", "variant_idは一意です");
+      if (new Set(productCodes).size !== productCodes.length) collector.fail("$.variants", "variant.duplicate_code", "product_codeは一意です");
+    }
 
     if (item.identification_status === "identified") {
       if (item.model_number === null || item.model_year === null || item.market === "unknown") {
@@ -312,6 +389,9 @@ export function validateSourceRecord(value: unknown): ValidationReport<SourceRec
     nullableString(item.target_product, collector, "$.target_product");
     nonEmptyString(item.product_name_as_written, collector, "$.product_name_as_written");
     nullableString(item.model_number_as_written, collector, "$.model_number_as_written");
+    if (item.variant_product_code_as_written !== undefined) {
+      nullableString(item.variant_product_code_as_written, collector, "$.variant_product_code_as_written");
+    }
     nullableString(item.model_year_as_written, collector, "$.model_year_as_written");
     enumValue(item.market_as_written, ["JP", "overseas", "unknown"] as const, collector, "$.market_as_written");
     enumValue(item.match_status, ["matched", "probable", "unmatched"] as const, collector, "$.match_status");
@@ -327,12 +407,30 @@ export function validateSourceRecord(value: unknown): ValidationReport<SourceRec
     }
     enumValue(item.acquisition_status, ["acquired", "partial", "failed", "skipped"] as const, collector, "$.acquisition_status");
     nullableString(item.acquisition_failure_reason, collector, "$.acquisition_failure_reason");
+    if (item.discovery_page_url !== undefined) url(item.discovery_page_url, collector, "$.discovery_page_url", true);
+    if (item.direct_asset_url !== undefined) url(item.direct_asset_url, collector, "$.direct_asset_url", true);
+    if (item.discovered_via_official_page !== undefined
+      && item.discovered_via_official_page !== null
+      && typeof item.discovered_via_official_page !== "boolean") {
+      collector.fail("$.discovered_via_official_page", "type.nullable_boolean", "booleanまたはnullが必要です");
+    }
     if ((item.acquisition_status === "failed" || item.acquisition_status === "skipped")
       && (typeof item.acquisition_failure_reason !== "string" || item.acquisition_failure_reason.length === 0)) {
       collector.fail("$.acquisition_failure_reason", "acquisition.reason_required", "failed/skippedには理由が必要です");
     }
     if (item.match_status === "matched" && item.target_product === null) {
       collector.fail("$.target_product", "source.matched_without_product", "matchedにはtarget_productが必要です");
+    }
+    if (schemaAtLeast(item.schema_version, 0, 3) && item.source_type === "official_manual") {
+      if (typeof item.discovery_page_url !== "string") {
+        collector.fail("$.discovery_page_url", "manual.discovery_required", "公式到達元ページURLが必要です");
+      }
+      if (typeof item.direct_asset_url !== "string") {
+        collector.fail("$.direct_asset_url", "manual.asset_required", "直接PDF URLが必要です");
+      }
+      if (item.discovered_via_official_page !== true) {
+        collector.fail("$.discovered_via_official_page", "manual.official_route_required", "公式ページからの到達確認が必要です");
+      }
     }
   });
 }
@@ -393,6 +491,9 @@ export function validateEvidenceClaim(value: unknown): ValidationReport<Evidence
     if (item.claim_class === "irodori_inference" && item.fact_or_inference !== "inference") {
       collector.fail("$.fact_or_inference", "inference.class_mismatch", "irodori_inferenceはinferenceです");
     }
+    if (item.fact_or_inference === "inference" && item.evidence_status === "confirmed") {
+      collector.fail("$.evidence_status", "inference.cannot_be_confirmed", "推論をconfirmedな事実として扱えません");
+    }
     if (item.evidence_status === "conflicting"
       && (!Array.isArray(item.conflict_with) || item.conflict_with.length === 0)) {
       collector.fail("$.conflict_with", "conflict.reference_required", "conflictingには相互参照が必要です");
@@ -422,17 +523,29 @@ export function validateNormalizedFeature(value: unknown): ValidationReport<Norm
     }
 
     if (item.value === null) {
-      if (item.evidence_status !== "unconfirmed") {
-        collector.fail("$.evidence_status", "missing.must_be_unconfirmed", "null値はunconfirmedです");
-      }
-      if (!Array.isArray(item.supporting_claims)
-        || item.supporting_claims.length !== 0
-        || independentSourceCount !== 0) {
-        collector.fail(
-          "$.supporting_claims",
-          "missing.must_not_have_evidence",
-          "未確認軸はsupporting_claims=[]かつindependent_source_count=0です",
-        );
+      if (item.evidence_status === "unconfirmed") {
+        if (!Array.isArray(item.supporting_claims)
+          || item.supporting_claims.length !== 0
+          || independentSourceCount !== 0) {
+          collector.fail(
+            "$.supporting_claims",
+            "missing.must_not_have_evidence",
+            "未確認軸はsupporting_claims=[]かつindependent_source_count=0です",
+          );
+        }
+      } else if (item.evidence_status === "conflicting") {
+        if (!Array.isArray(item.supporting_claims)
+          || item.supporting_claims.length < 2
+          || typeof independentSourceCount !== "number"
+          || independentSourceCount < 1) {
+          collector.fail(
+            "$.supporting_claims",
+            "conflict.evidence_required",
+            "矛盾によりnullの軸は相反claim 2件以上とsource数が必要です",
+          );
+        }
+      } else {
+        collector.fail("$.evidence_status", "missing.invalid_status", "null値はunconfirmedまたはconflictingです");
       }
     } else {
       if (!Array.isArray(item.supporting_claims) || item.supporting_claims.length === 0) {
@@ -538,7 +651,7 @@ export function validateRankingDefinition(value: unknown): ValidationReport<Rank
       item.axis_weights.forEach((axis, index) => {
         const path = "$.axis_weights[" + index + "]";
         if (!record(axis, collector, path)) return;
-        if (nonEmptyString(axis.axis_id, collector, path + ".axis_id")) axisIds.push(axis.axis_id);
+        if (nonEmptyString(axis.axis_id, collector, path + ".axis_id")) axisIds.push(canonicalizeAxisId(axis.axis_id));
         if (finiteNumber(axis.weight, collector, path + ".weight") && axis.weight <= 0) {
           collector.fail(path + ".weight", "value.positive", "weightは正数です");
         }
@@ -553,7 +666,7 @@ export function validateRankingDefinition(value: unknown): ValidationReport<Rank
     if (record(item.required_axes, collector, "$.required_axes")) {
       if (stringArray(item.required_axes.axes, collector, "$.required_axes.axes", { unique: true })) {
         for (const axisId of item.required_axes.axes) {
-          if (!axisIds.includes(axisId)) {
+          if (!axisIds.includes(canonicalizeAxisId(axisId))) {
             collector.fail("$.required_axes.axes", "ranking.unknown_required_axis", axisId + "はaxis_weightsにありません");
           }
         }
@@ -573,6 +686,27 @@ export function validateRankingDefinition(value: unknown): ValidationReport<Rank
         collector,
         "$.min_data_coverage.value_status",
       );
+    }
+    if (item.min_weighted_data_coverage === undefined) {
+      if (schemaAtLeast(item.schema_version, 0, 3)) {
+        collector.fail("$.min_weighted_data_coverage", "ranking.weighted_coverage_required", "0.3.0以降はweighted coverage閾値が必要です");
+      }
+    } else if (record(item.min_weighted_data_coverage, collector, "$.min_weighted_data_coverage")) {
+      ratio(item.min_weighted_data_coverage.value, collector, "$.min_weighted_data_coverage.value");
+      enumValue(
+        item.min_weighted_data_coverage.value_status,
+        ["proposed", "confirmed"] as const,
+        collector,
+        "$.min_weighted_data_coverage.value_status",
+      );
+    }
+    if (item.critical_axes === undefined) {
+      if (schemaAtLeast(item.schema_version, 0, 3)) {
+        collector.fail("$.critical_axes", "ranking.critical_axes_required", "0.3.0以降は重要事項軸の設定が必要です");
+      }
+    } else if (record(item.critical_axes, collector, "$.critical_axes")) {
+      stringArray(item.critical_axes.axes, collector, "$.critical_axes.axes", { unique: true });
+      enumValue(item.critical_axes.value_status, ["proposed", "confirmed"] as const, collector, "$.critical_axes.value_status");
     }
 
     if (array(item.disqualification_rules, collector, "$.disqualification_rules")) {
@@ -616,12 +750,40 @@ export function validateRankingDefinition(value: unknown): ValidationReport<Rank
           }
         });
       }
-      enumValue(
-        item.evidence_policy.unresolved_conflict,
-        ["hold", "exclude_axis"] as const,
-        collector,
-        "$.evidence_policy.unresolved_conflict",
-      );
+      if (isRecord(item.evidence_policy.unresolved_conflict)) {
+        enumValue(
+          item.evidence_policy.unresolved_conflict.required_axis,
+          ["hold"] as const,
+          collector,
+          "$.evidence_policy.unresolved_conflict.required_axis",
+        );
+        enumValue(
+          item.evidence_policy.unresolved_conflict.non_required_axis,
+          ["exclude_axis"] as const,
+          collector,
+          "$.evidence_policy.unresolved_conflict.non_required_axis",
+        );
+        enumValue(
+          item.evidence_policy.unresolved_conflict.critical_axis,
+          ["hold"] as const,
+          collector,
+          "$.evidence_policy.unresolved_conflict.critical_axis",
+        );
+      } else {
+        enumValue(
+          item.evidence_policy.unresolved_conflict,
+          ["hold", "exclude_axis"] as const,
+          collector,
+          "$.evidence_policy.unresolved_conflict",
+        );
+        if (schemaAtLeast(item.schema_version, 0, 3)) {
+          collector.fail(
+            "$.evidence_policy.unresolved_conflict",
+            "ranking.scoped_conflict_policy_required",
+            "0.3.0以降はrequired/non_required/critical別の方針が必要です",
+          );
+        }
+      }
       enumValue(item.evidence_policy.outdated, ["hold", "exclude_axis"] as const, collector, "$.evidence_policy.outdated");
       enumValue(
         item.evidence_policy.duplicate_handling,
@@ -754,6 +916,9 @@ export function validateRankingInput(value: unknown): ValidationReport<RankingIn
         stringArray(candidate.feature_refs, collector, path + ".feature_refs", { unique: true });
         stringArray(candidate.review_refs, collector, path + ".review_refs", { unique: true });
         if (candidate.data_coverage !== null) ratio(candidate.data_coverage, collector, path + ".data_coverage");
+        if (candidate.weighted_data_coverage !== undefined && candidate.weighted_data_coverage !== null) {
+          ratio(candidate.weighted_data_coverage, collector, path + ".weighted_data_coverage");
+        }
       });
     }
     if (new Set(candidateIds).size !== candidateIds.length) {
@@ -768,6 +933,15 @@ export function validateRankingInput(value: unknown): ValidationReport<RankingIn
       });
     }
     nullableString(item.input_hash, collector, "$.input_hash");
+    if (item.input_hash_algorithm !== undefined) {
+      enumValue(item.input_hash_algorithm, ["sha256", null] as const, collector, "$.input_hash_algorithm");
+    }
+    if (typeof item.input_hash === "string") {
+      if (!SHA256_HEX.test(item.input_hash)) collector.fail("$.input_hash", "hash.sha256", "64文字の小文字SHA-256 hexが必要です");
+      if (item.input_hash_algorithm !== "sha256") {
+        collector.fail("$.input_hash_algorithm", "hash.algorithm_required", "input_hashにはsha256指定が必要です");
+      }
+    }
   });
 }
 
@@ -793,10 +967,26 @@ export function validateRankingResult(value: unknown): ValidationReport<RankingR
           collector.fail(path + ".rank", "value.positive_integer", "1以上の整数です");
         }
         nonEmptyString(entry.product_identity_id, collector, path + ".product_identity_id");
-        if (finiteNumber(entry.score, collector, path + ".score") && (entry.score < 0 || entry.score > 100)) {
-          collector.fail(path + ".score", "value.score", "0〜100です");
+        const observedScore = entry.observed_score ?? entry.score;
+        if (finiteNumber(observedScore, collector, path + ".observed_score") && (observedScore < 0 || observedScore > 100)) {
+          collector.fail(path + ".observed_score", "value.score", "0〜100です");
+        }
+        if (entry.score !== undefined) {
+          if (finiteNumber(entry.score, collector, path + ".score") && entry.score !== observedScore) {
+            collector.fail(path + ".score", "ranking.score_alias_mismatch", "score aliasはobserved_scoreと同値です");
+          }
+        }
+        if (schemaAtLeast(item.schema_version, 0, 3) && entry.observed_score === undefined) {
+          collector.fail(path + ".observed_score", "ranking.observed_score_required", "0.3.0以降はobserved_scoreが必要です");
         }
         ratio(entry.data_coverage, collector, path + ".data_coverage");
+        if (entry.weighted_data_coverage === undefined) {
+          if (schemaAtLeast(item.schema_version, 0, 3)) {
+            collector.fail(path + ".weighted_data_coverage", "ranking.weighted_coverage_required", "0.3.0以降はweighted_data_coverageが必要です");
+          }
+        } else {
+          ratio(entry.weighted_data_coverage, collector, path + ".weighted_data_coverage");
+        }
         ratio(entry.confidence, collector, path + ".confidence");
         if (array(entry.per_axis_breakdown, collector, path + ".per_axis_breakdown", true)) {
           entry.per_axis_breakdown.forEach((axis, axisIndex) => {
@@ -829,6 +1019,11 @@ export function validateRankingResult(value: unknown): ValidationReport<RankingR
           nonEmptyString(disposition.reason, collector, path + ".reason");
           nonEmptyString(disposition.reason_code, collector, path + ".reason_code");
           if (disposition.data_coverage !== null) ratio(disposition.data_coverage, collector, path + ".data_coverage");
+          if (disposition.weighted_data_coverage !== undefined && disposition.weighted_data_coverage !== null) {
+            ratio(disposition.weighted_data_coverage, collector, path + ".weighted_data_coverage");
+          } else if (disposition.weighted_data_coverage === undefined && schemaAtLeast(item.schema_version, 0, 3)) {
+            collector.fail(path + ".weighted_data_coverage", "ranking.weighted_coverage_required", "0.3.0以降はweighted_data_coverageが必要です");
+          }
           if (disposition.confidence !== null) ratio(disposition.confidence, collector, path + ".confidence");
         });
       }
@@ -843,6 +1038,13 @@ export function validateRankingResult(value: unknown): ValidationReport<RankingR
         finiteNumber(note.weight_delta, collector, path + ".weight_delta");
         enumValue(note.direction, ["increase", "decrease"] as const, collector, path + ".direction");
       });
+    }
+    if (schemaAtLeast(item.schema_version, 0, 3)) {
+      nonEmptyString(item.input_hash, collector, "$.input_hash");
+      if (typeof item.input_hash === "string" && !SHA256_HEX.test(item.input_hash)) {
+        collector.fail("$.input_hash", "hash.sha256", "64文字の小文字SHA-256 hexが必要です");
+      }
+      enumValue(item.input_hash_algorithm, ["sha256"] as const, collector, "$.input_hash_algorithm");
     }
     enumValue(item.publication_status, PUBLICATION_STATUSES, collector, "$.publication_status");
     if (item.publication_status !== "draft") {
@@ -887,6 +1089,16 @@ export function validateReviewReport(value: unknown): ValidationReport<ReviewRep
     }
     stringArray(item.open_questions, collector, "$.open_questions");
     stringArray(item.recommended_next_actions, collector, "$.recommended_next_actions");
+    if (item.editorial_notes !== undefined && array(item.editorial_notes, collector, "$.editorial_notes")) {
+      item.editorial_notes.forEach((note, index) => {
+        const path = "$.editorial_notes[" + index + "]";
+        if (!record(note, collector, path)) return;
+        nonEmptyString(note.topic, collector, path + ".topic");
+        nonEmptyString(note.text, collector, path + ".text");
+        enumValue(note.evidence_status, EVIDENCE_STATUSES, collector, path + ".evidence_status");
+        stringArray(note.supporting_claims, collector, path + ".supporting_claims", { nonEmpty: true, unique: true });
+      });
+    }
     enumValue(item.publication_status, PUBLICATION_STATUSES, collector, "$.publication_status");
   });
 }
@@ -1002,6 +1214,24 @@ export function validateRankingExecutionBundle(value: unknown): ValidationReport
         );
       }
     }
+    for (const variant of product.variants ?? []) {
+      for (const claimId of variant.supporting_claims) {
+        const claim = claims.get(claimId);
+        if (!claim) {
+          collector.fail(
+            "$.product_identities." + product.product_identity_id + ".variants." + variant.variant_id + ".supporting_claims",
+            "reference.missing_claim",
+            claimId,
+          );
+        } else if (claim.product_identity_id !== product.product_identity_id) {
+          collector.fail(
+            "$.product_identities." + product.product_identity_id + ".variants." + variant.variant_id + ".supporting_claims",
+            "identity.cross_product_claim",
+            claimId,
+          );
+        }
+      }
+    }
   }
   for (const source of bundle.source_records) {
     if (source.target_product !== null && !products.has(source.target_product)) {
@@ -1083,7 +1313,7 @@ export function validateRankingExecutionBundle(value: unknown): ValidationReport
             claimId + "は別identityです",
           );
         }
-        if (claim.axis_id !== null && claim.axis_id !== feature.axis_id) {
+        if (claim.axis_id !== null && canonicalizeAxisId(claim.axis_id) !== canonicalizeAxisId(feature.axis_id)) {
           collector.fail(
             "$.normalized_features." + feature.normalized_feature_id + ".supporting_claims",
             "reference.axis_mismatch",
@@ -1134,14 +1364,14 @@ export function validateRankingExecutionBundle(value: unknown): ValidationReport
           "identity.cross_product_feature",
           featureId + "は別identityです",
         );
-      } else if (candidateAxes.has(feature.axis_id)) {
+      } else if (candidateAxes.has(canonicalizeAxisId(feature.axis_id))) {
         collector.fail(
           "$.input.candidates." + candidate.product_identity_id + ".feature_refs",
           "reference.duplicate_axis_feature",
-          feature.axis_id + "のfeatureが複数あります",
+          canonicalizeAxisId(feature.axis_id) + "のfeatureが複数あります",
         );
       } else {
-        candidateAxes.add(feature.axis_id);
+        candidateAxes.add(canonicalizeAxisId(feature.axis_id));
       }
     }
     for (const reviewId of candidate.review_refs) {

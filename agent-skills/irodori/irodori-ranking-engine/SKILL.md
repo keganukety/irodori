@@ -1,6 +1,6 @@
 ---
 name: irodori-ranking-engine
-description: IRODORI独自の総合・シーン別ランキング定義と入力を作成し、検証済み入力を決定論的TypeScript処理で得点・充足率・confidence・同点・感度分析へ変換するSkill。ランキング基準の設計、proposed重み案、除外/評価保留条件、架空fixtureによる再現性検証を頼まれたら使う。AIによる自由順位、Web調査、出典取得、products.rank_noへの書き込み、公開処理はしない。
+description: IRODORI独自の総合・シーン別ランキング定義と入力を作成し、検証済み入力を決定論的TypeScript処理でobserved_score・軸数/weight充足率・confidence・同点・感度分析へ変換するSkill。ランキング基準の設計、proposed重み案、除外/評価保留条件、架空fixtureによる再現性検証を頼まれたら使う。AIによる自由順位、Web調査、出典取得、products.rank_noへの書き込み、公開処理はしない。
 ---
 
 # irodori-ranking-engine — ランキング定義・入力整備
@@ -48,6 +48,8 @@ AIは設定候補を提案できるが、得点・順位・充足率・confidenc
    - ユーザーが明示的に確定した値のみ `confirmed` にする。**勝手に確定しない。**
    - confidence 式は第2段階の試験式 `confidence-proposed-v1` を `proposed` として使う。
      confidenceをscoreへ加算しない。
+   - 通常coverageとweighted coverageの閾値、critical_axes、必須/非必須/重要事項別の
+     矛盾方針をすべてproposed設定として外出しする。
 3. **入力の整備**(`ranking_input`):
    - 候補商品を列挙し、失格条件(例: 現行品でない)に該当するものを
      `excluded` + 理由へ分離する。
@@ -77,9 +79,9 @@ AIは設定候補を提案できるが、得点・順位・充足率・confidenc
 
 ## Decision Rules
 
-- `score` / `data_coverage` / `confidence` は分離する。未確認軸は0点にせず計算から除外し、
+- `observed_score` / `data_coverage` / `weighted_data_coverage` / `confidence` は分離する。未確認軸は0点にせず計算から除外し、
   評価済み軸の重みで正規化する(仕様として定義に明記する)。
-- `data_coverage` が最低充足率未満の商品は `on_hold`(評価保留)へ分離する。
+- いずれかのcoverageが最低充足率未満の商品は `on_hold`(評価保留)へ分離する。
   下位に置かない。最低充足率の値は未確定のため `proposed` で提案する。
 - 同点処理・感度分析幅は候補を列挙し `proposed` とする(確定は Open Decision #10, #11)。
 - 商業条件(アフィリエイト報酬率・広告金額・在庫・販売店都合)を定義のどの項目にも
@@ -132,6 +134,7 @@ node --no-warnings --experimental-strip-types --test --test-isolation=none 'agen
 - [ ] 定義に商業条件由来の項目が含まれていない
 - [ ] 定義に他媒体の順位・星・点数を参照する項目が含まれていない
 - [ ] 未確認軸の扱いが「計算から除外+評価済み軸で正規化」と明記されている
+- [ ] observed_score・2種のcoverage・confidenceが別々に出力され、SHA-256入力hashが残る
 - [ ] `on_hold`(充足率不足)と `excluded`(失格)が区別されている
 - [ ] `ranking_input.candidates` の全参照ID(nf / rts)が実在する
 - [ ] 出力に未承認の実在商品の順位・得点が含まれていない
@@ -154,7 +157,7 @@ node --no-warnings --experimental-strip-types --test --test-isolation=none 'agen
 - `../shared/references/ranking-principles.md`(ランキング原則 — 正本)
 - `../shared/references/status-model.md`(publication_status の制約 — 正本)
 - `../shared/references/data-contracts.md`(ranking_definition / input / result 契約 — 正本)
-- `../shared/references/terminology.md`(score / data_coverage / confidence の定義)
+- `../shared/references/terminology.md`(observed_score / 2種のcoverage / confidence の定義)
 - `../shared/references/source-policy.md` §4(他媒体順位の禁止則)
 - `../shared/contracts/types.ts`(機械処理用TypeScript型)
 - `../shared/contracts/validators.ts`(実行時検証)

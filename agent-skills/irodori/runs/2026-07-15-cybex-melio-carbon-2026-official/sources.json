@@ -1,6 +1,6 @@
 [
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "src-melio26-001",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -15,7 +15,8 @@
     "date_kind_note": "ページ上に公開日・更新日の表記が見当たらないため両方null(現在日での捏造はしない)",
     "target_product": "pid-cybex-melio-carbon-2026-jp",
     "product_name_as_written": "Melio Carbon",
-    "model_number_as_written": "526000803 (Cinnamon Yellow)",
+    "model_number_as_written": null,
+    "variant_product_code_as_written": "526000803",
     "model_year_as_written": null,
     "market_as_written": "JP",
     "match_status": "matched",
@@ -24,10 +25,13 @@
     "commercial_relation": "self_published_by_maker",
     "external_rank_metadata": null,
     "acquisition_status": "acquired",
-    "acquisition_failure_reason": null
+    "acquisition_failure_reason": null,
+    "discovery_page_url": null,
+    "direct_asset_url": null,
+    "discovered_via_official_page": null
   },
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "src-melio26-002",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -51,10 +55,13 @@
     "commercial_relation": "self_published_by_maker",
     "external_rank_metadata": null,
     "acquisition_status": "acquired",
-    "acquisition_failure_reason": null
+    "acquisition_failure_reason": null,
+    "discovery_page_url": null,
+    "direct_asset_url": null,
+    "discovered_via_official_page": null
   },
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "src-melio26-003",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -78,10 +85,13 @@
     "commercial_relation": "self_published_by_maker",
     "external_rank_metadata": null,
     "acquisition_status": "acquired",
-    "acquisition_failure_reason": null
+    "acquisition_failure_reason": null,
+    "discovery_page_url": "https://download.cybex-online.com/products/melio-2026",
+    "direct_asset_url": "https://transmorpher.goodbabyprod.com/documents/Centor/productRevision-81-manual/?v=0_e628369a6ad147be8de3c6726f7244fb",
+    "discovered_via_official_page": true
   },
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "src-melio26-004",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -105,6 +115,9 @@
     "commercial_relation": "self_published_by_maker",
     "external_rank_metadata": null,
     "acquisition_status": "acquired",
-    "acquisition_failure_reason": null
+    "acquisition_failure_reason": null,
+    "discovery_page_url": null,
+    "direct_asset_url": null,
+    "discovered_via_official_page": null
   }
 ]

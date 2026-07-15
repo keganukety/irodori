@@ -85,3 +85,11 @@
   未確認(Unverified)であり、採否は Open Decision #18。
 - 各媒体の利用規約・取得可否は Unverified。公開運用前に `copyright-and-acquisition-policy.md` の
   手続きに従い確認する。
+
+## 8. 公式ページから配信される外部ドメイン資産 [C]
+
+- PDF等の直接URLだけでは公式資料と判定しない。
+- メーカー公式のダウンロードページから直接リンクされたことを確認できる場合に限り利用し、
+  `discovery_page_url` / `direct_asset_url` / `discovered_via_official_page: true` を保存する。
+- PDF表題だけで対象商品・年式を確定できない場合、公式到達経路があっても `match_status: probable`
+  を維持する。

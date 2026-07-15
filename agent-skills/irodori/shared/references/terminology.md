@@ -48,9 +48,11 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 
 | 用語 | 定義 | してはならないこと | 区分 |
 |---|---|---|---|
-| `score` | 重み付き評価点。評価できた軸のみから計算する | 未確認軸を0点として算入する | [C] |
-| `data_coverage` | データ充足率。評価対象軸のうち値が確認できた軸の割合 | scoreと混ぜて1つの数値にする | [C] |
-| `confidence` | 結果の確からしさ。第2段階は `confidence-proposed-v1` を試作 | AIの主観で付与する / scoreへ加算する | [C](分離) / [P](式) |
+| `observed_score` | 確認済みかつscore可能な軸の重み付き得点合計を、その軸のweight合計で割った観測済み範囲の得点 | 未確認軸を0点として算入する | [C] |
+| `score` | `observed_score` のdeprecated alias。新規成果物では正本にしない | 別の値として保持する | [C] |
+| `data_coverage` | 定義軸数のうち確認済みかつscore可能な軸数の割合 | observed_scoreと混ぜる | [C] |
+| `weighted_data_coverage` | 確認済みかつscore可能な軸のweight合計 ÷ 全定義軸のweight合計 | observed_scoreへ加算・乗算する | [C] |
+| `confidence` | 結果の確からしさ。第2段階は `confidence-proposed-v1` を試作 | AIの主観で付与する / observed_scoreへ加算する | [C](分離) / [P](式) |
 
 ## 5. 評価軸(axis)の初期候補 [P]
 
@@ -78,6 +80,7 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 | `newborn_ready` | 新生児対応 | boolean + 条件 |
 | `seat_comfort` | シートの快適性・通気性 | 評価傾向(ordinal) |
 | `care_ease` | お手入れのしやすさ(洗濯可否) | boolean + 評価傾向 |
+| `included_accessories` | 同梱付属品 | text / string[] |
 | `warranty` | 保証 | text(期間・条件) |
 | `caution` | 注意点 | text |
 
@@ -91,3 +94,6 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 - 完了判定できない抽象表現をスキル指示・成果物に書かない(例:「よく調べる」「最適にランキングする」「いい感じに」)。
 - 他媒体の評価ラベル(「◯◯ベストバイ」等)をIRODORI独自評価として使わない。
 - 「業界最軽量」等の宣伝表現を、`manufacturer_claim` ラベルなしで事実として書かない。
+
+互換規則 [C]: 旧 `included_items` は `included_accessories` のdeprecated aliasとして読み取り可能だが、
+新規成果物は必ず `included_accessories` を出力する。

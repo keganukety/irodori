@@ -51,7 +51,7 @@
     "independent_source_count": 1
   },
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "nf-melio26-target_age",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -62,9 +62,9 @@
     "unit": "month",
     "value_kind": "numeric",
     "supporting_claims": ["clm-melio26-004", "clm-melio26-014"],
-    "evidence_status": "confirmed",
+    "evidence_status": "conflicting",
     "fact_or_inference": "fact",
-    "normalization_notes": "開始は生後1ヶ月(公式ページ仕様欄・日本語取説が一致)。上限は公式ページの『approx. 3 years』を36ヶ月換算(取説側の上限は月齢でなく体重15kg到達まで)。商品説明の『from birth』表現との矛盾はclm-melio26-012にconflictingとして記録済み。2sourceともメーカー公式であり独立媒体ではない",
+    "normalization_notes": "仕様欄・取説の候補値は生後1ヶ月開始、上限は公式ページの『approx. 3 years』を36ヶ月換算。ただし商品説明の『from birth』表現と未解決矛盾があるためconfirmedにはしない。安全側の人間向け扱いはreview_report.editorial_notesへ分離。",
     "independent_source_count": 2
   },
   {
@@ -170,20 +170,20 @@
     "independent_source_count": 1
   },
   {
-    "schema_version": "0.2.0",
-    "record_id": "nf-melio26-included_items",
+    "schema_version": "0.3.0",
+    "record_id": "nf-melio26-included_accessories",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
-    "normalized_feature_id": "nf-melio26-included_items",
+    "normalized_feature_id": "nf-melio26-included_accessories",
     "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
-    "axis_id": "included_items",
+    "axis_id": "included_accessories",
     "value": "フレーム(車輪含む)、シートユニット、ショッピングバスケット、バンパーバー、サンキャノピー、Newborn Nest、ユーザーガイド",
     "unit": null,
     "value_kind": "text",
     "supporting_claims": ["clm-melio26-008"],
     "evidence_status": "confirmed",
     "fact_or_inference": "fact",
-    "normalization_notes": "axis_id『included_items』はterminology.mdの初期候補一覧にない追加軸(付属品)。契約上axis_idは自由文字列であり、軸一覧への正式追加はdata-contracts.mdのバージョン管理に従い要レビュー",
+    "normalization_notes": "IRODORI商品仕様語彙に合わせてincluded_accessoriesへ統一。旧included_itemsはdeprecated aliasとして読み取りのみ対応。",
     "independent_source_count": 1
   },
   {
@@ -204,7 +204,7 @@
     "independent_source_count": 1
   },
   {
-    "schema_version": "0.2.0",
+    "schema_version": "0.3.0",
     "record_id": "nf-melio26-newborn_ready",
     "created_at": "2026-07-15T15:55:00+09:00",
     "updated_at": "2026-07-15T15:55:00+09:00",
@@ -214,11 +214,11 @@
     "value": null,
     "unit": null,
     "value_kind": "boolean",
-    "supporting_claims": [],
-    "evidence_status": "unconfirmed",
+    "supporting_claims": ["clm-melio26-012", "clm-melio26-025", "clm-melio26-026"],
+    "evidence_status": "conflicting",
     "fact_or_inference": "fact",
-    "normalization_notes": "公式ページ商品説明は『from birth(Newborn Nest使用時)』、同ページ仕様欄は『From 1 month』、日本語取説は『新生児期(生後28日)を過ぎた生後1ヶ月から』で、誕生直後の使用可否に矛盾がある(clm-melio26-012がconflicting)。矛盾未解決のため値は確定しない",
-    "independent_source_count": 0
+    "normalization_notes": "公式ページ商品説明は『from birth(Newborn Nest使用時)』、同ページ仕様欄と日本語取説は『生後1ヶ月から』で未解決矛盾。値はnullのまま、矛盾claimを保持する。",
+    "independent_source_count": 2
   },
   {
     "schema_version": "0.2.0",

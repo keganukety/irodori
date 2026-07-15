@@ -185,6 +185,8 @@ export const fictionalProductIdentities: ProductIdentity[] = productSpecs.map((p
   identification_evidence: ["src-" + product.id.replace("pid-fictional-", "") + "-official"],
   unconfirmed_fields: [],
   site_product_id: null,
+  site_product_match_status: "unverified",
+  variants: [],
   notes: "名称・ブランド・型番を含むすべてが架空。",
 }));
 
@@ -361,7 +363,7 @@ weightFeature.supporting_claims = [...weightFeature.supporting_claims, duplicate
 weightFeature.normalization_notes = "公式fixture値を採用。affiliate転載claimはduplicate_ofにより独立証拠へ数えない";
 
 const conflictProduct = "pid-fictional-conflict-d";
-const conflictAxis = "train_fitness";
+const conflictAxis = "folding_ease";
 const conflictOriginal = claims.find((claim) =>
   claim.product_identity_id === conflictProduct && claim.axis_id === conflictAxis,
 )!;
@@ -454,7 +456,7 @@ const ordinalPoints = {
 export const trainCommuteProposedDefinition: RankingDefinition = {
   ...common("rdef-fictional-stroller-train"),
   ranking_definition_id: "rdef-fictional-stroller-train",
-  definition_version: "0.2.0",
+  definition_version: "0.3.0",
   name: "電車移動向けランキング（架空fixture・試験設定）",
   scope: "scene",
   scene_tag: "train_commute",
@@ -540,6 +542,11 @@ export const trainCommuteProposedDefinition: RankingDefinition = {
     value_status: "proposed",
   },
   min_data_coverage: { value: 0.7, value_status: "proposed" },
+  min_weighted_data_coverage: { value: 0.75, value_status: "proposed" },
+  critical_axes: {
+    axes: ["target_age", "newborn_ready", "max_load", "caution"],
+    value_status: "proposed",
+  },
   disqualification_rules: [
     {
       rule: "require_current_lifecycle",
@@ -564,7 +571,11 @@ export const trainCommuteProposedDefinition: RankingDefinition = {
   },
   evidence_policy: {
     accepted_statuses: ["confirmed"],
-    unresolved_conflict: "hold",
+    unresolved_conflict: {
+      required_axis: "hold",
+      non_required_axis: "exclude_axis",
+      critical_axis: "hold",
+    },
     outdated: "exclude_axis",
     duplicate_handling: "representative_only",
     value_status: "proposed",
@@ -608,9 +619,11 @@ export const fictionalRankingInput: RankingInput = {
       .map((feature) => feature.normalized_feature_id),
     review_refs: ["rts-" + productId.replace("pid-fictional-", "")],
     data_coverage: null,
+    weighted_data_coverage: null,
   })),
   excluded: [],
   input_hash: null,
+  input_hash_algorithm: "sha256",
   notes: "架空fixtureだけを含む入力。",
 };
 
@@ -634,13 +647,25 @@ export const fictionalRunManifest: RunManifest = {
     ranking_definition_id: trainCommuteProposedDefinition.ranking_definition_id,
     ranking_definition_version: trainCommuteProposedDefinition.definition_version,
     calc_version: CALCULATION_VERSION,
-    terminology_version: "0.2.0",
+    terminology_version: "0.3.0",
     contracts_version: CONTRACT_SCHEMA_VERSION,
   },
   stop_reason: null,
   artifacts: [
     "irodori-ranking-engine/fixtures/fictional-train-commute.ts",
   ],
+  execution_environment: {
+    node_version: "v24.16.0",
+    typescript_version: "5.9.3",
+    os: "Windows 11 Pro",
+    platform: "win32",
+    arch: "x64",
+    typecheck_command: "& '.\\node_modules\\.bin\\tsc.cmd' -p 'agent-skills\\irodori\\tsconfig.json' --pretty false",
+    test_command: "node --no-warnings --experimental-strip-types --test --test-isolation=none 'agent-skills/irodori/irodori-ranking-engine/tests/ranking-engine.test.mjs'",
+    test_isolation: "none",
+    calculation_version: CALCULATION_VERSION,
+    definition_version: trainCommuteProposedDefinition.definition_version,
+  },
   notes: "実在商品を含まない。",
 };
 

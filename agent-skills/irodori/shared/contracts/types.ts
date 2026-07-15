@@ -3,8 +3,8 @@
  * Keep field names aligned with the Markdown source of truth.
  */
 
-export const CONTRACT_SCHEMA_VERSION = "0.2.0" as const;
-export const CALCULATION_VERSION = "calc-train-prototype-0.1.0" as const;
+export const CONTRACT_SCHEMA_VERSION = "0.3.0" as const;
+export const CALCULATION_VERSION = "calc-train-prototype-0.2.0" as const;
 
 export const EVIDENCE_STATUSES = [
   "confirmed",
@@ -32,6 +32,8 @@ export type FactOrInference = "fact" | "inference";
 export type Market = "JP" | "overseas" | "unknown";
 export type LifecycleStatus = "current" | "discontinued" | "unknown";
 export type IdentificationStatus = "identified" | "provisional" | "unidentified";
+export type SiteProductMatchStatus = "confirmed" | "probable" | "unmatched" | "unverified";
+export type VariantSpecificationStatus = "confirmed_same" | "confirmed_different" | "unverified";
 
 export interface StatusHistoryEntry {
   field: string;
@@ -65,6 +67,19 @@ export interface RunConfigRefs {
   contracts_version: string;
 }
 
+export interface ExecutionEnvironment {
+  node_version: string | null;
+  typescript_version: string | null;
+  os: string | null;
+  platform: string | null;
+  arch: string | null;
+  typecheck_command: string | null;
+  test_command: string | null;
+  test_isolation: string | null;
+  calculation_version: string | null;
+  definition_version: string | null;
+}
+
 export interface RunManifest extends BaseContractRecord {
   run_id: string;
   purpose: string;
@@ -76,6 +91,17 @@ export interface RunManifest extends BaseContractRecord {
   config_refs: RunConfigRefs;
   stop_reason: string | null;
   artifacts: string[];
+  /** Required for schema_version >= 0.3.0. Optional only for 0.2.x compatibility. */
+  execution_environment?: ExecutionEnvironment;
+}
+
+export interface ProductVariant {
+  variant_id: string;
+  color_name: string | null;
+  product_code: string | null;
+  specification_equivalence_status: VariantSpecificationStatus;
+  supporting_claims: string[];
+  notes?: string;
 }
 
 export interface ProductIdentity extends BaseContractRecord {
@@ -97,6 +123,10 @@ export interface ProductIdentity extends BaseContractRecord {
   identification_evidence: string[];
   unconfirmed_fields: string[];
   site_product_id: string | null;
+  /** Required for schema_version >= 0.3.0. Optional only for 0.2.x compatibility. */
+  site_product_match_status?: SiteProductMatchStatus;
+  /** Model identity contains variants; a variant product code is never a model_number. */
+  variants?: ProductVariant[];
 }
 
 export const SOURCE_TYPES = [
@@ -144,6 +174,8 @@ export interface SourceRecord extends BaseContractRecord {
   target_product: string | null;
   product_name_as_written: string;
   model_number_as_written: string | null;
+  /** Product/SKU code tied to a color or other variant, not a model-wide number. */
+  variant_product_code_as_written?: string | null;
   model_year_as_written: string | null;
   market_as_written: Market;
   match_status: "matched" | "probable" | "unmatched";
@@ -153,6 +185,10 @@ export interface SourceRecord extends BaseContractRecord {
   external_rank_metadata: ExternalRankMetadata | null;
   acquisition_status: "acquired" | "partial" | "failed" | "skipped";
   acquisition_failure_reason: string | null;
+  /** Structured provenance for directly linked assets such as manuals. */
+  discovery_page_url?: string | null;
+  direct_asset_url?: string | null;
+  discovered_via_official_page?: boolean | null;
 }
 
 export const CLAIM_CLASSES = [
@@ -298,7 +334,11 @@ export interface TieBreakerRules {
 
 export interface EvidencePolicy {
   accepted_statuses: EvidenceStatus[];
-  unresolved_conflict: "hold" | "exclude_axis";
+  unresolved_conflict: "hold" | "exclude_axis" | {
+    required_axis: "hold";
+    non_required_axis: "exclude_axis";
+    critical_axis: "hold";
+  };
   outdated: "hold" | "exclude_axis";
   duplicate_handling: "representative_only";
   value_status: ValueStatus;
@@ -330,6 +370,11 @@ export interface FreshnessRule {
   value_status: ValueStatus;
 }
 
+export interface CriticalAxesConfig {
+  axes: string[];
+  value_status: ValueStatus;
+}
+
 export interface RankingDefinition extends BaseContractRecord {
   ranking_definition_id: string;
   definition_version: string;
@@ -340,6 +385,10 @@ export interface RankingDefinition extends BaseContractRecord {
   axis_weights: AxisWeight[];
   required_axes: RequiredAxesConfig;
   min_data_coverage: MinimumCoverageConfig;
+  /** Required for schema_version >= 0.3.0. Optional only for 0.2.x compatibility. */
+  min_weighted_data_coverage?: MinimumCoverageConfig;
+  /** Safety/compliance/target-age conflicts always hold participation. */
+  critical_axes?: CriticalAxesConfig;
   disqualification_rules: DisqualificationRule[];
   tie_breaker_rules: TieBreakerRules;
   evidence_policy: EvidencePolicy;
@@ -357,6 +406,7 @@ export interface RankingCandidate {
   feature_refs: string[];
   review_refs: string[];
   data_coverage: number | null;
+  weighted_data_coverage?: number | null;
 }
 
 export interface RankingExclusion {
@@ -373,6 +423,7 @@ export interface RankingInput extends BaseContractRecord {
   candidates: RankingCandidate[];
   excluded: RankingExclusion[];
   input_hash: string | null;
+  input_hash_algorithm?: "sha256" | null;
 }
 
 export interface PerAxisBreakdown {
@@ -390,8 +441,11 @@ export interface PerAxisBreakdown {
 export interface RankingEntry {
   rank: number;
   product_identity_id: string;
-  score: number;
+  observed_score: number;
+  /** @deprecated Alias of observed_score for 0.2.x consumers. */
+  score?: number;
   data_coverage: number;
+  weighted_data_coverage: number;
   confidence: number;
   per_axis_breakdown: PerAxisBreakdown[];
   reason_text: string;
@@ -406,6 +460,7 @@ export interface RankingDisposition {
   reason: string;
   reason_code: string;
   data_coverage: number | null;
+  weighted_data_coverage: number | null;
   confidence: number | null;
 }
 
@@ -427,6 +482,8 @@ export interface RankingResult extends BaseContractRecord {
   calc_version: string;
   run_id: string;
   generated_at: string;
+  input_hash: string;
+  input_hash_algorithm: "sha256";
   entries: RankingEntry[];
   on_hold: RankingDisposition[];
   excluded: RankingDisposition[];
@@ -449,6 +506,13 @@ export interface ValidationSummaryItem {
   detail: string;
 }
 
+export interface EditorialNote {
+  topic: string;
+  text: string;
+  evidence_status: EvidenceStatus;
+  supporting_claims: string[];
+}
+
 export interface ReviewReport extends BaseContractRecord {
   review_report_id: string;
   run_id: string;
@@ -457,6 +521,7 @@ export interface ReviewReport extends BaseContractRecord {
   validation_summary: ValidationSummaryItem[];
   open_questions: string[];
   recommended_next_actions: string[];
+  editorial_notes?: EditorialNote[];
   publication_status: PublicationStatus;
 }
 

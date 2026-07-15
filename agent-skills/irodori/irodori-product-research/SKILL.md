@@ -47,10 +47,14 @@ Required Inputs が欠けている場合は調査を開始せず、不足項目�
 2. **商品同定**: メーカー公式で正式商品名・型番・発売時期・現行/旧を確認し、
    `product_identity` を作成する(`product-identity-rules.md` §3 の手順)。
    確定できない要素は `unconfirmed_fields` に列挙する。
+   色別商品コードは `variants[].product_code` に分離し、モデル共通型番へ入れない。
+   `site_product_id` を付ける場合は `site_product_match_status` も記録する。
 3. **調査計画の宣言**: 対象媒体・時間窓・件数上限・情報源の優先順位を成果物冒頭に記す。
 4. **一次情報の登録**: 公式製品ページ・仕様表・取扱説明書・安全情報・公式ニュースを
    `source_record` 化し、仕様値を `evidence_claim`(下書き。`value_normalized` は null)
    として抽出する。
+   外部配信ドメインのPDFは、公式親ページからの直接到達を確認し、親ページURL・直接URL・
+   `discovered_via_official_page`を構造化して保存する。
 5. **二次情報の登録**: 計画で宣言した媒体を調査し、1情報源=1 `source_record` で登録する。
    - 全レコードで型番・商品名照合を行い `match_status` を付ける。
    - 他媒体の順位・星は `external_rank_metadata` にのみ記録する(得点化しない)。

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import {
   type AxisScoringRule,
   type AxisWeight,
@@ -15,7 +17,10 @@ import {
   type SourceRecord,
   type ValidationReport,
 } from "../../shared/contracts/types.ts";
-import { validateRankingExecutionBundle } from "../../shared/contracts/validators.ts";
+import {
+  canonicalizeAxisId,
+  validateRankingExecutionBundle,
+} from "../../shared/contracts/validators.ts";
 
 const ROUND_DIGITS = 6;
 const RELIABILITY_POINTS = { high: 1, medium: 0.65, low: 0.3 } as const;
@@ -38,9 +43,11 @@ export interface CandidateAxisContext {
 
 export interface CandidateMetrics {
   data_coverage: number;
+  weighted_data_coverage: number;
   confidence: number;
   contexts: CandidateAxisContext[];
   unconfirmed_axes: string[];
+  critical_conflict_axes: string[];
 }
 
 interface CandidateEvaluation {
@@ -205,10 +212,11 @@ function createFeatureMap(
     .sort((a, b) => compareString(a.normalized_feature_id, b.normalized_feature_id));
   const result = new Map<string, NormalizedFeature>();
   for (const feature of selected) {
-    if (result.has(feature.axis_id)) {
-      throw new Error("candidate has multiple normalized features for axis " + feature.axis_id);
+    const canonicalAxisId = canonicalizeAxisId(feature.axis_id);
+    if (result.has(canonicalAxisId)) {
+      throw new Error("candidate has multiple normalized features for axis " + canonicalAxisId);
     }
-    result.set(feature.axis_id, feature);
+    result.set(canonicalAxisId, feature);
   }
   return result;
 }
@@ -229,7 +237,7 @@ export function buildCandidateAxisContexts(
   return [...definition.axis_weights]
     .sort((a, b) => compareString(a.axis_id, b.axis_id))
     .map((axis) => {
-      const feature = features.get(axis.axis_id) ?? null;
+      const feature = features.get(canonicalizeAxisId(axis.axis_id)) ?? null;
       const evidence = feature === null
         ? { claims: [], claim_ids: [], sources: [], source_ids: [] }
         : deduplicateEvidence(feature, allClaims, allSources);
@@ -254,6 +262,15 @@ export function buildCandidateAxisContexts(
 export function calculateDataCoverage(contexts: CandidateAxisContext[]): number {
   if (contexts.length === 0) return 0;
   return round(contexts.filter((context) => context.usable).length / contexts.length);
+}
+
+export function calculateWeightedDataCoverage(contexts: CandidateAxisContext[]): number {
+  const totalWeight = contexts.reduce((sum, context) => sum + context.axis.weight, 0);
+  if (totalWeight <= 0) return 0;
+  const usableWeight = contexts
+    .filter((context) => context.usable)
+    .reduce((sum, context) => sum + context.axis.weight, 0);
+  return round(usableWeight / totalWeight);
 }
 
 function average(values: number[]): number {
@@ -308,12 +325,22 @@ export function calculateCandidateMetrics(
     allSources,
   );
   const dataCoverage = calculateDataCoverage(contexts);
+  const weightedDataCoverage = calculateWeightedDataCoverage(contexts);
   const confidence = calculateConfidence(definition, contexts, dataCoverage);
+  const criticalAxisIds = new Set((definition.critical_axes?.axes ?? []).map(canonicalizeAxisId));
+  const featureIdSet = new Set(featureRefs);
+  const criticalConflictAxes = allFeatures
+    .filter((feature) => featureIdSet.has(feature.normalized_feature_id))
+    .filter((feature) => criticalAxisIds.has(canonicalizeAxisId(feature.axis_id)))
+    .filter((feature) => unresolvedConflict(feature, deduplicateEvidence(feature, allClaims, allSources)))
+    .map((feature) => canonicalizeAxisId(feature.axis_id));
   return {
     data_coverage: dataCoverage,
+    weighted_data_coverage: weightedDataCoverage,
     confidence,
     contexts,
     unconfirmed_axes: contexts.filter((context) => !context.usable).map((context) => context.axis.axis_id),
+    critical_conflict_axes: sortedUnique(criticalConflictAxes),
   };
 }
 
@@ -333,8 +360,8 @@ function disqualificationReasons(product: ProductIdentity, definition: RankingDe
   return sortedUnique(reasons);
 }
 
-export function calculateWeightedScore(contexts: CandidateAxisContext[]): {
-  score: number | null;
+export function calculateObservedScore(contexts: CandidateAxisContext[]): {
+  observed_score: number | null;
   breakdown: PerAxisBreakdown[];
 } {
   const scored = contexts
@@ -347,7 +374,7 @@ export function calculateWeightedScore(contexts: CandidateAxisContext[]): {
       item.axisScore !== null,
     );
   const weightTotal = scored.reduce((sum, item) => sum + item.context.axis.weight, 0);
-  if (scored.length === 0 || weightTotal <= 0) return { score: null, breakdown: [] };
+  if (scored.length === 0 || weightTotal <= 0) return { observed_score: null, breakdown: [] };
 
   const breakdown = scored
     .map(({ context, axisScore }) => {
@@ -366,9 +393,18 @@ export function calculateWeightedScore(contexts: CandidateAxisContext[]): {
     })
     .sort((a, b) => compareString(a.axis_id, b.axis_id));
   return {
-    score: round(breakdown.reduce((sum, item) => sum + item.weighted_score, 0)),
+    observed_score: round(breakdown.reduce((sum, item) => sum + item.weighted_score, 0)),
     breakdown,
   };
+}
+
+/** @deprecated Use calculateObservedScore. */
+export function calculateWeightedScore(contexts: CandidateAxisContext[]): {
+  score: number | null;
+  breakdown: PerAxisBreakdown[];
+} {
+  const result = calculateObservedScore(contexts);
+  return { score: result.observed_score, breakdown: result.breakdown };
 }
 
 function createReasonText(breakdown: PerAxisBreakdown[]): string {
@@ -384,7 +420,18 @@ function createReasonText(breakdown: PerAxisBreakdown[]): string {
 function onHoldReason(metrics: CandidateMetrics, definition: RankingDefinition): { code: string; reason: string } | null {
   const conflicts = metrics.contexts
     .filter((context) => context.unresolved_conflict)
-    .map((context) => context.axis.axis_id);
+    .map((context) => canonicalizeAxisId(context.axis.axis_id));
+  if (metrics.critical_conflict_axes.length > 0) {
+    return {
+      code: "critical_axis_conflict",
+      reason: "安全・適合・対象年齢等の重要事項に未解決の矛盾: " + metrics.critical_conflict_axes.join(", "),
+    };
+  }
+  const requiredAxisIds = new Set(definition.required_axes.axes.map(canonicalizeAxisId));
+  const requiredConflicts = conflicts.filter((axisId) => requiredAxisIds.has(axisId));
+  if (requiredConflicts.length > 0) {
+    return { code: "unresolved_conflict", reason: "必須軸に未解決の矛盾: " + requiredConflicts.join(", ") };
+  }
   if (conflicts.length > 0 && definition.evidence_policy.unresolved_conflict === "hold") {
     return { code: "unresolved_conflict", reason: "未解決の矛盾: " + conflicts.join(", ") };
   }
@@ -393,7 +440,7 @@ function onHoldReason(metrics: CandidateMetrics, definition: RankingDefinition):
     return { code: "outdated_evidence", reason: "古い証拠の再確認が必要: " + outdated.join(", ") };
   }
   const missingRequired = definition.required_axes.axes.filter((axisId) =>
-    !metrics.contexts.some((context) => context.axis.axis_id === axisId && context.usable),
+    !metrics.contexts.some((context) => canonicalizeAxisId(context.axis.axis_id) === canonicalizeAxisId(axisId) && context.usable),
   );
   if (missingRequired.length > 0) {
     return { code: "required_axis_missing", reason: "必須軸が未確認: " + missingRequired.join(", ") };
@@ -405,6 +452,17 @@ function onHoldReason(metrics: CandidateMetrics, definition: RankingDefinition):
         : "insufficient_data",
       reason: "data_coverage " + metrics.data_coverage + " が試験閾値 "
         + definition.min_data_coverage.value + " 未満",
+    };
+  }
+  const weightedThreshold = definition.min_weighted_data_coverage?.value
+    ?? definition.min_data_coverage.value;
+  if (metrics.weighted_data_coverage < weightedThreshold) {
+    return {
+      code: definition.missing_data_policy.below_min_coverage === "reference"
+        ? "reference_only"
+        : "insufficient_weighted_data",
+      reason: "weighted_data_coverage " + metrics.weighted_data_coverage + " が試験閾値 "
+        + weightedThreshold + " 未満",
     };
   }
   return null;
@@ -425,6 +483,7 @@ function evaluateCandidate(
         reason: disqualifications.join(" / "),
         reason_code: "disqualified",
         data_coverage: null,
+        weighted_data_coverage: null,
         confidence: null,
       },
     };
@@ -446,13 +505,14 @@ function evaluateCandidate(
         reason: hold.reason,
         reason_code: hold.code,
         data_coverage: metrics.data_coverage,
+        weighted_data_coverage: metrics.weighted_data_coverage,
         confidence: metrics.confidence,
       },
     };
   }
 
-  const weighted = calculateWeightedScore(metrics.contexts);
-  if (weighted.score === null) {
+  const observed = calculateObservedScore(metrics.contexts);
+  if (observed.observed_score === null) {
     return {
       kind: "on_hold",
       disposition: {
@@ -460,6 +520,7 @@ function evaluateCandidate(
         reason: "評価可能な軸がありません",
         reason_code: "no_scoreable_axes",
         data_coverage: metrics.data_coverage,
+        weighted_data_coverage: metrics.weighted_data_coverage,
         confidence: metrics.confidence,
       },
     };
@@ -470,13 +531,15 @@ function evaluateCandidate(
     entry: {
       rank: 0,
       product_identity_id: product.product_identity_id,
-      score: weighted.score,
+      observed_score: observed.observed_score,
+      score: observed.observed_score,
       data_coverage: metrics.data_coverage,
+      weighted_data_coverage: metrics.weighted_data_coverage,
       confidence: metrics.confidence,
-      per_axis_breakdown: weighted.breakdown,
-      reason_text: createReasonText(weighted.breakdown),
-      strengths: weighted.breakdown.filter((axis) => axis.raw_axis_score >= 75).map((axis) => axis.axis_id),
-      cautions: weighted.breakdown.filter((axis) => axis.raw_axis_score <= 40).map((axis) => axis.axis_id),
+      per_axis_breakdown: observed.breakdown,
+      reason_text: createReasonText(observed.breakdown),
+      strengths: observed.breakdown.filter((axis) => axis.raw_axis_score >= 75).map((axis) => axis.axis_id),
+      cautions: observed.breakdown.filter((axis) => axis.raw_axis_score <= 40).map((axis) => axis.axis_id),
       unconfirmed_axes: metrics.unconfirmed_axes,
       tie_note: null,
     },
@@ -484,7 +547,7 @@ function evaluateCandidate(
 }
 
 function compareForRank(a: RankingEntry, b: RankingEntry, definition: RankingDefinition): number {
-  const scoreDifference = round(b.score - a.score);
+  const scoreDifference = round(b.observed_score - a.observed_score);
   if (scoreDifference !== 0) return scoreDifference;
   for (const rule of definition.tie_breaker_rules.ordered_rules) {
     if (rule === "data_coverage_desc") {
@@ -527,11 +590,36 @@ export function assignStableRanks(entries: RankingEntry[], definition: RankingDe
   }));
 }
 
+const UNORDERED_ARRAY_KEYS = new Set([
+  "candidates",
+  "product_identities",
+  "source_records",
+  "evidence_claims",
+  "normalized_features",
+  "review_theme_summaries",
+  "axis_weights",
+  "feature_refs",
+  "review_refs",
+  "identification_evidence",
+  "supporting_claims",
+  "representative_sources",
+  "derived_from",
+  "conflict_with",
+  "duplicate_candidate_of",
+  "accepted_statuses",
+  "axes",
+  "target_products",
+  "excluded",
+  "disqualification_rules",
+  "variants",
+]);
+
 function canonicalize(value: unknown, parentKey = ""): unknown {
   if (Array.isArray(value)) {
     const canonical = value.map((item) => canonicalize(item, parentKey));
-    if (parentKey === "ordered_rules") return canonical;
-    return canonical.sort((a, b) => compareString(JSON.stringify(a), JSON.stringify(b)));
+    return UNORDERED_ARRAY_KEYS.has(parentKey)
+      ? canonical.sort((a, b) => compareString(JSON.stringify(a), JSON.stringify(b)))
+      : canonical;
   }
   if (value !== null && typeof value === "object") {
     const source = value as Record<string, unknown>;
@@ -541,29 +629,30 @@ function canonicalize(value: unknown, parentKey = ""): unknown {
     }
     return result;
   }
-  return value;
-}
-
-function fnv1a32(value: string): string {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError("canonical input cannot contain non-finite numbers");
+    return Object.is(value, -0) ? 0 : value;
   }
-  return hash.toString(16).padStart(8, "0");
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+  if (value === undefined) throw new TypeError("canonical input cannot contain undefined");
+  throw new TypeError("canonical input contains an unsupported value type");
 }
 
-export function computeInputHash(bundle: RankingExecutionBundle): string {
+export function canonicalizeRankingInput(bundle: RankingExecutionBundle): string {
   const snapshot = {
     definition: bundle.definition,
-    input: { ...bundle.input, input_hash: null },
+    input: { ...bundle.input, input_hash: null, input_hash_algorithm: null },
     product_identities: bundle.product_identities,
     source_records: bundle.source_records,
     evidence_claims: bundle.evidence_claims,
     normalized_features: bundle.normalized_features,
     review_theme_summaries: bundle.review_theme_summaries,
   };
-  return "fnv1a32-" + fnv1a32(JSON.stringify(canonicalize(snapshot)));
+  return JSON.stringify(canonicalize(snapshot));
+}
+
+export function computeInputHash(bundle: RankingExecutionBundle): string {
+  return createHash("sha256").update(canonicalizeRankingInput(bundle), "utf8").digest("hex");
 }
 
 function generatedTimestamp(snapshotDate: string): string {
@@ -579,6 +668,7 @@ function calculateCore(bundle: RankingExecutionBundle): RankingResult {
     reason: item.exclusion_reason,
     reason_code: "input_excluded",
     data_coverage: null,
+    weighted_data_coverage: null,
     confidence: null,
   }));
 
@@ -602,14 +692,16 @@ function calculateCore(bundle: RankingExecutionBundle): RankingResult {
   const timestamp = generatedTimestamp(bundle.input.snapshot_date);
   return {
     schema_version: bundle.definition.schema_version,
-    record_id: "rres-" + inputHash.slice("fnv1a32-".length),
-    ranking_result_id: "rres-" + inputHash.slice("fnv1a32-".length),
+    record_id: "rres-" + inputHash.slice(0, 16),
+    ranking_result_id: "rres-" + inputHash.slice(0, 16),
     ranking_input_id: bundle.input.ranking_input_id,
     ranking_definition_id: bundle.definition.ranking_definition_id,
     definition_version: bundle.definition.definition_version,
     calc_version: bundle.definition.calc_version,
     run_id: bundle.input.run_id,
     generated_at: timestamp,
+    input_hash: inputHash,
+    input_hash_algorithm: "sha256",
     entries: assignStableRanks(ranked, bundle.definition),
     on_hold: onHold.sort((a, b) => compareString(a.product_identity_id, b.product_identity_id)),
     excluded: excluded.sort((a, b) => compareString(a.product_identity_id, b.product_identity_id)),

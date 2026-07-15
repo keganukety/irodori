@@ -39,6 +39,8 @@ description: irodori-product-research → irodori-product-evidence-normalizer �
 
 1. `run_id` を採番し、`run_manifest` を作成する(`data-contracts.md` §1)。
    目的・対象・実行範囲・使用する契約版(`contracts_version` 等)を記録する。
+   Node.js/TypeScript/OS/platform/arch、型チェック・テストコマンド、test isolation、
+   計算版・定義版を実測可能な範囲で`execution_environment`へ記録する。推測値は入れない。
 2. **工程ごとに次を繰り返す**(標準順序: research → normalizer → ranking-engine):
    a. そのスキルの Required Inputs が揃っているか確認する。
       揃っていなければ実行せず、不足を `review_report.open_questions` に記録して停止する。

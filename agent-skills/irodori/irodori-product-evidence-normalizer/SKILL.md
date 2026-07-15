@@ -60,6 +60,8 @@ description: irodori-product-researchが登録したsource_record/evidence_claim
    - 値が確認できない軸は `value: null` + `evidence_status: unconfirmed`
      + `supporting_claims: []` + `independent_source_count: 0`
      (**軸レコード自体を黙って省略しない**。unconfirmed の明示が目的)
+   - 矛盾により値を確定できない軸は `value: null` + `evidence_status: conflicting` とし、
+     相反claimへの参照を残す。旧`included_items`は`included_accessories`へ正規化する
    - シーン適性などの導出値は `fact_or_inference: inference` +
      `irodori_inference` claim(`derived_from` 必須)を経由して作る
 8. **review_theme_summary の作成**: 口コミ系 claim をテーマ別に集約し、
@@ -81,6 +83,7 @@ description: irodori-product-researchが登録したsource_record/evidence_claim
 ## Decision Rules
 
 - 未確認は0点でも低評価でもない: `unconfirmed` を維持し、値を埋めない。
+- 矛盾は未確認へ格下げせず、`conflicting`のままランキング参加判定へ渡す。
 - ordinal(評価傾向)への変換は、辞書にある表現のみ機械的に対応付ける。
   辞書にない表現は「その他所見」として text のまま保持し、辞書追加候補として報告する。
 - 数値の単位換算は換算式を `normalization_notes` に残す(例: g→kg)。

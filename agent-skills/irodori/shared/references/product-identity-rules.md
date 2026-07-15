@@ -22,7 +22,7 @@
 | 国内仕様・海外仕様 | `market` | `JP` / `overseas` / `unknown` |
 | 現行品・販売終了品 | `lifecycle_status` | `current` / `discontinued` / `unknown` |
 | 旧モデル・後継モデル | `predecessor_of` / `successor_of` | product_identity間の参照 |
-| 色違い・仕様違い | `variant_of` + `variant_axis` | 仕様同一の色違いは同一identity。仕様差は別identity候補 |
+| 色違い・仕様違い | `variants[]` / `variant_of` + `variant_axis` | 同一identity配下の色別商品コードは`variants[]`。仕様差は別identity候補 |
 | メーカー公式URL | `official_url` | 同定の基準点 |
 
 ## 3. 同定手順 [C](手順) / [P](細部)
@@ -53,6 +53,9 @@
 - 重量・素材・付属品・機能・対象月齢などに差がある場合は別identity候補とし、
   確認できた差を根拠に `variant_of` で関連付ける。
 - 差の有無を確認できない場合は統合せず、`provisional` の別identity候補として隔離する。
+- 色別・SKU別の商品コードは `variants[].product_code` に保存し、モデル共通の
+  `model_number` として扱わない。仕様同一性を確認できないvariantは
+  `specification_equivalence_status: unverified` のままにする。
 
 ## 6. 既存サイトデータとの対応 [U](実データ) / [P](対応方針)
 
@@ -62,3 +65,5 @@
 - 本スキル群の `product_identity` は既存 `products.id` と別のID体系とし、
   対応付けフィールド(`site_product_id`)で任意リンクする [P]。既存テーブルへの
   書き込み・変更はこの段階では行わない [C]。
+- 対応付けの確からしさは `site_product_match_status: confirmed | probable | unmatched | unverified`
+  で別管理し、`site_product_id` があるだけで同一性確定とはしない [C]。
