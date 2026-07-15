@@ -51,6 +51,14 @@ function makeSource(
 ): SourceRecord {
   const sourceId = "src-" + productId.replace("pid-fictional-", "") + "-" + suffix;
   const productCode = productId.replace("pid-fictional-", "");
+  const officialSource = sourceType.startsWith("official_");
+  const sourceRole: SourceRecord["source_role"] = officialSource
+    ? "official_spec_cross_check"
+    : sourceType === "retailer_page"
+      ? "external_ranking_metadata"
+      : sourceType === "independent_review"
+        ? "review_theme_source"
+        : "editorial_evaluation";
   return {
     ...common(sourceId),
     source_record_id: sourceId,
@@ -79,6 +87,20 @@ function makeSource(
       : null,
     acquisition_status: "acquired",
     acquisition_failure_reason: null,
+    source_usage_audit_id: officialSource ? null : "source-audit-fictional-editorial",
+    acquisition_method: "manual_browser",
+    content_capture_policy: officialSource
+      ? "structured_facts_only"
+      : sourceType === "retailer_page"
+        ? "metadata_only"
+        : "structured_themes_only",
+    quote_policy: "prohibited",
+    pii_policy: officialSource ? "not_applicable" : "reject_all",
+    automation_used: false,
+    human_review_required: !officialSource,
+    human_review_status: officialSource ? "not_required" : "completed",
+    legal_review_status: "not_required",
+    source_role: sourceRole,
     notes: "架空fixture。実在する媒体・商品・評価ではない。",
   };
 }
@@ -431,16 +453,23 @@ export const fictionalReviewThemeSummaries: ReviewThemeSummary[] = CURRENT_PRODU
     review_theme_summary_id: reviewId,
     product_identity_id: productId,
     theme: "train_commute",
-    sentiment: {
-      positive_count: 5 + index,
-      negative_count: index,
-      neutral_count: 2,
-    },
+    theme_id: "train_commute",
+    sentiment: index === 0 ? "positive" : "mixed",
+    observed_item_count: 7 + index * 2,
+    deduplicated_item_count: 7 + index * 2,
+    sample_size_status: "known_small",
     summary_text: "架空口コミの傾向を検証するための短いfixture要約。",
+    summary: "架空口コミの傾向を検証するための短いfixture要約。",
     representative_sources: ["src-" + shortId + "-editorial"],
+    source_record_ids: ["src-" + shortId + "-editorial"],
     conditions: null,
     pii_check: "pass",
+    limitations: ["架空の少数fixtureであり実在する口コミではない"],
     evidence_status: "confirmed",
+    human_review_status: "completed",
+    contains_quote: false,
+    contains_pii: false,
+    ranking_score_impact: "none",
     notes: "実在口コミを含まない。",
   };
 });

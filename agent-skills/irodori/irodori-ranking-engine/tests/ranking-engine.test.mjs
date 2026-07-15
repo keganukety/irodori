@@ -65,7 +65,7 @@ function metricsFor(bundle, productId) {
   );
 }
 
-test("all ten contract validators accept the fictional contract set and generated result", () => {
+test("all original ten contract validators accept the fictional contract set and generated result", () => {
   assert.equal(validateRunManifest(fictionalRunManifest).result, "pass");
   for (const product of fictionalProductIdentities) {
     assert.equal(validateProductIdentity(product).result, "pass");

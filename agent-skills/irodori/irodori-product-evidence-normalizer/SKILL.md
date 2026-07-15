@@ -65,8 +65,9 @@ description: irodori-product-researchが登録したsource_record/evidence_claim
    - シーン適性などの導出値は `fact_or_inference: inference` +
      `irodori_inference` claim(`derived_from` 必須)を経由して作る
 8. **review_theme_summary の作成**: 口コミ系 claim をテーマ別に集約し、
-   肯定・否定・中立の観測件数(事実)と短い要約(IRODORIの言葉)を書く。
-   `pii_check` を実施し、pass 以外は成果物に含めない。
+   sentiment、観測/重複除外後件数、sample size、短い要約、制約を分離する。
+   件数不明はnull+unknownとし、PII/引用/人間レビューを検証する。
+   `ranking_score_impact` は必ず`none`とする(詳細は`evidence-model.md` §7)。
 9. **成果物の出力と自己検証**(→ Verification)。
 
 ## Source Priority
@@ -128,7 +129,8 @@ description: irodori-product-researchが登録したsource_record/evidence_claim
 - [ ] `inference` の nf / claim がすべて `derived_from` を持つ
 - [ ] `conflicting` の claim がすべて `conflict_with` で相互参照されている
 - [ ] 数値系 nf に `unit` があり、`normalization_notes` に換算記録がある
-- [ ] `review_theme_summary` がすべて `pii_check: pass` である
+- [ ] `review_theme_summary` がすべてPIIなし・対応source参照あり・人間レビュー条件充足である
+- [ ] 件数不明がnull+unknownで、根拠のない一般化表現がなく、`ranking_score_impact: none`である
 - [ ] 除外 claim(旧モデル・別商品)が現行商品の nf に混入していない
 - [ ] 出力に順位・総合点に相当する値が含まれていない
 

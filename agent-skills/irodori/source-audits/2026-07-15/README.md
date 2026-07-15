@@ -20,6 +20,7 @@
 | [rakuten-ichiba-ranking.md](rakuten-ichiba-ranking.md) | 楽天市場ランキング(ranking.rakuten.co.jp / 楽天ウェブサービスAPI)の監査 |
 | [source-adoption-matrix.md](source-adoption-matrix.md) | 4媒体の横断比較(利用方式A〜L・保存項目・役割) |
 | [decision-log.md](decision-log.md) | Confirmed Fact / Operational Decision / Proposed Default / Unverified / Requires Legal Review |
+| [source-usage-audits.json](source-usage-audits.json) | 4媒体のSourceUsageAudit機械可読表現(Markdownを超える新規事実は含めない) |
 
 ## 監査の前提(全媒体共通)
 

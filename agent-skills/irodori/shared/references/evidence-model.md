@@ -63,8 +63,21 @@ normalized_feature(正規化値: 商品×評価軸ごとの確定値)
 ## 7. 口コミの扱い [C]
 
 - 口コミは個別本文を保存せず、テーマ別の傾向(`review_theme_summary`)として集約する。
-  肯定・否定・中立の別と、観測できた件数(事実)を記録する。
-- 件数をどうスコアへ反映するか(件数補正)は Open Decision #9。生の観測件数は
-  事実として保持し、補正はランキング計算側の設定とする。
+  sentiment、観測件数、重複除外後件数、sample size、制約、人間レビュー、引用/PII有無を分ける。
+- 件数不明は `observed_item_count: null` / `deduplicated_item_count: null` /
+  `sample_size_status: unknown` とし、0件へ変換しない。
+- `ranking_score_impact` は現段階で必ず`none`。sentimentや件数を品質scoreへ接続しない。
+- 件数根拠なし、または`known_small`で「多くの口コミ」等の一般化表現を使わない。
 - 個人を特定できる情報(投稿者名・ID・顔写真への言及等)を保存しない
   (→ `copyright-and-acquisition-policy.md`)。
+- 第三者媒体の要約は参照sourceの `source_usage_audit_id`、capture/quote/PII方針、
+  人間レビュー要否を検証してから成果物に含める。
+
+## 8. 市場需要シグナル [C]
+
+- 楽天rank・review_count・review_averageは商品品質の証拠ではなく、
+  `rakuten_ranking_snapshot`の市場需要メタデータとして保持する。
+- 楽天店舗listing(`rakuten_item_code` + `shop_code`)とIRODORI商品モデルを分離し、
+  商品名だけ・shopだけ・順位だけでidentityをconfirmedにしない。
+- 公式daily/weekly、公式API realtime、IRODORI 7日派生集計の出所と期間を分離する。
+- TTLを超えた価格・availability・metadataをcurrentとして表示・公開しない。

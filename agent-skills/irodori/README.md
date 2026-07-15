@@ -5,7 +5,8 @@ IRODORI(iLy.)を「育児用品の比較・ランキング」サイトへ発展�
 **出典へ戻れる状態**で整理し、IRODORI独自の比較データと総合・シーン別ランキングへ変換する。
 
 第1段階のスキル定義とMarkdown契約を正本として維持し、第2段階ではTypeScript型、
-明示的バリデーター、架空fixture、決定論的ランキング試作、依存追加なしのテストを追加した。
+明示的バリデーター、架空fixture、決定論的ランキング試作、第三者媒体/楽天需要シグナル契約、
+依存追加なしのテストを追加した。
 サイト本体・Supabase・migration・実在商品のランキングは含まない。
 
 ## 構成
@@ -24,7 +25,7 @@ agent-skills/irodori/
 │     ├─ copyright-and-acquisition-policy.md … 著作権・取得・保存ポリシー
 │     └─ data-contracts.md            … 全データ契約のフィールド案とJSON例(正本)
 │  └─ contracts/
-│     ├─ types.ts                     … 10契約のTypeScript型
+│     ├─ types.ts                     … 12契約のTypeScript型
 │     ├─ validators.ts                … 明示的な実行時検証
 │     ├─ node-crypto.d.ts             … node:cryptoの依存追加なし最小型宣言
 │     └─ index.ts
@@ -33,9 +34,10 @@ agent-skills/irodori/
 ├─ irodori-ranking-engine/
 │  ├─ SKILL.md
 │  ├─ scripts/ranking-engine.ts       … 決定論的試作
-│  ├─ fixtures/fictional-train-commute.ts
-│  └─ tests/ranking-engine.test.mjs
+│  ├─ fixtures/fictional-train-commute.ts / fictional-external-sources.ts
+│  └─ tests/ranking-engine.test.mjs / external-source-policy.test.mjs
 ├─ irodori-product-intelligence/SKILL.md
+├─ source-audits/2026-07-15/          … 4媒体のMarkdown監査とsource-usage-audits.json
 └─ tsconfig.json                      … 第2段階TypeScript型チェック
 ```
 
@@ -73,6 +75,8 @@ agent-skills/irodori/
 10. 原文の大量保存をしない。URLへ戻れる短い構造化要約を基本とし、個人を特定できる情報を保存しない(→ `copyright-and-acquisition-policy.md`)。
 11. 4スキルは責務を重複させない。共通ルールは `shared/references/` を正本とし、各SKILL.mdには参照だけを書く。
 12. 第2段階のローカル試作でも、実在商品のランキング決定・Webスクレイピング・Supabase接続・migration・サイト本体・`products.rank_no` の変更を行わない。
+13. 第三者媒体はSourceUsageAuditとsource_recordの利用方針を照合する。`audit_result: pass`は法的許可・明示的許諾・自動取得許可を意味しない。
+14. 楽天rank・review値・affiliate rateは市場需要メタデータであり、IRODORI品質scoreへ接続しない。価格/availabilityは24時間、その他API情報は3か月で失効させる。
 
 ## Decisions / Open Decisions(確定値とproposedを混同しない)
 
@@ -100,17 +104,20 @@ agent-skills/irodori/
 | 16 | Codex・Claude Code から正本(`agent-skills/irodori/`)を参照する方法(手動参照 / `.claude/skills/` への展開 / CLAUDE.md追記) | 未定。今回は自動検出用コピー・リンク・ラッパーを作らない |
 | 17 | `agent-skills/` をGit管理する範囲(現在は全体が未追跡) | 未定 |
 | 18 | Apify・Firecrawl 等の外部取得サービスの採否 | 未定。必須依存にしない(公式性・ライセンス・安全性・更新状況は未確認 = Unverified) |
-| 19 | 外部媒体(価格.com・マイベスト等)の利用規約・引用適法性 | Unverified。公開運用前に規約確認と専門家相談が必要 |
+| 19 | 外部媒体(マイベスト・価格.com・たまひよ・楽天市場ランキング)の利用方針 | 2026-07-15監査を機械可読化。法的判断・公開許可は未確定 |
+| 20 | 楽天official_api導入 | pending_review。規約第10条と収益構造、内部分析目的、履歴保持の法務確認後に再判定 |
+| 21 | 楽天派生集計の3か月超保持 | Unverified |
 
 ## 第2段階のローカル実装範囲
 
 第1段階の成果物を正本として、次を実装済み。
 
-1. `data-contracts.md` の10契約をTypeScript型へ変換
+1. `data-contracts.md` の12契約をTypeScript型へ変換
 2. 条件付き必須項目と参照整合性の明示的バリデーター
 3. 単位変換・重複排除・observed_score・2種のcoverage・confidence・同点・感度分析の決定論的試作
 4. 架空ベビーカー5候補 + 旧モデル/別市場の隔離identity
 5. Node標準testによる再現性・入力順非依存・証拠trace検証
+6. 4媒体のSourceUsageAudit、第三者SourceRecord/ReviewThemeSummary制約、楽天snapshot/TTL/名寄せの架空検証
 
 実在パイロットはidentity/source/claim/normalized feature/review reportの監査までとし、
 ranking_input・ranking_result・得点・順位は作成しない。
@@ -122,3 +129,4 @@ ranking_input・ranking_result・得点・順位は作成しない。
 | 2026-07-15 | 0.1.0 | 初版作成(第1段階: スキル定義とデータ契約の初版) |
 | 2026-07-15 | 0.2.0 | 第2段階: TypeScript契約・バリデーター・架空fixture・決定論的ランキング試作 |
 | 2026-07-15 | 0.3.0 | 公式パイロット監査、variant/PDF経路、observed_score・weighted coverage・矛盾参加規則・SHA-256・実行環境記録を強化 |
+| 2026-07-15 | 0.4.0 | 第三者媒体4件の利用監査、SourceUsageAudit、楽天需要シグナル/TTL/名寄せ、口コミPII・引用・一般化・品質score非接続を機械化 |

@@ -86,6 +86,8 @@ AIは設定候補を提案できるが、得点・順位・充足率・confidenc
 - 同点処理・感度分析幅は候補を列挙し `proposed` とする(確定は Open Decision #10, #11)。
 - 商業条件(アフィリエイト報酬率・広告金額・在庫・販売店都合)を定義のどの項目にも
   入れない。`commercial_relation` は独立性メタデータとして結果の注記にのみ使える。
+- `external_rank_metadata`、review sentiment/件数、楽天rank/review値、affiliate rate、
+  `market_demand_signal` は説明・調査優先順位用であり、品質scoreの入力にしない。
 - 情報量の多い商品が有利にならないよう、軸ごとの加点上限を定義で固定する。
 
 ## Failure Handling
@@ -124,7 +126,7 @@ AIは設定候補を提案できるが、得点・順位・充足率・confidenc
 
 ```powershell
 & '.\node_modules\.bin\tsc.cmd' -p 'agent-skills\irodori\tsconfig.json' --pretty false
-node --no-warnings --experimental-strip-types --test --test-isolation=none 'agent-skills/irodori/irodori-ranking-engine/tests/ranking-engine.test.mjs'
+node --no-warnings --experimental-strip-types --test --test-isolation=none 'agent-skills/irodori/irodori-ranking-engine/tests/ranking-engine.test.mjs' 'agent-skills/irodori/irodori-ranking-engine/tests/external-source-policy.test.mjs'
 ```
 
 各項目を `pass / fail / unknown / not_applicable` で報告する:
@@ -133,6 +135,7 @@ node --no-warnings --experimental-strip-types --test --test-isolation=none 'agen
 - [ ] ユーザーの明示確認なしに `confirmed` にした値がない
 - [ ] 定義に商業条件由来の項目が含まれていない
 - [ ] 定義に他媒体の順位・星・点数を参照する項目が含まれていない
+- [ ] review件数/sentiment・楽天rank/review値・affiliate rate・需要シグナルが品質scoreへ接続されていない
 - [ ] 未確認軸の扱いが「計算から除外+評価済み軸で正規化」と明記されている
 - [ ] observed_score・2種のcoverage・confidenceが別々に出力され、SHA-256入力hashが残る
 - [ ] `on_hold`(充足率不足)と `excluded`(失格)が区別されている
@@ -163,3 +166,4 @@ node --no-warnings --experimental-strip-types --test --test-isolation=none 'agen
 - `../shared/contracts/validators.ts`(実行時検証)
 - `scripts/ranking-engine.ts`(決定論的計算)
 - `fixtures/fictional-train-commute.ts`(架空fixtureとproposed定義)
+- `fixtures/fictional-external-sources.ts`(第三者媒体・楽天需要シグナルの架空fixture)

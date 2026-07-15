@@ -6,7 +6,7 @@
 `../../irodori-ranking-engine/` 配下を機械処理上の実装とする。
 
 区分ラベル(各フィールドの「区分」列): **C = Confirmed Principle 由来で確定 / P = Proposed Default(初期案・変更されうる)**
-契約の**構造そのもの**(10契約が存在し、分離されていること)は Confirmed。個々のフィールド名・許容値の多くは Proposed。
+契約の**構造そのもの**(12契約が存在し、分離されていること)は Confirmed。個々のフィールド名・許容値の多くは Proposed。
 
 ## 0. 共通事項
 
@@ -14,7 +14,7 @@
 
 | フィールド | 型 | 必須 | 説明 / 許容値 | 不明時 | 区分 |
 |---|---|---|---|---|---|
-| `schema_version` | string | 必須 | この契約の版(semver。現在 `"0.3.0"`) | 省略不可 | C(存在) |
+| `schema_version` | string | 必須 | この契約の版(semver。現在 `"0.4.0"`) | 省略不可 | C(存在) |
 | `record_id` | string | 必須 | レコードの一意ID。`<契約名の略>-<連番またはハッシュ>`(例 `src-0001`) | 省略不可 | P |
 | `created_at` / `updated_at` | string | 必須 | ISO 8601(JST オフセット付き。例 `"2026-07-15T10:00:00+09:00"`) | 省略不可 | P |
 | `notes` | string | 任意 | 自由記述の補足。**確定値をここに書かない**(構造化フィールドが正) | 空文字可 | P |
@@ -56,7 +56,7 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "runm-0001",
   "run_id": "run-20260715-001",
   "purpose": "パイロット商品1件の調査から正規化までを実行し、レビュー報告を作る",
@@ -68,7 +68,7 @@
     { "skill_name": "irodori-product-research", "started_at": "2026-07-15T10:01:00+09:00", "finished_at": "2026-07-15T11:20:00+09:00", "result": "pass" },
     { "skill_name": "irodori-product-evidence-normalizer", "started_at": "2026-07-15T11:30:00+09:00", "finished_at": null, "result": "unknown" }
   ],
-  "config_refs": { "ranking_definition_id": null, "ranking_definition_version": null, "calc_version": null, "terminology_version": "0.3.0", "contracts_version": "0.3.0" },
+  "config_refs": { "ranking_definition_id": null, "ranking_definition_version": null, "calc_version": null, "terminology_version": "0.4.0", "contracts_version": "0.4.0" },
   "stop_reason": null,
   "artifacts": ["outputs/run-20260715-001/source-records.json"],
   "execution_environment": {
@@ -122,7 +122,7 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "pid-0001",
   "product_identity_id": "pid-0001",
   "official_name": "（正式商品名）",
@@ -181,10 +181,20 @@
 | `discovery_page_url` | string \| null | official_manualで0.3.0以降必須 | 直接資産へ到達した公式親ページ | null | C |
 | `direct_asset_url` | string \| null | official_manualで0.3.0以降必須 | PDF等の直接URL | null | C |
 | `discovered_via_official_page` | boolean \| null | official_manualで0.3.0以降必須 | 公式ページから直接到達した確認。trueでなければ公式資料扱いしない | null | C |
+| `source_usage_audit_id` | string \| null | 0.4.0以降必須 | 第三者媒体は対応する `SourceUsageAudit.audit_id` が必須。メーカー公式はnull可 | 第三者媒体でnull不可 | C |
+| `acquisition_method` | string | 0.4.0以降必須 | `manual_browser` / `ai_browser_assisted` / `official_api` / `licensed_feed` / `automated_html` / `user_provided` / `not_acquired` | 省略不可 | C |
+| `content_capture_policy` | string | 0.4.0以降必須 | `metadata_only` / `structured_facts_only` / `structured_themes_only` / `market_demand_metadata_only` / `minimal_quote_allowed` / `no_content_storage` | 省略不可 | C |
+| `quote_policy` | string | 0.4.0以降必須 | `prohibited` / `pending_review` / `minimal_with_review` / `permitted_by_license` | 省略不可 | C |
+| `pii_policy` | string | 0.4.0以降必須 | `reject_all` / `redact_before_storage` / `not_applicable` | 省略不可 | C |
+| `automation_used` | boolean | 0.4.0以降必須 | 実際に自動取得を使ったか。取得方式と一致させる | 省略不可 | C |
+| `human_review_required` | boolean | 0.4.0以降必須 | 公開・利用前の人間確認要否 | 省略不可 | C |
+| `human_review_status` | string | 0.4.0以降必須 | `not_required` / `pending` / `completed` / `rejected` | 省略不可 | C |
+| `legal_review_status` | string | 0.4.0以降必須 | §11の法務確認状態 | 省略不可 | C |
+| `source_role` | string | 0.4.0以降必須 | 情報源の用途。需要シグナルは `market_demand_signal` / `external_sales_ranking_metadata` | 省略不可 | C |
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "src-0001",
   "source_record_id": "src-0001",
   "media_name": "（媒体名）",
@@ -210,6 +220,16 @@
   "discovery_page_url": null,
   "direct_asset_url": null,
   "discovered_via_official_page": null,
+  "source_usage_audit_id": "source-audit-example-editorial",
+  "acquisition_method": "manual_browser",
+  "content_capture_policy": "structured_themes_only",
+  "quote_policy": "prohibited",
+  "pii_policy": "reject_all",
+  "automation_used": false,
+  "human_review_required": true,
+  "human_review_status": "completed",
+  "legal_review_status": "completed",
+  "source_role": "editorial_evaluation",
   "created_at": "2026-07-15T10:10:00+09:00",
   "updated_at": "2026-07-15T10:10:00+09:00"
 }
@@ -244,7 +264,7 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "clm-0001",
   "evidence_claim_id": "clm-0001",
   "source_record_id": "src-0001",
@@ -295,7 +315,7 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "nf-0001",
   "normalized_feature_id": "nf-0001",
   "product_identity_id": "pid-0001",
@@ -321,27 +341,43 @@
 |---|---|---|---|---|---|
 | `review_theme_summary_id` | string | 必須 | `rts-<連番>` | 省略不可 | C |
 | `product_identity_id` | string | 必須 | 対象商品 | 省略不可 | C |
-| `theme` | string | 必須 | テーマ(axis_id またはシーンタグに対応付ける。対応不能なら自由テーマ + notes) | 省略不可 | P |
-| `sentiment` | object | 必須 | `{positive_count, negative_count, neutral_count}` — **観測できた件数(事実)**。補正はランキング側 | 観測不能な区分は null | C(事実性)/P(形式) |
-| `summary_text` | string | 必須 | IRODORIの言葉による短い要約(原文転載禁止・3文以内目安) | 省略不可 | C(制限)/P(長さ) |
-| `representative_sources` | string[] | 必須 | 代表 `source_record_id`(1件以上) | 空配列不可 | C |
-| `conditions` | string \| null | 任意 | 評価が変わる条件(例: 「エレベーターなし住居で否定的傾向」) | null | P |
-| `pii_check` | string | 必須 | validation_result 値。`pass` 以外の rts は成果物に含めない | `unknown` は含めない | C |
+| `source_record_ids` | string[] | 必須 | 根拠 `source_record_id`(1件以上) | 空配列不可 | C |
+| `theme_id` | string | 必須 | テーマの安定ID(axis_idまたはシーンタグに対応) | 省略不可 | P |
+| `sentiment` | string | 必須 | `positive` / `negative` / `mixed` / `neutral` / `not_applicable` | 推測せず`not_applicable` | C |
+| `observed_item_count` | number \| null | 必須 | 観測件数。件数不明はnull | **0へ変換しない** | C |
+| `deduplicated_item_count` | number \| null | 必須 | 重複除外後件数。観測件数以下 | **0へ変換しない** | C |
+| `sample_size_status` | string | 必須 | `known_small` / `known_moderate` / `known_large` / `unknown` | 件数不明は`unknown` | C |
+| `summary` | string | 必須 | IRODORIの言葉による短い構造化要約。本文転載不可 | 省略不可 | C |
+| `limitations` | string[] | 必須 | 件数・代表性・取得制約等 | 1件以上 | C |
 | `evidence_status` | string | 必須 | status-model.md §1 | `unconfirmed` | C |
+| `human_review_status` | string | 必須 | `not_required` / `pending` / `completed` / `rejected` | 省略不可 | C |
+| `contains_quote` | boolean | 必須 | 引用を含むか。sourceのquote_policyと照合 | 省略不可 | C |
+| `contains_pii` | boolean | 必須 | PIIを含むか。成果物はfalseのみ | 省略不可 | C |
+| `ranking_score_impact` | string | 必須 | 現段階は必ず`none` | 他値は禁止 | C |
+
+件数不明時は `observed_item_count: null` / `deduplicated_item_count: null` /
+`sample_size_status: unknown` の3点を揃える。旧 `theme` / `summary_text` /
+`representative_sources` / `pii_check` は0.3.xの読み取り互換aliasであり、新規成果物では使わない。
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "rts-0001",
   "review_theme_summary_id": "rts-0001",
   "product_identity_id": "pid-0001",
-  "theme": "folding_ease",
-  "sentiment": { "positive_count": 14, "negative_count": 3, "neutral_count": 2 },
-  "summary_text": "片手で畳める点への肯定が多い。ロック操作に慣れが要るという指摘が少数ある。",
-  "representative_sources": ["src-0002"],
-  "conditions": "抱っこしながらの操作について評価が分かれる",
-  "pii_check": "pass",
+  "source_record_ids": ["src-0002"],
+  "theme_id": "folding_ease",
+  "sentiment": "mixed",
+  "observed_item_count": 19,
+  "deduplicated_item_count": 17,
+  "sample_size_status": "known_moderate",
+  "summary": "片手操作への肯定的記述と、ロック操作に慣れが必要という記述が確認された。",
+  "limitations": ["媒体掲載分だけの集約", "母集団の代表性は未確認"],
   "evidence_status": "unconfirmed",
+  "human_review_status": "completed",
+  "contains_quote": false,
+  "contains_pii": false,
+  "ranking_score_impact": "none",
   "created_at": "2026-07-15T12:30:00+09:00",
   "updated_at": "2026-07-15T12:30:00+09:00"
 }
@@ -379,10 +415,10 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "rdef-stroller-train",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.3.0",
+  "definition_version": "0.4.0",
   "name": "ベビーカー 電車移動向け（初期案）",
   "scope": "scene",
   "scene_tag": "train_commute",
@@ -467,11 +503,11 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "rin-0001",
   "ranking_input_id": "rin-0001",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.3.0",
+  "definition_version": "0.4.0",
   "run_id": "run-20260715-001",
   "snapshot_date": "2026-07-15",
   "candidates": [
@@ -521,12 +557,12 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "rres-0001",
   "ranking_result_id": "rres-0001",
   "ranking_input_id": "rin-0001",
   "ranking_definition_id": "rdef-stroller-train",
-  "definition_version": "0.3.0",
+  "definition_version": "0.4.0",
   "calc_version": "calc-train-prototype-0.2.0",
   "run_id": "run-20260715-001",
   "generated_at": "2026-07-15T14:00:00+09:00",
@@ -588,7 +624,7 @@
 
 ```json
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.4.0",
   "record_id": "rrep-0001",
   "review_report_id": "rrep-0001",
   "run_id": "run-20260715-001",
@@ -611,6 +647,94 @@
 
 ---
 
+## 11. `source_usage_audit` — 第三者媒体の利用方針監査(作成者: 人間レビュー担当)
+
+第三者媒体を `source_record` に登録する前提契約。媒体別のMarkdown監査を人間向け正本、
+`source-audits/2026-07-15/source-usage-audits.json` を機械可読表現とする。
+`audit_result: pass` はIRODORI内部基準への適合だけを表し、法的許可・規約上の明示許諾・
+自動取得許可を意味しない。
+
+状態は必ず分離する [C]:
+
+- `terms_permission_status`: `explicitly_permitted` / `explicitly_prohibited` / `not_found` / `ambiguous` / `not_applicable`
+- `operational_decision`: `allowed_with_conditions` / `prohibited` / `pending_review` / `not_adopted`
+- `legal_review_status`: `not_required` / `recommended` / `required` / `completed` / `unresolved`
+- `audit_result`: `pass` / `fail` / `unknown` / `not_applicable`
+
+| フィールド | 型 | 必須 | 説明 |
+|---|---|---|---|
+| `audit_id` / `schema_version` | string | 必須 | 安定IDと契約版 |
+| `medium_id` / `medium_name` / `operator_name` | string | 必須 | 媒体ID・表示名・運営主体 |
+| `official_domains` | string[] | 必須 | 監査対象の公式ドメイン |
+| `audited_at` / `audit_version` | string | 必須 | 監査日時・監査版 |
+| `terms_urls` / `copyright_policy_urls` / `community_guideline_urls` | string[] | 必須 | 確認した公式ポリシーURL |
+| `robots_url` | string \| null | 必須 | robots.txt。単独で許諾判断に使わない |
+| `effective_dates` | object[] | 必須 | `{policy_id, effective_date, note}`。日付不明はnull |
+| `checked_operations` | `SourceUsageOperation[]` | 必須 | 操作単位の判定。安定IDと4状態を保持 |
+| `permitted_roles` / `prohibited_roles` | string[] | 必須 | この媒体を利用できる/できない用途 |
+| `storage_policy` | `StoragePolicy` | 必須 | 許可capture、禁止内容、PII、保持注記と構造化`retention_rules` |
+| `citation_policy` | `CitationPolicy` | 必須 | 引用方針、帰属表示、人間レビュー |
+| `automation_policy` | `AutomationPolicy` | 必須 | 許可/禁止operation。両方への重複は禁止 |
+| `terms_permission_status` / `operational_decision` / `legal_review_status` | string | 必須 | 媒体全体の状態。操作別状態を上書きしない |
+| `legal_review_requirement` | object | 必須 | 状態、確認前に実行できない操作、未解決論点 |
+| `unresolved_questions` | string[] | 必須 | 推測で埋めない未解決事項 |
+| `review_due_at` | string | 必須 | 再監査日(ISO日付) |
+| `evidence_references` | string[] | 必須 | 判断根拠の公式URL |
+
+`SourceUsageOperation.operation_id` の許容値 [C]:
+`manual_read_and_structure`, `browser_assisted_summary`, `automated_html_acquisition`,
+`scheduled_html_monitoring`, `official_api`, `scheduled_api_snapshot`, `spec_cross_check`,
+`editorial_theme_extraction`, `individual_review_storage`, `aggregate_review_summary`,
+`external_ranking_metadata`, `market_demand_snapshot`, `minimal_quote`, `metadata_only`。
+
+各operationは `audit_result`, `terms_permission_status`, `operational_decision`, `conditions`,
+`prohibited_actions`, `evidence_references`, `legal_review_status` を必須とする。
+
+---
+
+## 12. `rakuten_ranking_snapshot` — 楽天市場ランキング需要シグナル
+
+楽天店舗商品listingとIRODORIの商品モデルを分離した時点スナップショット。
+これは `market_demand_signal` / `external_sales_ranking_metadata` であり、品質評価ではない。
+
+| フィールド | 型 | 必須 | 説明 / 制約 |
+|---|---|---|---|
+| `snapshot_id` / `schema_version` | string | 必須 | 安定IDと契約版 |
+| `source_usage_audit_id` | string | 必須 | 楽天監査ID |
+| `ranking_source` | string | 必須 | 下記の公式/派生名称 |
+| `ranking_period` | string | 必須 | `realtime` / `official_daily` / `official_weekly` / `irodori_7day_derived` |
+| `acquisition_method` | string | 必須 | `official_api`で有効化済みなのは`realtime`だけ。daily/weeklyをAPI取得と推測しない |
+| `genre_id` / `genre_name` | string | 必須 | ランキングジャンル |
+| `rank` | number \| null | 必須 | 順位。不明を0にしない |
+| `last_build_date` | string \| null | 必須 | 配信元の更新日時 |
+| `fetched_at` / `captured_at` | string | 必須 | 取得・保持開始日時 |
+| `rakuten_item_code` / `shop_code` / `item_name` / `item_url` | string | 必須 | 楽天店舗listing。shopを跨いで統合しない |
+| `price` / `availability` / `review_count` / `review_average` | number \| null | 必須 | 不明はnull。品質scoreに接続しない |
+| `product_identity_id` | string \| null | 必須 | IRODORI商品モデル。未名寄せはnull |
+| `model_year` / `market` / `model_number` / `variant_id` | 値またはnull | 必須 | 同一性確認項目。色・年式・市場を無視しない |
+| `identity_match_status` | string | 必須 | `confirmed` / `probable` / `unmatched` / `unverified` |
+| `match_evidence` | object[] | 必須 | `{evidence_type, value}`。商品名だけのconfirmedは禁止 |
+| `data_expiry` | object | 必須 | `price_expires_at`, `availability_expires_at`, `metadata_expires_at` |
+| `retention_policy` | object | 必須 | 価格/availability 24時間、その他3か月、派生3か月超は`unresolved`、方針の参照元 |
+| `retention_status` | string | 必須 | `current` / `expired` / `pending_refresh` / `prohibited_retention` / `unknown` |
+| `display_requirements` | string[] | 必須 | クレジット・リンク・更新日時等の表示条件 |
+| `legal_review_status` / `publication_status` | string | 必須 | 法務未完了・期限切れcurrentの公開を拒否 |
+| `source_role` | string | 必須 | `market_demand_signal` / `external_sales_ranking_metadata` |
+| `ranking_score_impact` | string | 必須 | 必ず`none` |
+| `quality_score_input_fields` | string[] | 必須 | 必ず空配列。rank・星・件数・affiliate等の接続要求を拒否 |
+
+`ranking_source` の許容値 [C]: `rakuten_official_realtime_rank`,
+`rakuten_official_daily_rank`, `rakuten_official_weekly_rank`, `irodori_7day_rank_presence`,
+`irodori_7day_average_position`, `irodori_7day_rank_stability`。
+`official_daily` / `official_weekly` は公式Webページの区分として保持できるが、API対応はUNKNOWN。
+`irodori_7day_derived` を楽天公式週間順位と表記してはならない。
+
+confirmed名寄せは、少なくともbrand・marketと、model_year / model_number /
+一意識別子のいずれかを含む複数根拠が必要。商品名だけ、shop_codeだけ、楽天rankだけでは
+confirmedにできない。variantを関連付ける場合はvariant根拠も必要。
+
+---
+
 ## 変更履歴
 
 | 日付 | contracts_version | 変更 |
@@ -618,3 +742,4 @@
 | 2026-07-15 | 0.1.0 | 初版(10契約のフィールド案とJSON例) |
 | 2026-07-15 | 0.2.0 | TypeScript型・実行時検証・決定論的架空fixture試作に合わせて条件付き契約を具体化 |
 | 2026-07-15 | 0.3.0 | variant/site関連付け/PDF到達経路、observed_score・weighted_data_coverage・矛盾軸参加規則、SHA-256・実行環境記録を追加。score/included_itemsはdeprecated alias化 |
+| 2026-07-15 | 0.4.0 | SourceUsageAudit、第三者SourceRecord利用制約、ReviewThemeSummaryの件数/PII/引用/score非接続、RakutenRankingSnapshot・TTL・名寄せ・需要シグナル分離を追加 |

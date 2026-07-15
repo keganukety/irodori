@@ -83,8 +83,9 @@
 - 第2段階のローカル試作では、Webスクレイピングの実行・外部取得サービスへの接続を行わない。
 - Apify・Firecrawl 等の外部サービスは必須依存にしない。公式性・ライセンス・安全性・更新状況は
   未確認(Unverified)であり、採否は Open Decision #18。
-- 各媒体の利用規約・取得可否は Unverified。公開運用前に `copyright-and-acquisition-policy.md` の
-  手続きに従い確認する。
+- マイベスト・価格.com・たまひよ・楽天市場ランキングは
+  `source-audits/2026-07-15/` の媒体別Markdownを監査正本とし、機械判定は
+  `source-usage-audits.json` を使う。監査後も未解決事項は推測せず、法務確認前に公開しない。
 
 ## 8. 公式ページから配信される外部ドメイン資産 [C]
 
@@ -93,3 +94,39 @@
   `discovery_page_url` / `direct_asset_url` / `discovered_via_official_page: true` を保存する。
 - PDF表題だけで対象商品・年式を確定できない場合、公式到達経路があっても `match_status: probable`
   を維持する。
+
+## 9. 第三者媒体の利用監査 [C]
+
+- schema 0.4.0以降の第三者 `source_record` は `source_usage_audit_id` を必須とする。
+  メーカー公式sourceはnull可とし、0.3.xパイロットを後方互換で読み取る。
+- `terms_permission_status` / `operational_decision` / `legal_review_status` / `audit_result` を
+  分離する。`audit_result: pass`を規約上の許諾や自動取得許可へ読み替えない。
+- sourceの取得方法・保存方針・引用方針・PII方針・自動化利用・人間レビュー状態を
+  `source_record`へ保持し、対応する監査operationと照合する。
+- 記事本文、口コミ本文、画像、表、raw HTML、投稿者名・IDを保存しない。
+
+媒体別の現在の運用判断 [C]:
+
+| medium_id | operational_decision | 許容範囲 |
+|---|---|---|
+| `my-best` | `allowed_with_conditions` | 少数ページの手動/AIブラウザ参照と短い論点。HTML取得・巡回・引用は禁止。順位等はpending_review |
+| `kakaku-com` | `not_adopted` | URL・ページ名・確認日のみ。人/AI閲覧もpending_review。正式承諾なしで採用しない |
+| `tamahiyo` | `allowed_with_conditions` | 手動/AIブラウザ参照、短い構造化テーマ、公開前人間確認。明示的許諾とは扱わない |
+| `rakuten-ichiba-ranking` | `pending_review` | HTML取得・巡回は禁止。法務確認後のofficial_api / scheduled_api_snapshotだけが条件付き候補 |
+
+## 10. 外部順位・需要シグナルの役割分離 [C]
+
+- 編集媒体の順位は `external_ranking_metadata`、楽天市場ランキングは
+  `market_demand_signal` / `external_sales_ranking_metadata` とする。
+- 他媒体順位、星、掲載/受賞回数、review sentiment/件数、楽天rank/review値、affiliate rate、
+  売上人気シグナルは品質ランキングscoreへ加算・乗算・換算しない。
+- 用途は説明用メタデータ、人気傾向表示、更新・調査優先順位、将来の独立市場人気表示に限定する。
+
+## 11. 楽天API情報の保持 [C](監査確認値) / [U](派生保持)
+
+- 価格・availabilityは取得から24時間、その他API情報は3か月を上限とし、値を
+  `retention_policy`へ記録する。ランキングエンジンへ直書きしない。
+- 期限切れを`retention_status: current`または公開用currentとして扱わない。
+- APIで取得可能と確認できたランキングperiodは`realtime`のみ。daily/weeklyは公式Web区分として
+  保持できるがAPI対応はUNKNOWN。IRODORI 7日派生集計と楽天公式週間順位を混同しない。
+- 派生集計を3か月超保持できるかはUnverifiedのままにする。

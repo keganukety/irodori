@@ -56,6 +56,8 @@ Required Inputs が欠けている場合は調査を開始せず、不足項目�
    外部配信ドメインのPDFは、公式親ページからの直接到達を確認し、親ページURL・直接URL・
    `discovered_via_official_page`を構造化して保存する。
 5. **二次情報の登録**: 計画で宣言した媒体を調査し、1情報源=1 `source_record` で登録する。
+   - 調査前に `source-policy.md` §9と対応する `SourceUsageAudit` を検証し、
+     許可されたoperation/captureだけを使う。監査ID・取得/保存/引用/PII/レビュー状態を記録する。
    - 全レコードで型番・商品名照合を行い `match_status` を付ける。
    - 他媒体の順位・星は `external_rank_metadata` にのみ記録する(得点化しない)。
    - 商業的関係(`commercial_relation`)を必ず判定・記録する。
@@ -119,6 +121,8 @@ Required Inputs が欠けている場合は調査を開始せず、不足項目�
 
 - [ ] 全 `source_record` に `url`・`media_name`・`accessed_date` がある
 - [ ] 全 `source_record` に `match_status`・`source_type`・`commercial_relation` がある
+- [ ] 第三者 `source_record` に有効な `source_usage_audit_id` と利用方針フィールドがある
+- [ ] sourceの取得方法・保存内容・自動化が対応監査の`operational_decision`に違反していない
 - [ ] `failed / skipped` に `acquisition_failure_reason` がある
 - [ ] 全 `evidence_claim` が1つの `source_record_id` を参照している
 - [ ] `fact_or_inference: inference` の claim が存在しない(このスキルでは禁止)

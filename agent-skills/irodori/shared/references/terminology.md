@@ -13,6 +13,10 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 | `evidence_claim` | 1つの情報源から抽出した個別の主張(1仕様・1測定値・1評価・1口コミ傾向)。1つの `source_record` から複数作れる | [C] |
 | `normalized_feature` | 商品×評価軸ごとに正規化された値。複数の `evidence_claim` に支えられる | [C] |
 | `review_theme_summary` | 口コミをテーマ別に肯定/否定/中立で整理した短い構造化要約 | [C] |
+| `source_usage_audit` | 第三者媒体について、規約上の許諾・運用判断・法務確認・内部監査結果を操作単位で分離した記録 | [C] |
+| `rakuten_ranking_snapshot` | 楽天店舗商品listingの順位・価格等を時点とTTL付きで保持する市場需要メタデータ。品質評価ではない | [C] |
+| `market_demand_signal` | 売上人気・需要の鮮度を説明・調査優先順位に使うsource_role。品質scoreへ接続しない | [C] |
+| `external_sales_ranking_metadata` | 外部販売ランキングの参考メタデータ。IRODORI順位・品質scoreと分離する | [C] |
 | 正規化 (normalization) | 単位・表記・名称を共通形式に揃えること。値の意味を変えないこと | [C] |
 | 決定論的処理 | 同じ入力・同じ設定・同じ計算バージョンで必ず同じ結果を返す処理。AIの自由判断を含まない | [C] |
 | 計算バージョン (`calc_version`) | ランキング計算ロジックの版。結果の再現に必要 | [C] |
@@ -43,6 +47,10 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 - `evidence_status`: `confirmed / unconfirmed / conflicting / outdated / not_applicable` — 証拠の確からしさ
 - `validation_result`: `pass / fail / unknown / not_applicable` — 機械的検証の結果
 - `publication_status`: `draft / review_required / approved / rejected / published` — 公開ワークフロー上の位置
+- `terms_permission_status`: 規約上の明示許諾・禁止・不明の状態
+- `operational_decision`: IRODORIがその利用方式を採用するかの判断
+- `legal_review_status`: 法務確認の要否・完了状態
+- `audit_result`: IRODORI内部監査基準への適合。`pass`でも法的許可・明示許諾・自動取得許可を意味しない
 
 ## 4. スコア関連の用語(分離必須)
 
@@ -94,6 +102,9 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 - 完了判定できない抽象表現をスキル指示・成果物に書かない(例:「よく調べる」「最適にランキングする」「いい感じに」)。
 - 他媒体の評価ラベル(「◯◯ベストバイ」等)をIRODORI独自評価として使わない。
 - 「業界最軽量」等の宣伝表現を、`manufacturer_claim` ラベルなしで事実として書かない。
+- 件数根拠なしに「多くの口コミ」「多数の利用者」「よく言われている」「圧倒的に好評」
+  「口コミで人気」「高評価が多い」「売れ筋」「大人気」「今一番売れている」を使わない。
+- 楽天順位・星・口コミ件数から「品質が高い」「おすすめ」へ自動変換しない。
 
 互換規則 [C]: 旧 `included_items` は `included_accessories` のdeprecated aliasとして読み取り可能だが、
 新規成果物は必ず `included_accessories` を出力する。

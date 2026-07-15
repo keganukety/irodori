@@ -41,6 +41,7 @@ description: irodori-product-research → irodori-product-evidence-normalizer �
    目的・対象・実行範囲・使用する契約版(`contracts_version` 等)を記録する。
    Node.js/TypeScript/OS/platform/arch、型チェック・テストコマンド、test isolation、
    計算版・定義版を実測可能な範囲で`execution_environment`へ記録する。推測値は入れない。
+   第三者媒体を含む場合は対応する`SourceUsageAudit`の版と再確認期限も成果物参照へ加える。
 2. **工程ごとに次を繰り返す**(標準順序: research → normalizer → ranking-engine):
    a. そのスキルの Required Inputs が揃っているか確認する。
       揃っていなければ実行せず、不足を `review_report.open_questions` に記録して停止する。
@@ -78,6 +79,7 @@ description: irodori-product-research → irodori-product-evidence-normalizer �
    (例: 色違いの分割単位が結果を左右する場合)
 5. 現段階の禁止事項(未承認の実在商品の順位決定・スクレイピング実行・DB接続等)に
    踏み込まないと先へ進めない場合
+6. 第三者媒体の監査がない、operationが`prohibited/not_adopted`、または必要な法務・人間レビューが未完了の場合
 
 `unknown` が残る場合: 停止はしないが、`review_report.validation_summary` に
 「何が揃えば判定できるか」を必ず記載する。
@@ -120,6 +122,7 @@ description: irodori-product-research → irodori-product-evidence-normalizer �
 - [ ] `review_report` に fail / unknown がすべて記載されている
 - [ ] `review_report.publication_status` が `review_required` である
 - [ ] 本スキル自身が調査・正規化・採点のロジックを新設していない
+- [ ] 第三者媒体を使った工程が対応監査ID・運用判断・法務/人間レビュー状態を記録している
 
 ## Completion Criteria
 

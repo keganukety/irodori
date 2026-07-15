@@ -3,7 +3,7 @@
  * Keep field names aligned with the Markdown source of truth.
  */
 
-export const CONTRACT_SCHEMA_VERSION = "0.3.0" as const;
+export const CONTRACT_SCHEMA_VERSION = "0.4.0" as const;
 export const CALCULATION_VERSION = "calc-train-prototype-0.2.0" as const;
 
 export const EVIDENCE_STATUSES = [
@@ -35,6 +35,100 @@ export type IdentificationStatus = "identified" | "provisional" | "unidentified"
 export type SiteProductMatchStatus = "confirmed" | "probable" | "unmatched" | "unverified";
 export type VariantSpecificationStatus = "confirmed_same" | "confirmed_different" | "unverified";
 
+export const TERMS_PERMISSION_STATUSES = [
+  "explicitly_permitted",
+  "explicitly_prohibited",
+  "not_found",
+  "ambiguous",
+  "not_applicable",
+] as const;
+export type TermsPermissionStatus = (typeof TERMS_PERMISSION_STATUSES)[number];
+
+export const OPERATIONAL_DECISIONS = [
+  "allowed_with_conditions",
+  "prohibited",
+  "pending_review",
+  "not_adopted",
+] as const;
+export type OperationalDecision = (typeof OPERATIONAL_DECISIONS)[number];
+
+export const LEGAL_REVIEW_STATUSES = [
+  "not_required",
+  "recommended",
+  "required",
+  "completed",
+  "unresolved",
+] as const;
+export type LegalReviewStatus = (typeof LEGAL_REVIEW_STATUSES)[number];
+
+export type AuditResult = ValidationResult;
+
+export const SOURCE_USAGE_OPERATION_IDS = [
+  "manual_read_and_structure",
+  "browser_assisted_summary",
+  "automated_html_acquisition",
+  "scheduled_html_monitoring",
+  "official_api",
+  "scheduled_api_snapshot",
+  "spec_cross_check",
+  "editorial_theme_extraction",
+  "individual_review_storage",
+  "aggregate_review_summary",
+  "external_ranking_metadata",
+  "market_demand_snapshot",
+  "minimal_quote",
+  "metadata_only",
+] as const;
+export type SourceUsageOperationId = (typeof SOURCE_USAGE_OPERATION_IDS)[number];
+
+export const ACQUISITION_METHODS = [
+  "manual_browser",
+  "ai_browser_assisted",
+  "official_api",
+  "licensed_feed",
+  "automated_html",
+  "user_provided",
+  "not_acquired",
+] as const;
+export type AcquisitionMethod = (typeof ACQUISITION_METHODS)[number];
+
+export const CONTENT_CAPTURE_POLICIES = [
+  "metadata_only",
+  "structured_facts_only",
+  "structured_themes_only",
+  "market_demand_metadata_only",
+  "minimal_quote_allowed",
+  "no_content_storage",
+] as const;
+export type ContentCapturePolicy = (typeof CONTENT_CAPTURE_POLICIES)[number];
+
+export const QUOTE_POLICIES = [
+  "prohibited",
+  "pending_review",
+  "minimal_with_review",
+  "permitted_by_license",
+] as const;
+export type QuotePolicy = (typeof QUOTE_POLICIES)[number];
+
+export const PII_POLICIES = ["reject_all", "redact_before_storage", "not_applicable"] as const;
+export type PiiPolicy = (typeof PII_POLICIES)[number];
+
+export const HUMAN_REVIEW_STATUSES = ["not_required", "pending", "completed", "rejected"] as const;
+export type HumanReviewStatus = (typeof HUMAN_REVIEW_STATUSES)[number];
+
+export const SOURCE_ROLES = [
+  "product_identity_confirmation",
+  "official_spec_cross_check",
+  "third_party_measurement",
+  "editorial_evaluation",
+  "review_theme_source",
+  "buyer_review_source",
+  "external_ranking_metadata",
+  "market_demand_signal",
+  "external_sales_ranking_metadata",
+] as const;
+export type SourceRole = (typeof SOURCE_ROLES)[number];
+
 export interface StatusHistoryEntry {
   field: string;
   from: string | null;
@@ -50,6 +144,94 @@ export interface BaseContractRecord {
   updated_at: string;
   notes?: string;
   status_history?: StatusHistoryEntry[];
+}
+
+export interface SourceUsageOperation {
+  operation_id: SourceUsageOperationId;
+  audit_result: AuditResult;
+  terms_permission_status: TermsPermissionStatus;
+  operational_decision: OperationalDecision;
+  conditions: string[];
+  prohibited_actions: string[];
+  evidence_references: string[];
+  legal_review_status: LegalReviewStatus;
+}
+
+export type ProhibitedContentKind =
+  | "article_body"
+  | "review_body"
+  | "image"
+  | "table"
+  | "author_name"
+  | "author_id"
+  | "raw_html";
+
+export interface SourceRetentionRule {
+  applies_to: "price" | "availability" | "metadata" | "derived_aggregate_over_three_months";
+  duration_value: number | null;
+  duration_unit: "hours" | "months" | null;
+  status: "confirmed" | "unresolved";
+  evidence_reference: string;
+}
+
+export interface StoragePolicy {
+  allowed_capture_policies: ContentCapturePolicy[];
+  prohibited_content: ProhibitedContentKind[];
+  pii_policy: PiiPolicy;
+  retention_notes: string[];
+  retention_rules: SourceRetentionRule[];
+}
+
+export interface CitationPolicy {
+  quote_policy: QuotePolicy;
+  attribution_required: boolean;
+  human_review_required: boolean;
+}
+
+export interface AutomationPolicy {
+  allowed_operations: SourceUsageOperationId[];
+  prohibited_operations: SourceUsageOperationId[];
+  notes: string[];
+}
+
+export interface LegalReviewRequirement {
+  status: LegalReviewStatus;
+  required_before_operations: SourceUsageOperationId[];
+  unresolved_topics: string[];
+}
+
+export interface SourcePolicyEffectiveDate {
+  policy_id: string;
+  effective_date: string | null;
+  note: string;
+}
+
+export interface SourceUsageAudit extends BaseContractRecord {
+  audit_id: string;
+  medium_id: string;
+  medium_name: string;
+  operator_name: string;
+  official_domains: string[];
+  audited_at: string;
+  audit_version: string;
+  terms_urls: string[];
+  copyright_policy_urls: string[];
+  community_guideline_urls: string[];
+  robots_url: string | null;
+  effective_dates: SourcePolicyEffectiveDate[];
+  checked_operations: SourceUsageOperation[];
+  permitted_roles: SourceRole[];
+  prohibited_roles: SourceRole[];
+  storage_policy: StoragePolicy;
+  citation_policy: CitationPolicy;
+  automation_policy: AutomationPolicy;
+  terms_permission_status: TermsPermissionStatus;
+  operational_decision: OperationalDecision;
+  legal_review_status: LegalReviewStatus;
+  legal_review_requirement: LegalReviewRequirement;
+  unresolved_questions: string[];
+  review_due_at: string;
+  evidence_references: string[];
 }
 
 export interface RunStep {
@@ -189,6 +371,17 @@ export interface SourceRecord extends BaseContractRecord {
   discovery_page_url?: string | null;
   direct_asset_url?: string | null;
   discovered_via_official_page?: boolean | null;
+  /** Required for schema_version >= 0.4.0. Third-party records must use a non-null audit ID. */
+  source_usage_audit_id?: string | null;
+  acquisition_method?: AcquisitionMethod;
+  content_capture_policy?: ContentCapturePolicy;
+  quote_policy?: QuotePolicy;
+  pii_policy?: PiiPolicy;
+  automation_used?: boolean;
+  human_review_required?: boolean;
+  human_review_status?: HumanReviewStatus;
+  legal_review_status?: LegalReviewStatus;
+  source_role?: SourceRole;
 }
 
 export const CLAIM_CLASSES = [
@@ -264,16 +457,130 @@ export interface SentimentCounts {
   neutral_count: number | null;
 }
 
+export const REVIEW_SENTIMENTS = ["positive", "negative", "mixed", "neutral", "not_applicable"] as const;
+export type ReviewSentiment = (typeof REVIEW_SENTIMENTS)[number];
+
+export const SAMPLE_SIZE_STATUSES = ["known_small", "known_moderate", "known_large", "unknown"] as const;
+export type SampleSizeStatus = (typeof SAMPLE_SIZE_STATUSES)[number];
+
 export interface ReviewThemeSummary extends BaseContractRecord {
   review_theme_summary_id: string;
   product_identity_id: string;
-  theme: string;
-  sentiment: SentimentCounts;
-  summary_text: string;
-  representative_sources: string[];
-  conditions: string | null;
-  pii_check: ValidationResult;
+  /** 0.2.x/0.3.x aliases retained for runtime compatibility. */
+  theme?: string;
+  summary_text?: string;
+  representative_sources?: string[];
+  conditions?: string | null;
+  pii_check?: ValidationResult;
+  /** schema_version >= 0.4.0 fields. */
+  source_record_ids?: string[];
+  theme_id?: string;
+  sentiment: SentimentCounts | ReviewSentiment;
+  observed_item_count?: number | null;
+  deduplicated_item_count?: number | null;
+  sample_size_status?: SampleSizeStatus;
+  summary?: string;
+  limitations?: string[];
   evidence_status: EvidenceStatus;
+  human_review_status?: HumanReviewStatus;
+  contains_quote?: boolean;
+  contains_pii?: boolean;
+  ranking_score_impact?: "none";
+}
+
+export const RAKUTEN_RANKING_PERIODS = [
+  "realtime",
+  "official_daily",
+  "official_weekly",
+  "irodori_7day_derived",
+] as const;
+export type RakutenRankingPeriod = (typeof RAKUTEN_RANKING_PERIODS)[number];
+
+export const RAKUTEN_RANKING_SOURCES = [
+  "rakuten_official_realtime_rank",
+  "rakuten_official_daily_rank",
+  "rakuten_official_weekly_rank",
+  "irodori_7day_rank_presence",
+  "irodori_7day_average_position",
+  "irodori_7day_rank_stability",
+] as const;
+export type RakutenRankingSource = (typeof RAKUTEN_RANKING_SOURCES)[number];
+
+export const RETENTION_STATUSES = [
+  "current",
+  "expired",
+  "pending_refresh",
+  "prohibited_retention",
+  "unknown",
+] as const;
+export type RetentionStatus = (typeof RETENTION_STATUSES)[number];
+
+export const IDENTITY_MATCH_EVIDENCE_TYPES = [
+  "normalized_product_name",
+  "brand",
+  "model_year",
+  "market",
+  "model_number",
+  "unique_identifier",
+  "variant",
+] as const;
+export type IdentityMatchEvidenceType = (typeof IDENTITY_MATCH_EVIDENCE_TYPES)[number];
+
+export interface RakutenDataExpiry {
+  price_expires_at: string;
+  availability_expires_at: string;
+  metadata_expires_at: string;
+}
+
+export interface RakutenRetentionPolicy {
+  price_availability_ttl_hours: number;
+  metadata_ttl_months: number;
+  derived_aggregate_over_three_months: "unresolved";
+  policy_source: string;
+}
+
+export interface IdentityMatchEvidence {
+  evidence_type: IdentityMatchEvidenceType;
+  value: string;
+}
+
+export interface RakutenRankingSnapshot extends BaseContractRecord {
+  snapshot_id: string;
+  source_usage_audit_id: string;
+  ranking_source: RakutenRankingSource;
+  ranking_period: RakutenRankingPeriod;
+  acquisition_method: AcquisitionMethod;
+  genre_id: string;
+  genre_name: string;
+  rank: number | null;
+  last_build_date: string | null;
+  fetched_at: string;
+  captured_at: string;
+  rakuten_item_code: string;
+  shop_code: string;
+  item_name: string;
+  item_url: string;
+  price: number | null;
+  availability: 0 | 1 | null;
+  review_count: number | null;
+  review_average: number | null;
+  product_identity_id: string | null;
+  model_year: number | null;
+  market: Market;
+  model_number: string | null;
+  variant_id: string | null;
+  identity_match_status: SiteProductMatchStatus;
+  match_evidence: IdentityMatchEvidence[];
+  data_expiry: RakutenDataExpiry;
+  display_requirements: string[];
+  retention_policy: RakutenRetentionPolicy;
+  retention_status: RetentionStatus;
+  legal_review_status: LegalReviewStatus;
+  publication_status: PublicationStatus;
+  source_role: "market_demand_signal" | "external_sales_ranking_metadata";
+  ranking_score_impact: "none";
+  /** Must remain empty; used to reject prohibited score wiring at validation time. */
+  quality_score_input_fields: string[];
 }
 
 export type NumericDirection = "lower_better" | "higher_better";
@@ -535,6 +842,15 @@ export interface RankingExecutionBundle {
   review_theme_summaries: ReviewThemeSummary[];
 }
 
+export interface ExternalSourceValidationBundle {
+  validation_at: string;
+  source_usage_audits: SourceUsageAudit[];
+  source_records: SourceRecord[];
+  evidence_claims?: EvidenceClaim[];
+  review_theme_summaries: ReviewThemeSummary[];
+  rakuten_ranking_snapshots: RakutenRankingSnapshot[];
+}
+
 export type ContractName =
   | "run_manifest"
   | "product_identity"
@@ -542,6 +858,8 @@ export type ContractName =
   | "evidence_claim"
   | "normalized_feature"
   | "review_theme_summary"
+  | "source_usage_audit"
+  | "rakuten_ranking_snapshot"
   | "ranking_definition"
   | "ranking_input"
   | "ranking_result"
@@ -554,6 +872,8 @@ export type ContractRecord =
   | EvidenceClaim
   | NormalizedFeature
   | ReviewThemeSummary
+  | SourceUsageAudit
+  | RakutenRankingSnapshot
   | RankingDefinition
   | RankingInput
   | RankingResult
