@@ -1,0 +1,74 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "rvw-2026-07-16-aprica-karoon-air-mesh-ac-official",
+  "created_at": "2026-07-16T15:30:00+09:00",
+  "updated_at": "2026-07-16T15:30:00+09:00",
+  "review_report_id": "rvw-2026-07-16-aprica-karoon-air-mesh-ac-official",
+  "run_id": "run-2026-07-16-aprica-karoon-air-mesh-ac-official",
+  "summary": "アップリカ公式情報限定run。ブランド・正式商品名・市場JP・現行性を公式商品ページと公式一覧ページで確認した。アップリカはモデル年表記を用いず、品番はカラー別のため、model_number・model_yearはnullとしidentification_statusはprovisional。取扱説明書は利用規約同意ゲートのため未取得(skipped)であり、折りたたみ操作・自立・同梱物・取説由来の警告は未確認のまま。公式情報内の矛盾は検出していない。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "identification_status": "provisional",
+      "source_count": 3,
+      "claim_count": 18,
+      "unconfirmed_axes": ["folding_ease", "self_standing", "included_accessories"],
+      "conflicts": 0
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "audit_01_manufacturer_official_sources_only",
+      "result": "pass",
+      "detail": "3/3がaprica.jpの公式ページ。全件primary/self_published_by_maker。"
+    },
+    {
+      "check_name": "audit_02_no_search_snippets_as_evidence",
+      "result": "pass",
+      "detail": "検索は公式ページの発見経路のみ。claimはすべてブラウザ/HTMLで直接確認したページ表記に基づく。"
+    },
+    {
+      "check_name": "audit_03_variant_codes_separated_from_model_number",
+      "result": "pass",
+      "detail": "カラー別品番(2206924/2206925)はvariants[].product_codeへ分離し、model_numberはnull。"
+    },
+    {
+      "check_name": "audit_04_manual_gate_recorded_as_skipped",
+      "result": "pass",
+      "detail": "取説ダウンロードページは利用規約同意ゲートのためacquisition_status: skipped + 理由付きで記録。PDF直リンク禁止の規約表記に従い直接URLを保存していない。"
+    },
+    {
+      "check_name": "audit_05_unknown_values_are_null",
+      "result": "pass",
+      "detail": "folding_ease / self_standing / included_accessoriesはvalue: null / unconfirmed / supporting_claims: [] / independent_source_count: 0。"
+    },
+    {
+      "check_name": "audit_06_manufacturer_claim_separated",
+      "result": "pass",
+      "detail": "『片手でかるがる持ち運び』はmanufacturer_claimとして分離し、folding_ease(片手折りたたみ)へ流用していない。"
+    },
+    {
+      "check_name": "audit_07_no_real_product_score_or_rank",
+      "result": "pass",
+      "detail": "run内にranking_input/ranking_resultがなく、得点・順位フィールドもない。"
+    },
+    {
+      "check_name": "audit_08_all_contract_validations_pass",
+      "result": "pass",
+      "detail": "validate-run.mjsでrun_manifest/product_identity/source×3/claim×18/feature×14/review_reportと参照整合性を検証。"
+    }
+  ],
+  "open_questions": [
+    "モデル共通型番の有無と、アップリカにおける世代表記(末尾記号AC)の公式定義は未確認",
+    "取扱説明書の内容(折りたたみ操作・自立可否・同梱物・警告・保証書条件)は同意ゲートのため未確認。人間による同意取得の上での取得可否を判断する必要がある",
+    "ベージュ/グレー間の仕様同一性は明示記載がなくunverified",
+    "製造者法人名(フッター著作権はNewell Brands Japan G.K.)を製造者として確定できるかは未確認",
+    "バスケットの容量(L)は公式テキストで未確認(耐荷重5kgのみ確認)"
+  ],
+  "recommended_next_actions": [
+    "人間の判断で取扱説明書ダウンロードの利用規約に同意し、取説由来の仕様(折りたたみ・自立・同梱物・保証条件)を追加確認する",
+    "モデル共通型番の有無をカタログ・公式資料で追加確認する",
+    "site_product_id 5(ローカル『カルーンエアー メッシュ AC』)との同一性を人間レビューで確定する"
+  ],
+  "publication_status": "review_required"
+}

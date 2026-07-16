@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "pid-combi-sugocal-eggshock-la-jp",
+  "created_at": "2026-07-16T15:35:00+09:00",
+  "updated_at": "2026-07-16T15:35:00+09:00",
+  "notes": "ブランド コンビ・正式商品名 スゴカル エッグショック LA・市場JPを公式ブランドストア商品ページと公式取説ダウンロードページで確認。商品コードはカラー別(119376/119377/119767)でありモデル共通型番は未確認のためmodel_numberはnull。取説ダウンロードページに『型式: LA』の表記があるが、LAが正式なモデル型番かグレード記号かの公式定義は未確認のためnotesでの保持に留める。コンビはモデル年表記を用いず、発売日2024/7/19で世代を区別。取扱説明書の表題は『スゴカル エッグショック』のみでLAの明記がないためsource側match_statusはprobableを維持。",
+  "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+  "official_name": "スゴカル エッグショック LA",
+  "brand_name": "コンビ",
+  "manufacturer_name": null,
+  "model_number": null,
+  "model_year": null,
+  "market": "JP",
+  "lifecycle_status": "current",
+  "predecessor_of": null,
+  "successor_of": null,
+  "variant_of": null,
+  "variant_axis": null,
+  "category": "stroller",
+  "official_url": "https://www.combi.co.jp/store/stroller/sugocalfa/g/g119376/",
+  "identification_status": "provisional",
+  "identification_evidence": [
+    "src-sgcla-001",
+    "src-sgcla-002"
+  ],
+  "unconfirmed_fields": [
+    "manufacturer_name",
+    "model_number",
+    "model_year",
+    "predecessor_of",
+    "successor_of",
+    "variant_specification_equivalence_between_colors"
+  ],
+  "site_product_id": "3",
+  "site_product_match_status": "probable",
+  "variants": [
+    {
+      "variant_id": "var-combi-sugocal-eggshock-la-jp-light-beige",
+      "color_name": "ライトベージュ（BE）",
+      "product_code": "119376",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-sgcla-009"],
+      "notes": "公式ストアのコード/カラー欄(JAN 4972990193764)。仕様表は色別に分かれていないが、色間の仕様同一性の明示記載はないためunverified。"
+    },
+    {
+      "variant_id": "var-combi-sugocal-eggshock-la-jp-dark-gray",
+      "color_name": "ダークグレー（DG）",
+      "product_code": "119377",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-sgcla-009"],
+      "notes": "公式ストアのコード/カラー欄(JAN 4972990193771)。確認時点で公式ストア在庫は完売表示。"
+    },
+    {
+      "variant_id": "var-combi-sugocal-eggshock-la-jp-gray-ivory",
+      "color_name": "グレーアイボリー（GL）",
+      "product_code": "119767",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-sgcla-009"],
+      "notes": "公式ストアのコード/カラー欄(JAN 4972990197670)。"
+    }
+  ]
+}

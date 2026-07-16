@@ -1,0 +1,85 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "rvw-2026-07-16-combi-sugocal-eggshock-la-official",
+  "created_at": "2026-07-16T15:50:00+09:00",
+  "updated_at": "2026-07-16T15:50:00+09:00",
+  "review_report_id": "rvw-2026-07-16-combi-sugocal-eggshock-la-official",
+  "run_id": "run-2026-07-16-combi-sugocal-eggshock-la-official",
+  "summary": "コンビ公式情報限定run。ブランド・正式商品名・市場JP・現行性を公式ブランドストアと公式取説ダウンロードページで確認し、取扱説明書PDF(公式ページから直接リンク)を取得して使用月齢・カゴ耐荷重・自立・保証・SG記載を照合した。商品コードはカラー別(3色)のためvariantへ分離し、model_number・model_yearはnullでidentification_statusはprovisional。取説表題にLAの明記がないためsource側match_statusはprobable。公式情報内の矛盾は検出していない。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "identification_status": "provisional",
+      "source_count": 3,
+      "claim_count": 24,
+      "unconfirmed_axes": ["folding_ease"],
+      "conflicts": 0
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "audit_01_manufacturer_official_sources_only",
+      "result": "pass",
+      "detail": "3/3がcombi.co.jpの公式ページ・公式取説PDF。全件primary/self_published_by_maker。"
+    },
+    {
+      "check_name": "audit_02_no_search_snippets_as_evidence",
+      "result": "pass",
+      "detail": "検索は公式ページの発見経路のみ。claimはページ/PDFの直接確認に基づく。"
+    },
+    {
+      "check_name": "audit_03_variant_codes_separated_from_model_number",
+      "result": "pass",
+      "detail": "カラー別商品コード(119376/119377/119767)はvariants[].product_codeへ分離し、model_numberはnull。取説DLページの『型式LA』は昇格させずsource/claimに保持。"
+    },
+    {
+      "check_name": "audit_04_pdf_official_discovery_route",
+      "result": "pass",
+      "detail": "取説PDFにdiscovery_page_url・direct_asset_url・discovered_via_official_page=trueを構造化保存。同意ゲートなしの直接リンクを確認。"
+    },
+    {
+      "check_name": "audit_05_manual_title_match_probable",
+      "result": "pass",
+      "detail": "取説表題は『スゴカル エッグショック』のみのためmatch_status: probableを維持(DLページの型式LA紐付けを根拠に保持)。"
+    },
+    {
+      "check_name": "audit_06_no_review_content_stored",
+      "result": "pass",
+      "detail": "公式ストアページのユーザーレビュー・スタッフレビューの本文・投稿者情報・件数・星は一切保存していない。"
+    },
+    {
+      "check_name": "audit_07_manufacturer_claim_separated",
+      "result": "pass",
+      "detail": "『オート4キャス最軽量』はmanufacturer_claimとして分離。ワンタッチ開閉はfolding_ease(片手折りたたみ)へ流用していない。"
+    },
+    {
+      "check_name": "audit_08_unknown_values_are_null",
+      "result": "pass",
+      "detail": "folding_easeはvalue: null / unconfirmed / supporting_claims: []。"
+    },
+    {
+      "check_name": "audit_09_no_real_product_score_or_rank",
+      "result": "pass",
+      "detail": "run内にranking_input/ranking_resultがなく、得点・順位フィールドもない。"
+    },
+    {
+      "check_name": "audit_10_all_contract_validations_pass",
+      "result": "pass",
+      "detail": "validate-run.mjsでrun_manifest/product_identity/source×3/claim×24/feature×14/review_reportと参照整合性を検証。"
+    }
+  ],
+  "open_questions": [
+    "『型式: LA』(取説DLページ表記)がモデル共通型番として扱えるかは公式定義未確認。確認できるまでmodel_number: nullを維持する",
+    "3色間の仕様同一性は明示記載がなくunverified",
+    "片手での折りたたみ操作可否は未確認(ワンタッチ開閉の表記のみ)",
+    "洗濯方式の詳細(洗濯機/手洗いの区分・対象パーツ)はPDFテキスト抽出で確定できず要人間確認",
+    "公式ストア価格48,000円とローカルproducts(id 3)の32,000円が一致しない。ローカル値の由来確認が必要",
+    "製造者法人名(コンビ株式会社)としての明示記載は本runのsource内で未確認"
+  ],
+  "recommended_next_actions": [
+    "取説PDFの該当ページを人間が目視確認し、洗濯方式・折りたたみ操作の詳細を確定する",
+    "site_product_id 3(ローカル『スゴカル エッグショック LA』)の価格差異(32,000円 vs 48,000円)の由来を確認する",
+    "モデル共通型番(型式LA)の扱いをコンビ公式資料で追加確認する"
+  ],
+  "publication_status": "review_required"
+}

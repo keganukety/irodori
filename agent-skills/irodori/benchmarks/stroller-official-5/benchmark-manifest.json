@@ -1,0 +1,106 @@
+{
+  "schema_note": "benchmark-manifestは12契約の外側にあるベンチマーク管理メタデータ。契約レコード(run_manifest等)は各runディレクトリを正本とする。scoreや順位は含まない。",
+  "benchmark_id": "stroller-official-5",
+  "name": "ベビーカー5商品 公式情報比較ベンチマーク",
+  "created_at": "2026-07-16T17:30:00+09:00",
+  "updated_at": "2026-07-16T17:30:00+09:00",
+  "purpose": "現行日本モデル5商品の公式情報を同一契約形式へ揃え、identity分離・variant区別・軸取得可能性・未確認項目・データ充足率を確認する(ランキング順位・得点は作成しない)",
+  "contracts_version": "0.4.0",
+  "source_policy": "メーカー日本公式情報のみ(公式商品ページ・公式取扱説明書・公式ダウンロードセンター・公式一覧ページ)。検索エンジンは発見のみ。第三者媒体・EC・楽天データは不使用",
+  "prohibited_artifacts": [
+    "ranking_input",
+    "ranking_result",
+    "observed_score",
+    "score",
+    "総合順位・シーン別順位・おすすめ順位",
+    "星評価・勝者・優劣の断定"
+  ],
+  "products": [
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "official_name": "Melio Carbon",
+      "brand_name": "CYBEX",
+      "role": "既存パイロット・軽量プレミアム(AB型寄り両対面)",
+      "run_dir": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official",
+      "run_status": "existing_pilot_referenced_not_recreated",
+      "site_product_id": "4",
+      "site_product_match_status": "probable"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "official_name": "カルーンエアー メッシュ AC",
+      "brand_name": "アップリカ",
+      "role": "軽量・公共交通向け(A形両対面)",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official",
+      "run_status": "created_in_this_benchmark",
+      "site_product_id": "5",
+      "site_product_match_status": "probable"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "official_name": "スゴカル エッグショック LA",
+      "brand_name": "コンビ",
+      "role": "標準A型両対面・オート4キャス(取説取得済み)",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official",
+      "run_status": "created_in_this_benchmark",
+      "site_product_id": "3",
+      "site_product_match_status": "probable"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "official_name": "Runfee RB5（ランフィ RB5）",
+      "brand_name": "ピジョン",
+      "role": "走行安定性・収納力重視(A形シングルタイヤ)",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official",
+      "run_status": "created_in_this_benchmark",
+      "site_product_id": null,
+      "site_product_match_status": "unmatched"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "official_name": "Libelle",
+      "brand_name": "CYBEX",
+      "role": "コンパクト・旅行向け(B形セカンド)",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official",
+      "run_status": "created_in_this_benchmark",
+      "site_product_id": "7",
+      "site_product_match_status": "probable"
+    }
+  ],
+  "benchmark_axes": [
+    "weight_body",
+    "size_open",
+    "size_folded",
+    "target_age",
+    "max_load",
+    "basket_capacity",
+    "folding_ease",
+    "self_standing",
+    "warranty",
+    "care_ease",
+    "included_accessories",
+    "caution",
+    "newborn_ready",
+    "price"
+  ],
+  "axis_vocabulary_note": "軸はterminology.md §5の既存語彙のみを使用。ユーザー要求軸のうちterminologyに未定義のもの(リクライニング角度・タイヤ仕様・安全基準・シート向き・ハンドル調節・携行補助・トラベルシステム互換等)はaxis_id: nullのevidence_claimとして保持し、語彙追加はcoverage-report.mdのルーブリック必要軸として提案する",
+  "artifacts": [
+    "selection-report.md",
+    "benchmark-manifest.json",
+    "build-feature-matrix.mjs",
+    "official-feature-matrix.json",
+    "validate-benchmark.mjs",
+    "coverage-report.md",
+    "identity-review.md",
+    "open-conflicts.md"
+  ],
+  "validation_commands": [
+    "node agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official/validate-run.mjs",
+    "node agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official/validate-run.mjs",
+    "node agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/validate-run.mjs",
+    "node agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/validate-run.mjs",
+    "node agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/validate-run.mjs",
+    "node agent-skills/irodori/benchmarks/stroller-official-5/validate-benchmark.mjs"
+  ],
+  "publication_status": "review_required"
+}

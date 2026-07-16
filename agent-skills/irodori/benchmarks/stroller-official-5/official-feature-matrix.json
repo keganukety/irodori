@@ -1,0 +1,1528 @@
+{
+  "schema_note": "official-feature-matrixは12契約の外側にあるベンチマーク集計ビュー。行の値はrunsのnormalized_feature/claim/sourceをそのまま参照し、独自の値を持たない。scoreや順位は含まない。",
+  "benchmark_id": "stroller-official-5",
+  "generated_by": "build-feature-matrix.mjs",
+  "generated_at": "2026-07-16T17:30:00+09:00",
+  "axis_ids": [
+    "weight_body",
+    "size_open",
+    "size_folded",
+    "target_age",
+    "max_load",
+    "basket_capacity",
+    "folding_ease",
+    "self_standing",
+    "warranty",
+    "care_ease",
+    "included_accessories",
+    "caution",
+    "newborn_ready",
+    "price"
+  ],
+  "products": [
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "official_name": "カルーンエアー メッシュ AC",
+      "brand_name": "アップリカ",
+      "model_year": null,
+      "market": "JP",
+      "identification_status": "provisional",
+      "site_product_id": "5",
+      "site_product_match_status": "probable",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "official_name": "スゴカル エッグショック LA",
+      "brand_name": "コンビ",
+      "model_year": null,
+      "market": "JP",
+      "identification_status": "provisional",
+      "site_product_id": "3",
+      "site_product_match_status": "probable",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "official_name": "Libelle",
+      "brand_name": "CYBEX",
+      "model_year": 2026,
+      "market": "JP",
+      "identification_status": "provisional",
+      "site_product_id": "7",
+      "site_product_match_status": "probable",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "official_name": "Melio Carbon",
+      "brand_name": "CYBEX",
+      "model_year": 2026,
+      "market": "JP",
+      "identification_status": "provisional",
+      "site_product_id": "4",
+      "site_product_match_status": "probable",
+      "run_dir": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "official_name": "Runfee RB5（ランフィ RB5）",
+      "brand_name": "ピジョン",
+      "model_year": null,
+      "market": "JP",
+      "identification_status": "provisional",
+      "site_product_id": null,
+      "site_product_match_status": "unmatched",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official"
+    }
+  ],
+  "entries": [
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "weight_body",
+      "value": 3.9,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-001"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "size_open",
+      "value": {
+        "width_mm": 452,
+        "depth_mm": 817,
+        "height_mm": 1007
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-002"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "size_folded",
+      "value": {
+        "width_mm": 452,
+        "depth_mm": 311,
+        "height_mm": 959
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-003"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "target_age",
+      "value": {
+        "min": 1,
+        "max": 36
+      },
+      "unit": "month",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-004"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "max_load",
+      "value": 15,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-005"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "basket_capacity",
+      "value": 5,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-006"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "folding_ease",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "self_standing",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "warranty",
+      "value": "アップリカ ベビーカー3年保証(公式一覧ページのカテゴリ共通表記。個別保証条件は未確認)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-017"
+      ],
+      "source_record_ids": [
+        "src-krnac-002"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "care_ease",
+      "value": "シートは洗濯機洗い可(液温30℃限度・弱水流・洗濯ネット使用)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-012"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "included_accessories",
+      "value": null,
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "caution",
+      "value": "キャリートラベルシステム(CTS)非対応。レインカバーは指定2種を使用",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-013"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "newborn_ready",
+      "value": false,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-016"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "price",
+      "value": 37400,
+      "unit": "円(税込・メーカー希望小売価格)",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-krnac-008"
+      ],
+      "source_record_ids": [
+        "src-krnac-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "weight_body",
+      "value": 4.6,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-001"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "size_open",
+      "value": {
+        "width_mm": 486,
+        "depth_mm": 835,
+        "height_mm": 1048
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-002"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "size_folded",
+      "value": {
+        "width_mm": 486,
+        "depth_mm": 425,
+        "height_mm": 1012
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-003"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "target_age",
+      "value": {
+        "min": 1,
+        "max": 36
+      },
+      "unit": "month",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-004",
+        "clm-sgcla-012"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001",
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "max_load",
+      "value": 15,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-005",
+        "clm-sgcla-013"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001",
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "basket_capacity",
+      "value": 5,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-014"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "folding_ease",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "self_standing",
+      "value": true,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-015"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "warranty",
+      "value": "品質保証はお買い上げ日より1年間(標準使用期間は新規購入後5年)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-016"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "care_ease",
+      "value": "着脱シート等は洗濯可(中性洗剤推奨・蛍光剤/漂白剤入り不可。洗濯方式の詳細は要人間確認)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-021"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "included_accessories",
+      "value": "ベビーカー本体、取扱説明書、保証書、ヘッドサポート、頭部用エッグショックパッド(ヘッドサポート内蔵)、おしりサポート",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-020"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "caution",
+      "value": "連続使用は2時間以内(生後7ヵ月以上の座位使用は1時間以内)。カゴ耐荷重5kg超過禁止",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-018"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "newborn_ready",
+      "value": false,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-022"
+      ],
+      "source_record_ids": [
+        "src-sgcla-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "price",
+      "value": 48000,
+      "unit": "円(税込・公式ブランドストア価格)",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-sgcla-006"
+      ],
+      "source_record_ids": [
+        "src-sgcla-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "weight_body",
+      "value": 6,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-001"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "size_open",
+      "value": {
+        "width_mm": 520,
+        "depth_mm": 710,
+        "height_mm": 1020
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-002"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "size_folded",
+      "value": {
+        "width_mm": 320,
+        "depth_mm": 200,
+        "height_mm": 480
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-003"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "target_age",
+      "value": {
+        "min": 6,
+        "max": 48
+      },
+      "unit": "month",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-004",
+        "clm-lib26-016"
+      ],
+      "source_record_ids": [
+        "src-lib26-001",
+        "src-lib26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "max_load",
+      "value": 22,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-005",
+        "clm-lib26-017"
+      ],
+      "source_record_ids": [
+        "src-lib26-001",
+        "src-lib26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "basket_capacity",
+      "value": 5,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-006",
+        "clm-lib26-018"
+      ],
+      "source_record_ids": [
+        "src-lib26-001",
+        "src-lib26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "folding_ease",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "self_standing",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "warranty",
+      "value": "正規販売店での購入日から2年間(日本国内・最初の所有者)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-019"
+      ],
+      "source_record_ids": [
+        "src-lib26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "care_ease",
+      "value": "ファブリックカバーは30°Cで洗濯機洗い可",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-008"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "included_accessories",
+      "value": "フレーム(車輪含む)、シートユニット、ショッピングバスケット、サンキャノピー、ユーザーガイド",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-007"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "caution",
+      "value": "規定重量(子ども22kg/バスケット5kg)を超えて使用しない(転倒・ケガのおそれ)。2人以上の乗車禁止",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-024"
+      ],
+      "source_record_ids": [
+        "src-lib26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "newborn_ready",
+      "value": false,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-lib26-023"
+      ],
+      "source_record_ids": [
+        "src-lib26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "price",
+      "value": null,
+      "unit": null,
+      "value_kind": "numeric",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "weight_body",
+      "value": 5.9,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-001"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "size_open",
+      "value": {
+        "width_mm": 490,
+        "depth_mm": 910,
+        "height_mm": 1070
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-002"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "size_folded",
+      "value": {
+        "width_mm": 490,
+        "depth_mm": 590,
+        "height_mm": 290
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-003"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "target_age",
+      "value": {
+        "min": 1,
+        "max": 36
+      },
+      "unit": "month",
+      "value_kind": "numeric",
+      "evidence_status": "conflicting",
+      "supporting_claim_ids": [
+        "clm-melio26-004",
+        "clm-melio26-014"
+      ],
+      "source_record_ids": [
+        "src-melio26-001",
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "max_load",
+      "value": 15,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-005",
+        "clm-melio26-013"
+      ],
+      "source_record_ids": [
+        "src-melio26-001",
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "basket_capacity",
+      "value": 5,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-006",
+        "clm-melio26-015"
+      ],
+      "source_record_ids": [
+        "src-melio26-001",
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "folding_ease",
+      "value": true,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-007"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "self_standing",
+      "value": true,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-017"
+      ],
+      "source_record_ids": [
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "warranty",
+      "value": "正規販売店での購入日から2年間(日本国内でのみ有効)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-018"
+      ],
+      "source_record_ids": [
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "care_ease",
+      "value": "ファブリックカバーは30°Cで洗濯機洗い可",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-010"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "included_accessories",
+      "value": "フレーム(車輪含む)、シートユニット、ショッピングバスケット、バンパーバー、サンキャノピー、Newborn Nest、ユーザーガイド",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-008"
+      ],
+      "source_record_ids": [
+        "src-melio26-001"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "caution",
+      "value": "規定重量(子ども15kg/バスケット5kg/カップホルダー0.5kg)を超えて使用しない(転倒・ケガのおそれ)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-melio26-019"
+      ],
+      "source_record_ids": [
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "newborn_ready",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "conflicting",
+      "supporting_claim_ids": [
+        "clm-melio26-012",
+        "clm-melio26-025",
+        "clm-melio26-026"
+      ],
+      "source_record_ids": [
+        "src-melio26-001",
+        "src-melio26-003"
+      ],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "price",
+      "value": null,
+      "unit": null,
+      "value_kind": "numeric",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "probable",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "weight_body",
+      "value": 5.9,
+      "unit": "kg",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-001",
+        "clm-rnf5-014"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001",
+        "src-rnf5-002"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "size_open",
+      "value": {
+        "width_mm": 516,
+        "depth_mm": 890,
+        "height_mm": 1030
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-002",
+        "clm-rnf5-003"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "size_folded",
+      "value": {
+        "width_mm": 516,
+        "depth_mm": 380,
+        "height_mm": 1030
+      },
+      "unit": "mm",
+      "value_kind": "dimensions",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-004"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "target_age",
+      "value": {
+        "min": 1,
+        "max": 36
+      },
+      "unit": "month",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-005"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "max_load",
+      "value": null,
+      "unit": null,
+      "value_kind": "numeric",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "basket_capacity",
+      "value": 25,
+      "unit": "L",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-009"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "folding_ease",
+      "value": true,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-011"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "self_standing",
+      "value": null,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "warranty",
+      "value": null,
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "care_ease",
+      "value": "シートは洗濯機で丸洗い可(パーツ洗い可)",
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-012"
+      ],
+      "source_record_ids": [
+        "src-rnf5-002"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "included_accessories",
+      "value": null,
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "caution",
+      "value": null,
+      "unit": null,
+      "value_kind": "text",
+      "evidence_status": "unconfirmed",
+      "supporting_claim_ids": [],
+      "source_record_ids": [],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "newborn_ready",
+      "value": false,
+      "unit": null,
+      "value_kind": "boolean",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-013"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "price",
+      "value": 67100,
+      "unit": "円(税込)",
+      "value_kind": "numeric",
+      "evidence_status": "confirmed",
+      "supporting_claim_ids": [
+        "clm-rnf5-006"
+      ],
+      "source_record_ids": [
+        "src-rnf5-001"
+      ],
+      "match_status": "unmatched",
+      "human_review_status": "pending"
+    }
+  ],
+  "coverage": [
+    {
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "confirmed_axis_count_benchmark14": 11,
+      "data_coverage_benchmark14": 0.7857,
+      "confirmed_axes_benchmark14": [
+        "basket_capacity",
+        "care_ease",
+        "caution",
+        "max_load",
+        "newborn_ready",
+        "price",
+        "size_folded",
+        "size_open",
+        "target_age",
+        "warranty",
+        "weight_body"
+      ],
+      "train_commute_proposed": {
+        "value_status": "proposed",
+        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+        "confirmed_axis_count_10": 4,
+        "data_coverage_10": 0.4,
+        "weighted_data_coverage": 0.47,
+        "confirmed_axes": [
+          "basket_capacity",
+          "size_folded",
+          "size_open",
+          "weight_body"
+        ]
+      }
+    },
+    {
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "confirmed_axis_count_benchmark14": 13,
+      "data_coverage_benchmark14": 0.9286,
+      "confirmed_axes_benchmark14": [
+        "basket_capacity",
+        "care_ease",
+        "caution",
+        "included_accessories",
+        "max_load",
+        "newborn_ready",
+        "price",
+        "self_standing",
+        "size_folded",
+        "size_open",
+        "target_age",
+        "warranty",
+        "weight_body"
+      ],
+      "train_commute_proposed": {
+        "value_status": "proposed",
+        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+        "confirmed_axis_count_10": 5,
+        "data_coverage_10": 0.5,
+        "weighted_data_coverage": 0.55,
+        "confirmed_axes": [
+          "basket_capacity",
+          "self_standing",
+          "size_folded",
+          "size_open",
+          "weight_body"
+        ]
+      }
+    },
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "confirmed_axis_count_benchmark14": 11,
+      "data_coverage_benchmark14": 0.7857,
+      "confirmed_axes_benchmark14": [
+        "basket_capacity",
+        "care_ease",
+        "caution",
+        "included_accessories",
+        "max_load",
+        "newborn_ready",
+        "size_folded",
+        "size_open",
+        "target_age",
+        "warranty",
+        "weight_body"
+      ],
+      "train_commute_proposed": {
+        "value_status": "proposed",
+        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+        "confirmed_axis_count_10": 4,
+        "data_coverage_10": 0.4,
+        "weighted_data_coverage": 0.47,
+        "confirmed_axes": [
+          "basket_capacity",
+          "size_folded",
+          "size_open",
+          "weight_body"
+        ]
+      }
+    },
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "confirmed_axis_count_benchmark14": 11,
+      "data_coverage_benchmark14": 0.7857,
+      "confirmed_axes_benchmark14": [
+        "basket_capacity",
+        "care_ease",
+        "caution",
+        "folding_ease",
+        "included_accessories",
+        "max_load",
+        "self_standing",
+        "size_folded",
+        "size_open",
+        "warranty",
+        "weight_body"
+      ],
+      "train_commute_proposed": {
+        "value_status": "proposed",
+        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+        "confirmed_axis_count_10": 6,
+        "data_coverage_10": 0.6,
+        "weighted_data_coverage": 0.68,
+        "confirmed_axes": [
+          "basket_capacity",
+          "folding_ease",
+          "self_standing",
+          "size_folded",
+          "size_open",
+          "weight_body"
+        ]
+      }
+    },
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "confirmed_axis_count_benchmark14": 9,
+      "data_coverage_benchmark14": 0.6429,
+      "confirmed_axes_benchmark14": [
+        "basket_capacity",
+        "care_ease",
+        "folding_ease",
+        "newborn_ready",
+        "price",
+        "size_folded",
+        "size_open",
+        "target_age",
+        "weight_body"
+      ],
+      "train_commute_proposed": {
+        "value_status": "proposed",
+        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+        "confirmed_axis_count_10": 5,
+        "data_coverage_10": 0.5,
+        "weighted_data_coverage": 0.6,
+        "confirmed_axes": [
+          "basket_capacity",
+          "folding_ease",
+          "size_folded",
+          "size_open",
+          "weight_body"
+        ]
+      }
+    }
+  ],
+  "axis_coverage": [
+    {
+      "axis_id": "weight_body",
+      "confirmed_product_count": 5,
+      "status_breakdown": {
+        "confirmed": 5
+      },
+      "units_observed": [
+        "kg"
+      ]
+    },
+    {
+      "axis_id": "size_open",
+      "confirmed_product_count": 5,
+      "status_breakdown": {
+        "confirmed": 5
+      },
+      "units_observed": [
+        "mm"
+      ]
+    },
+    {
+      "axis_id": "size_folded",
+      "confirmed_product_count": 5,
+      "status_breakdown": {
+        "confirmed": 5
+      },
+      "units_observed": [
+        "mm"
+      ]
+    },
+    {
+      "axis_id": "target_age",
+      "confirmed_product_count": 4,
+      "status_breakdown": {
+        "confirmed": 4,
+        "conflicting": 1
+      },
+      "units_observed": [
+        "month"
+      ]
+    },
+    {
+      "axis_id": "max_load",
+      "confirmed_product_count": 4,
+      "status_breakdown": {
+        "confirmed": 4,
+        "unconfirmed": 1
+      },
+      "units_observed": [
+        "kg"
+      ]
+    },
+    {
+      "axis_id": "basket_capacity",
+      "confirmed_product_count": 5,
+      "status_breakdown": {
+        "confirmed": 5
+      },
+      "units_observed": [
+        "L",
+        "kg"
+      ]
+    },
+    {
+      "axis_id": "folding_ease",
+      "confirmed_product_count": 2,
+      "status_breakdown": {
+        "unconfirmed": 3,
+        "confirmed": 2
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "self_standing",
+      "confirmed_product_count": 2,
+      "status_breakdown": {
+        "unconfirmed": 3,
+        "confirmed": 2
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "warranty",
+      "confirmed_product_count": 4,
+      "status_breakdown": {
+        "confirmed": 4,
+        "unconfirmed": 1
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "care_ease",
+      "confirmed_product_count": 5,
+      "status_breakdown": {
+        "confirmed": 5
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "included_accessories",
+      "confirmed_product_count": 3,
+      "status_breakdown": {
+        "unconfirmed": 2,
+        "confirmed": 3
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "caution",
+      "confirmed_product_count": 4,
+      "status_breakdown": {
+        "confirmed": 4,
+        "unconfirmed": 1
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "newborn_ready",
+      "confirmed_product_count": 4,
+      "status_breakdown": {
+        "confirmed": 4,
+        "conflicting": 1
+      },
+      "units_observed": []
+    },
+    {
+      "axis_id": "price",
+      "confirmed_product_count": 3,
+      "status_breakdown": {
+        "confirmed": 3,
+        "unconfirmed": 2
+      },
+      "units_observed": [
+        "円(税込)",
+        "円(税込・メーカー希望小売価格)",
+        "円(税込・公式ブランドストア価格)"
+      ]
+    }
+  ],
+  "ranking_artifacts": "none (ranking_input / ranking_result / observed_score / score / 順位は作成しない)"
+}
