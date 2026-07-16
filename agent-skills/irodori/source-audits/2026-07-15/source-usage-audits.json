@@ -1,0 +1,264 @@
+[
+  {
+    "schema_version": "0.4.0",
+    "record_id": "source-audit-2026-07-15-my-best",
+    "audit_id": "source-audit-2026-07-15-my-best",
+    "created_at": "2026-07-15T21:05:00+09:00",
+    "updated_at": "2026-07-15T21:05:00+09:00",
+    "medium_id": "my-best",
+    "medium_name": "マイベスト",
+    "operator_name": "株式会社マイベスト",
+    "official_domains": ["my-best.com"],
+    "audited_at": "2026-07-15T21:05:00+09:00",
+    "audit_version": "1.0.0",
+    "terms_urls": ["https://my-best.com/terms"],
+    "copyright_policy_urls": ["https://my-best.com/citation_terms", "https://my-best.com/content_policy"],
+    "community_guideline_urls": [],
+    "robots_url": "https://my-best.com/robots.txt",
+    "effective_dates": [
+      { "policy_id": "terms", "effective_date": "2025-12-22", "note": "監査Markdown記載の最終改定日" },
+      { "policy_id": "citation_terms", "effective_date": null, "note": "公開日・更新日の記載なし" }
+    ],
+    "checked_operations": [
+      { "operation_id": "manual_read_and_structure", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "短い内部メモ", "原文を保存しない"], "prohibited_actions": ["公開利用の自動承認"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "required" },
+      { "operation_id": "browser_assisted_summary", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "大量取得をしない", "公開前に人間確認"], "prohibited_actions": ["無人公開"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "required" },
+      { "operation_id": "automated_html_acquisition", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["HTML自動取得", "ページ複製"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "not_required" },
+      { "operation_id": "scheduled_html_monitoring", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["定期巡回", "反復取得"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "not_required" },
+      { "operation_id": "official_api", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["存在未確認APIの利用"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "unresolved" },
+      { "operation_id": "scheduled_api_snapshot", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["存在未確認APIの定期実行"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "unresolved" },
+      { "operation_id": "spec_cross_check", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["公式一次情報で再確認", "仕様根拠に単独使用しない"], "prohibited_actions": ["第三者記載だけで仕様確定"], "evidence_references": ["https://my-best.com/content_policy"], "legal_review_status": "recommended" },
+      { "operation_id": "editorial_theme_extraction", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["論点だけを短く構造化", "表現を複製しない", "公開前に人間確認"], "prohibited_actions": ["記事本文保存"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "required" },
+      { "operation_id": "individual_review_storage", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["口コミ本文保存", "投稿者情報保存"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "not_required" },
+      { "operation_id": "aggregate_review_summary", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["内部参考", "出典付き", "公開前に人間確認"], "prohibited_actions": ["口コミ本文保存", "得点接続"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "required" },
+      { "operation_id": "external_ranking_metadata", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "pending_review", "conditions": ["内部保存可否を法務確認", "公開しない"], "prohibited_actions": ["公開順位表示", "品質得点接続"], "evidence_references": ["https://my-best.com/citation_terms"], "legal_review_status": "required" },
+      { "operation_id": "market_demand_snapshot", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["編集評価を市場需要へ変換"], "evidence_references": ["https://my-best.com/content_policy"], "legal_review_status": "not_required" },
+      { "operation_id": "minimal_quote", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["法人・営利目的の引用"], "evidence_references": ["https://my-best.com/citation_terms"], "legal_review_status": "required" },
+      { "operation_id": "metadata_only", "audit_result": "pass", "terms_permission_status": "not_applicable", "operational_decision": "allowed_with_conditions", "conditions": ["URL・ページ名・確認日のみ"], "prohibited_actions": ["本文保存"], "evidence_references": ["https://my-best.com/terms"], "legal_review_status": "not_required" }
+    ],
+    "permitted_roles": ["editorial_evaluation", "review_theme_source"],
+    "prohibited_roles": ["buyer_review_source"],
+    "storage_policy": {
+      "allowed_capture_policies": ["metadata_only", "structured_facts_only", "structured_themes_only", "no_content_storage"],
+      "prohibited_content": ["article_body", "review_body", "image", "table", "author_name", "author_id", "raw_html"],
+      "pii_policy": "reject_all",
+      "retention_notes": ["原文を保存しない", "内部の短い構造化メモに限定"],
+      "retention_rules": []
+    },
+    "citation_policy": { "quote_policy": "prohibited", "attribution_required": true, "human_review_required": true },
+    "automation_policy": {
+      "allowed_operations": [],
+      "prohibited_operations": ["automated_html_acquisition", "scheduled_html_monitoring"],
+      "notes": ["prohibited_automation", "公式APIの存在は未確認"]
+    },
+    "terms_permission_status": "ambiguous",
+    "operational_decision": "allowed_with_conditions",
+    "legal_review_status": "required",
+    "legal_review_requirement": {
+      "status": "required",
+      "required_before_operations": ["external_ranking_metadata", "minimal_quote"],
+      "unresolved_topics": ["営利目的の調査利用", "順位・実測値の公開利用"]
+    },
+    "unresolved_questions": ["公式API・RSS・データ提供の有無", "内部での順位保存可否"],
+    "review_due_at": "2026-10-15",
+    "evidence_references": ["https://my-best.com/terms", "https://my-best.com/citation_terms", "https://my-best.com/content_policy", "https://my-best.com/robots.txt"],
+    "notes": "my-best.mdを正本として機械可読化。passは法的許諾を意味しない。"
+  },
+  {
+    "schema_version": "0.4.0",
+    "record_id": "source-audit-2026-07-15-kakaku-com",
+    "audit_id": "source-audit-2026-07-15-kakaku-com",
+    "created_at": "2026-07-15T21:05:00+09:00",
+    "updated_at": "2026-07-15T21:05:00+09:00",
+    "medium_id": "kakaku-com",
+    "medium_name": "価格.com",
+    "operator_name": "株式会社カカクコム",
+    "official_domains": ["kakaku.com", "corporate.kakaku.com"],
+    "audited_at": "2026-07-15T21:05:00+09:00",
+    "audit_version": "1.0.0",
+    "terms_urls": ["https://kakaku.com/terms/", "https://kakaku.com/terms/kiyaku.html"],
+    "copyright_policy_urls": ["https://kakaku.com/terms/kiyaku.html"],
+    "community_guideline_urls": ["https://kakaku.com/terms/kiyaku_community.html", "https://kakaku.com/guideline/review_rules.html"],
+    "robots_url": "https://kakaku.com/robots.txt",
+    "effective_dates": [
+      { "policy_id": "site_terms", "effective_date": "2025-06-30", "note": "監査Markdown記載の最終改正日" },
+      { "policy_id": "community_terms", "effective_date": "2024-06-10", "note": "監査Markdown記載の改定日" }
+    ],
+    "checked_operations": [
+      { "operation_id": "manual_read_and_structure", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "pending_review", "conditions": ["営利利用の承諾または法務確認が必要"], "prohibited_actions": ["承諾前の構造化保存"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "browser_assisted_summary", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "pending_review", "conditions": ["営利利用の承諾または法務確認が必要"], "prohibited_actions": ["承諾前のAI要約保存"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "automated_html_acquisition", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["HTML自動取得", "複製・保管"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "not_required" },
+      { "operation_id": "scheduled_html_monitoring", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["定期巡回", "反復取得"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html", "https://kakaku.com/robots.txt"], "legal_review_status": "not_required" },
+      { "operation_id": "official_api", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["現行提供未確認APIの利用"], "evidence_references": ["https://corporate.kakaku.com/press/release/20060927a"], "legal_review_status": "unresolved" },
+      { "operation_id": "scheduled_api_snapshot", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["現行提供未確認APIの定期実行"], "evidence_references": ["https://corporate.kakaku.com/press/release/20060927a"], "legal_review_status": "unresolved" },
+      { "operation_id": "spec_cross_check", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "not_adopted", "conditions": ["正式承諾後に再判定"], "prohibited_actions": ["承諾前の採用"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "editorial_theme_extraction", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["対象外媒体からの編集評価抽出"], "evidence_references": ["https://kakaku.com/terms/"], "legal_review_status": "not_required" },
+      { "operation_id": "individual_review_storage", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["口コミ本文保存", "投稿者情報保存"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "not_required" },
+      { "operation_id": "aggregate_review_summary", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "not_adopted", "conditions": ["正式承諾後に再判定"], "prohibited_actions": ["承諾前の傾向保存"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "external_ranking_metadata", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "not_adopted", "conditions": ["正式承諾後に再判定"], "prohibited_actions": ["順位の公開転載", "品質得点接続"], "evidence_references": ["https://kakaku.com/ranking/", "https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "market_demand_snapshot", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["価格.com順位を楽天型需要signalへ変換"], "evidence_references": ["https://kakaku.com/ranking/"], "legal_review_status": "not_required" },
+      { "operation_id": "minimal_quote", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "not_adopted", "conditions": ["法務確認後に再判定"], "prohibited_actions": ["承諾前の引用保存"], "evidence_references": ["https://kakaku.com/terms/kiyaku.html"], "legal_review_status": "required" },
+      { "operation_id": "metadata_only", "audit_result": "pass", "terms_permission_status": "not_applicable", "operational_decision": "allowed_with_conditions", "conditions": ["URL・ページ名・確認日のみ"], "prohibited_actions": ["本文・順位・口コミの保存"], "evidence_references": ["https://kakaku.com/terms/"], "legal_review_status": "not_required" }
+    ],
+    "permitted_roles": [],
+    "prohibited_roles": ["third_party_measurement", "editorial_evaluation", "review_theme_source", "buyer_review_source", "external_ranking_metadata"],
+    "storage_policy": {
+      "allowed_capture_policies": ["metadata_only", "no_content_storage"],
+      "prohibited_content": ["article_body", "review_body", "image", "table", "author_name", "author_id", "raw_html"],
+      "pii_policy": "reject_all",
+      "retention_notes": ["当面はURL・ページ名・確認日のみ", "正式承諾なしでは採用しない"],
+      "retention_rules": []
+    },
+    "citation_policy": { "quote_policy": "pending_review", "attribution_required": true, "human_review_required": true },
+    "automation_policy": {
+      "allowed_operations": [],
+      "prohibited_operations": ["automated_html_acquisition", "scheduled_html_monitoring"],
+      "notes": ["prohibited_automation", "現行API提供は未確認"]
+    },
+    "terms_permission_status": "ambiguous",
+    "operational_decision": "not_adopted",
+    "legal_review_status": "required",
+    "legal_review_requirement": {
+      "status": "required",
+      "required_before_operations": ["manual_read_and_structure", "browser_assisted_summary", "aggregate_review_summary", "external_ranking_metadata", "minimal_quote"],
+      "unresolved_topics": ["営利利用の事前承諾", "閲覧とURLメモのみの運用"]
+    },
+    "unresolved_questions": ["公式APIの現在の提供状況", "承諾なしの業務閲覧可否"],
+    "review_due_at": "2026-10-15",
+    "evidence_references": ["https://kakaku.com/terms/kiyaku.html", "https://kakaku.com/terms/kiyaku_community.html", "https://kakaku.com/guideline/review_rules.html", "https://kakaku.com/ranking/", "https://kakaku.com/robots.txt"],
+    "notes": "kakaku-com.mdを正本として機械可読化。当面not_adopted。"
+  },
+  {
+    "schema_version": "0.4.0",
+    "record_id": "source-audit-2026-07-15-tamahiyo",
+    "audit_id": "source-audit-2026-07-15-tamahiyo",
+    "created_at": "2026-07-15T21:05:00+09:00",
+    "updated_at": "2026-07-15T21:05:00+09:00",
+    "medium_id": "tamahiyo",
+    "medium_name": "たまひよ",
+    "operator_name": "株式会社ベネッセコーポレーション",
+    "official_domains": ["st.benesse.ne.jp", "faq.benesse.co.jp"],
+    "audited_at": "2026-07-15T21:05:00+09:00",
+    "audit_version": "1.0.0",
+    "terms_urls": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"],
+    "copyright_policy_urls": ["https://st.benesse.ne.jp/ninshin/content/?id=14052"],
+    "community_guideline_urls": ["https://st.benesse.ne.jp/ninshin/content/?id=35020"],
+    "robots_url": "https://st.benesse.ne.jp/robots.txt",
+    "effective_dates": [
+      { "policy_id": "media_terms", "effective_date": "2023-09-28", "note": "監査Markdown記載の改定日" },
+      { "policy_id": "media_policy", "effective_date": null, "note": "公開日・更新日の記載なし" }
+    ],
+    "checked_operations": [
+      { "operation_id": "manual_read_and_structure", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "短い内部メモ", "原文を保存しない"], "prohibited_actions": ["無断転載"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "recommended" },
+      { "operation_id": "browser_assisted_summary", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "大量取得をしない", "公開前に人間確認"], "prohibited_actions": ["無人公開"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "recommended" },
+      { "operation_id": "automated_html_acquisition", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["HTML自動取得", "ページ複製"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "not_required" },
+      { "operation_id": "scheduled_html_monitoring", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["定期巡回"], "evidence_references": ["https://st.benesse.ne.jp/robots.txt"], "legal_review_status": "not_required" },
+      { "operation_id": "official_api", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["存在未確認APIの利用"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "unresolved" },
+      { "operation_id": "scheduled_api_snapshot", "audit_result": "unknown", "terms_permission_status": "not_found", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["存在未確認APIの定期実行"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "unresolved" },
+      { "operation_id": "spec_cross_check", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["公式一次情報で再確認"], "prohibited_actions": ["第三者記載だけで仕様確定"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=14052"], "legal_review_status": "recommended" },
+      { "operation_id": "editorial_theme_extraction", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["短い構造化テーマのみ", "表現を複製しない", "公開前に人間確認"], "prohibited_actions": ["記事本文・画像・表の保存"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "required" },
+      { "operation_id": "individual_review_storage", "audit_result": "fail", "terms_permission_status": "explicitly_prohibited", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["口コミ本文保存", "投稿者情報保存"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "not_required" },
+      { "operation_id": "aggregate_review_summary", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["短い構造化テーマ", "出典付き", "公開前に人間確認"], "prohibited_actions": ["原文保存", "品質得点接続"], "evidence_references": ["https://st.benesse.ne.jp/babygoods_rank/"], "legal_review_status": "required" },
+      { "operation_id": "external_ranking_metadata", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["内部メタデータのみ", "公開前に法務・人間確認"], "prohibited_actions": ["無確認の受賞表現", "品質得点接続"], "evidence_references": ["https://st.benesse.ne.jp/babygoods_rank/"], "legal_review_status": "required" },
+      { "operation_id": "market_demand_snapshot", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["編集ランキングを楽天型需要signalへ変換"], "evidence_references": ["https://st.benesse.ne.jp/babygoods_rank/"], "legal_review_status": "not_required" },
+      { "operation_id": "minimal_quote", "audit_result": "unknown", "terms_permission_status": "ambiguous", "operational_decision": "pending_review", "conditions": ["当面引用しない"], "prohibited_actions": ["人間確認前の引用"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "required" },
+      { "operation_id": "metadata_only", "audit_result": "pass", "terms_permission_status": "not_applicable", "operational_decision": "allowed_with_conditions", "conditions": ["URL・ページ名・確認日のみ"], "prohibited_actions": ["本文保存"], "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748"], "legal_review_status": "not_required" }
+    ],
+    "permitted_roles": ["editorial_evaluation", "review_theme_source", "external_ranking_metadata"],
+    "prohibited_roles": ["buyer_review_source"],
+    "storage_policy": {
+      "allowed_capture_policies": ["metadata_only", "structured_facts_only", "structured_themes_only", "no_content_storage"],
+      "prohibited_content": ["article_body", "review_body", "image", "table", "author_name", "author_id", "raw_html"],
+      "pii_policy": "reject_all",
+      "retention_notes": ["原文・画像・表・投稿者情報を保存しない", "短い構造化テーマに限定"],
+      "retention_rules": []
+    },
+    "citation_policy": { "quote_policy": "pending_review", "attribution_required": true, "human_review_required": true },
+    "automation_policy": {
+      "allowed_operations": [],
+      "prohibited_operations": ["automated_html_acquisition", "scheduled_html_monitoring"],
+      "notes": ["prohibited_automation", "公式APIの存在は未確認"]
+    },
+    "terms_permission_status": "ambiguous",
+    "operational_decision": "allowed_with_conditions",
+    "legal_review_status": "required",
+    "legal_review_requirement": {
+      "status": "required",
+      "required_before_operations": ["editorial_theme_extraction", "aggregate_review_summary", "external_ranking_metadata", "minimal_quote"],
+      "unresolved_topics": ["公開時の順位・調査結果表現", "引用と商標・信用利用"]
+    },
+    "unresolved_questions": ["公式API・RSS・データ提供の有無", "引用の許容範囲"],
+    "review_due_at": "2026-10-15",
+    "evidence_references": ["https://st.benesse.ne.jp/ninshin/content/?id=68748", "https://st.benesse.ne.jp/ninshin/content/?id=14052", "https://st.benesse.ne.jp/ninshin/content/?id=35020", "https://st.benesse.ne.jp/babygoods_rank/", "https://st.benesse.ne.jp/robots.txt"],
+    "notes": "tamahiyo.mdを正本として機械可読化。明示的許諾とは扱わない。"
+  },
+  {
+    "schema_version": "0.4.0",
+    "record_id": "source-audit-2026-07-15-rakuten-ichiba-ranking",
+    "audit_id": "source-audit-2026-07-15-rakuten-ichiba-ranking",
+    "created_at": "2026-07-15T12:45:00+09:00",
+    "updated_at": "2026-07-15T12:45:00+09:00",
+    "medium_id": "rakuten-ichiba-ranking",
+    "medium_name": "楽天市場ランキング",
+    "operator_name": "楽天グループ株式会社",
+    "official_domains": ["ranking.rakuten.co.jp", "webservice.rakuten.co.jp", "webservice.faq.rakuten.net"],
+    "audited_at": "2026-07-15T12:45:00+09:00",
+    "audit_version": "1.0.0",
+    "terms_urls": ["https://webservice.rakuten.co.jp/guide/rule"],
+    "copyright_policy_urls": ["https://webservice.rakuten.co.jp/guide/credit", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974363"],
+    "community_guideline_urls": [],
+    "robots_url": "https://ranking.rakuten.co.jp/robots.txt",
+    "effective_dates": [
+      { "policy_id": "webservice_terms", "effective_date": "2012-06-28", "note": "監査Markdown記載の最終改定日" },
+      { "policy_id": "ranking_api", "effective_date": "2022-06-01", "note": "公式API仕様version" },
+      { "policy_id": "genre_api", "effective_date": "2026-07-01", "note": "公式API仕様version" }
+    ],
+    "checked_operations": [
+      { "operation_id": "manual_read_and_structure", "audit_result": "pass", "terms_permission_status": "not_found", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "短い内部メモ", "原文・画像を保存しない"], "prohibited_actions": ["公開利用の自動承認"], "evidence_references": ["https://ranking.rakuten.co.jp/"], "legal_review_status": "recommended" },
+      { "operation_id": "browser_assisted_summary", "audit_result": "pass", "terms_permission_status": "not_found", "operational_decision": "allowed_with_conditions", "conditions": ["少数ページ", "大量取得・定期巡回をしない", "公開前に人間確認"], "prohibited_actions": ["無人公開"], "evidence_references": ["https://ranking.rakuten.co.jp/"], "legal_review_status": "recommended" },
+      { "operation_id": "automated_html_acquisition", "audit_result": "fail", "terms_permission_status": "not_found", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["ランキングHTMLスクレイピング"], "evidence_references": ["https://ranking.rakuten.co.jp/robots.txt"], "legal_review_status": "not_required" },
+      { "operation_id": "scheduled_html_monitoring", "audit_result": "fail", "terms_permission_status": "not_found", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["ランキングHTML定期巡回"], "evidence_references": ["https://ranking.rakuten.co.jp/robots.txt"], "legal_review_status": "not_required" },
+      { "operation_id": "official_api", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["アプリ登録", "クレジット表示", "楽天へのリンク", "TTL遵守", "1秒1回以下", "利用目的適合", "導入前法務確認"], "prohibited_actions": ["APIキーのリポジトリ保存", "目的外利用", "realtime以外をAPI取得可能と推測"], "evidence_references": ["https://webservice.rakuten.co.jp/guide/rule", "https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking"], "legal_review_status": "required" },
+      { "operation_id": "scheduled_api_snapshot", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["official_api法務確認完了後", "少数ジャンル", "低頻度", "TTL遵守"], "prohibited_actions": ["法務確認前の定期実行", "1秒1回超"], "evidence_references": ["https://webservice.rakuten.co.jp/guide/rule", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974383"], "legal_review_status": "required" },
+      { "operation_id": "spec_cross_check", "audit_result": "pass", "terms_permission_status": "ambiguous", "operational_decision": "allowed_with_conditions", "conditions": ["公式一次情報を優先"], "prohibited_actions": ["楽天商品ページだけで仕様確定"], "evidence_references": ["https://ranking.rakuten.co.jp/"], "legal_review_status": "recommended" },
+      { "operation_id": "editorial_theme_extraction", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["売上順位を編集評価へ変換"], "evidence_references": ["https://ranking.rakuten.co.jp/"], "legal_review_status": "not_required" },
+      { "operation_id": "individual_review_storage", "audit_result": "fail", "terms_permission_status": "not_applicable", "operational_decision": "prohibited", "conditions": [], "prohibited_actions": ["口コミ本文保存", "投稿者情報保存"], "evidence_references": ["https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking"], "legal_review_status": "not_required" },
+      { "operation_id": "aggregate_review_summary", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["reviewCount・reviewAverageのみ", "3か月TTL", "品質得点にしない"], "prohibited_actions": ["レビュー本文保存", "星評価の品質得点化"], "evidence_references": ["https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343"], "legal_review_status": "required" },
+      { "operation_id": "external_ranking_metadata", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["TTL", "リンク", "クレジット", "公開前法務確認"], "prohibited_actions": ["品質得点接続", "IRODORI順位への変換"], "evidence_references": ["https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking"], "legal_review_status": "required" },
+      { "operation_id": "market_demand_snapshot", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["市場需要シグナルに限定", "TTL", "公開前法務確認"], "prohibited_actions": ["品質評価への変換"], "evidence_references": ["https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking"], "legal_review_status": "required" },
+      { "operation_id": "minimal_quote", "audit_result": "not_applicable", "terms_permission_status": "not_applicable", "operational_decision": "not_adopted", "conditions": [], "prohibited_actions": ["販促文の引用保存"], "evidence_references": ["https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking"], "legal_review_status": "not_required" },
+      { "operation_id": "metadata_only", "audit_result": "pass", "terms_permission_status": "explicitly_permitted", "operational_decision": "pending_review", "conditions": ["TTL", "リンク", "クレジット", "利用目的適合"], "prohibited_actions": ["恒久保存", "品質得点接続"], "evidence_references": ["https://webservice.rakuten.co.jp/guide/rule", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343"], "legal_review_status": "required" }
+    ],
+    "permitted_roles": ["market_demand_signal", "external_sales_ranking_metadata"],
+    "prohibited_roles": ["third_party_measurement", "editorial_evaluation", "review_theme_source", "buyer_review_source"],
+    "storage_policy": {
+      "allowed_capture_policies": ["metadata_only", "market_demand_metadata_only", "no_content_storage"],
+      "prohibited_content": ["article_body", "review_body", "image", "table", "author_name", "author_id", "raw_html"],
+      "pii_policy": "reject_all",
+      "retention_notes": ["価格・availabilityは24時間", "その他API情報は3か月", "派生集計の3か月超保持は未解決", "rawレスポンスを恒久保存しない"],
+      "retention_rules": [
+        { "applies_to": "price", "duration_value": 24, "duration_unit": "hours", "status": "confirmed", "evidence_reference": "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343" },
+        { "applies_to": "availability", "duration_value": 24, "duration_unit": "hours", "status": "confirmed", "evidence_reference": "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343" },
+        { "applies_to": "metadata", "duration_value": 3, "duration_unit": "months", "status": "confirmed", "evidence_reference": "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343" },
+        { "applies_to": "derived_aggregate_over_three_months", "duration_value": null, "duration_unit": null, "status": "unresolved", "evidence_reference": "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343" }
+      ]
+    },
+    "citation_policy": { "quote_policy": "prohibited", "attribution_required": true, "human_review_required": true },
+    "automation_policy": {
+      "allowed_operations": ["official_api", "scheduled_api_snapshot"],
+      "prohibited_operations": ["automated_html_acquisition", "scheduled_html_monitoring"],
+      "notes": ["conditional_api_only", "API導入前の法務確認が必要", "本監査ではAPI未実行"]
+    },
+    "terms_permission_status": "ambiguous",
+    "operational_decision": "pending_review",
+    "legal_review_status": "required",
+    "legal_review_requirement": {
+      "status": "required",
+      "required_before_operations": ["official_api", "scheduled_api_snapshot", "external_ranking_metadata", "market_demand_snapshot"],
+      "unresolved_topics": ["IRODORI収益構造と規約第10条", "内部分析専用利用の目的適合性", "派生履歴の3か月超保持"]
+    },
+    "unresolved_questions": ["APIでデイリー順位を取得できるか", "APIで公式週間順位を取得できるか", "派生集計の3か月超保持可否"],
+    "review_due_at": "2026-10-15",
+    "evidence_references": ["https://webservice.rakuten.co.jp/guide/rule", "https://webservice.rakuten.co.jp/documentation/ichiba-item-ranking", "https://webservice.rakuten.co.jp/guide/credit", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974343", "https://webservice.faq.rakuten.net/hc/ja/articles/900001974363", "https://ranking.rakuten.co.jp/robots.txt"],
+    "notes": "rakuten-ichiba-ranking.mdを正本として機械可読化。APIキー入力・API呼び出しは未実施。"
+  }
+]

@@ -1,0 +1,145 @@
+{
+  "schema_version": "0.3.0",
+  "record_id": "rvw-2026-07-15-cybex-melio-carbon-2026-official",
+  "created_at": "2026-07-15T16:20:00+09:00",
+  "updated_at": "2026-07-15T16:30:42+09:00",
+  "review_report_id": "rvw-2026-07-15-cybex-melio-carbon-2026-official",
+  "run_id": "run-2026-07-15-cybex-melio-carbon-2026-official",
+  "summary": "CYBEX公式情報限定パイロットを独立監査し、人間レビュー判断を反映した。ブランドCYBEX・正式商品名Melio Carbon・モデル年2026・市場JPは暫定承認、モデル共通型番はnull、商品コード526000803はCinnamon Yellow variantへ分離したためidentification_statusはprovisional。新生児対応の矛盾は1グループ(公式記載3点をaxis別5claimで表現)とtarget_age/newborn_readyのconflicting状態で保持した。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "identification_status": "provisional",
+      "source_count": 4,
+      "claim_count": 26,
+      "unconfirmed_axes": ["price"],
+      "conflicts": 1
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "audit_01_manufacturer_official_sources_only",
+      "result": "pass",
+      "detail": "4/4がCYBEX公式サイト、公式ダウンロードセンター、または公式ページから直接到達した取扱説明書。全件primary/self_published_by_maker。"
+    },
+    {
+      "check_name": "audit_02_no_search_snippets_as_evidence",
+      "result": "pass",
+      "detail": "検索は発見経路のみ。source/claimに検索結果スニペットを保存していない。"
+    },
+    {
+      "check_name": "audit_03_official_product_name_evidence",
+      "result": "pass",
+      "detail": "src-melio26-001の商品ページ表記Melio Carbonへ戻れる。"
+    },
+    {
+      "check_name": "audit_04_model_year_2026_evidence",
+      "result": "pass",
+      "detail": "src-melio26-002のMelio Carbon (2026)とclm-melio26-021へ戻れる。"
+    },
+    {
+      "check_name": "audit_05_jp_market_evidence",
+      "result": "pass",
+      "detail": "JPストアフロント、日本向けダウンロード版、日本語取説の根拠を保持。"
+    },
+    {
+      "check_name": "audit_06_product_code_is_variant_code",
+      "result": "pass",
+      "detail": "model_numberはnull。526000803はCinnamon Yellowのvariants[].product_codeおよびsource.variant_product_code_as_writtenへ分離。"
+    },
+    {
+      "check_name": "audit_07_current_and_2025_separated",
+      "result": "pass",
+      "detail": "src-melio26-004/clm-melio26-023で2025の別商品URLを保持し、2026のnormalized featureへ2025仕様を混入していない。"
+    },
+    {
+      "check_name": "audit_08_no_old_or_overseas_specs_mixed",
+      "result": "pass",
+      "detail": "対象sourceはJPとして記録され、旧モデル・海外仕様由来のfeature参照はない。取説の対象一致はprobableのまま。"
+    },
+    {
+      "check_name": "audit_09_claim_to_source_traceability",
+      "result": "pass",
+      "detail": "26/26 claimのsource_record_idが実在し対象identityと一致。"
+    },
+    {
+      "check_name": "audit_10_feature_to_claim_traceability",
+      "result": "pass",
+      "detail": "値あり・conflicting featureはsupporting_claimsへ戻れ、単純未確認priceだけ参照が空。"
+    },
+    {
+      "check_name": "audit_11_manufacturer_claim_separated",
+      "result": "pass",
+      "detail": "from birth表現はmanufacturer_claim、仕様・取説はofficial_spec/manual_safetyとして分離。"
+    },
+    {
+      "check_name": "audit_12_newborn_conflict_preserved",
+      "result": "pass",
+      "detail": "公式記載3点(clm-melio26-004/012/014)とnewborn_ready用clm-melio26-025/026をconflictingかつ相互参照とし、newborn_readyはnull/conflicting。"
+    },
+    {
+      "check_name": "audit_13_unknown_values_are_null",
+      "result": "pass",
+      "detail": "不明値を0や空文字へ変換していない。priceはnull/unconfirmed、newborn_readyはnull/conflicting。"
+    },
+    {
+      "check_name": "audit_14_site_product_match_probable",
+      "result": "pass",
+      "detail": "site_product_idは4を維持し、site_product_match_statusはprobable。"
+    },
+    {
+      "check_name": "audit_15_pdf_official_discovery_route",
+      "result": "pass",
+      "detail": "src-melio26-003にdiscovery_page_url、direct_asset_url、discovered_via_official_page=trueを構造化保存。"
+    },
+    {
+      "check_name": "audit_16_quotes_are_minimal",
+      "result": "pass",
+      "detail": "claimは短い仕様句・構造化要約に限定し、ページ全文・PDF全文を保存していない。"
+    },
+    {
+      "check_name": "audit_17_no_real_product_score_or_rank",
+      "result": "pass",
+      "detail": "run内にranking_input/ranking_resultファイルがなく、実在商品用得点・順位フィールドもない。"
+    },
+    {
+      "check_name": "audit_18_not_published",
+      "result": "pass",
+      "detail": "publication_statusはreview_required。"
+    },
+    {
+      "check_name": "audit_19_all_contract_validations_pass",
+      "result": "pass",
+      "detail": "validate-run.mjsでrun_manifest/product_identity/source×4/claim×26/feature×14/review_reportと参照整合性を検証。"
+    },
+    {
+      "check_name": "audit_20_included_accessories_standardized",
+      "result": "pass",
+      "detail": "claim/normalized feature/research summaryをincluded_accessoriesへ統一。included_itemsはdeprecated aliasのみ。"
+    }
+  ],
+  "open_questions": [
+    "モデル全体に共通する型番は未確認。確認できるまではmodel_number:null / identification_status:provisionalを維持する",
+    "Cinnamon Yellow以外の商品コードと、色違い間の重量・寸法・付属品・機能等の仕様同一性は未確認",
+    "取扱説明書の表題は『メリオ』のみであり、Melio Carbon (2026)日本向けページからの到達を根拠にmatch_status: probableを維持する",
+    "manufacturer_name(製造者法人名)と、2025年モデルとの公式な後継関係は未確認",
+    "公式ページ内の出生時/生後1ヶ月表記の矛盾はメーカー確認等が得られるまで未解決",
+    "公式価格は未確認",
+    "第三者レビュー・口コミ媒体の利用規約と引用運用は未確認"
+  ],
+  "recommended_next_actions": [
+    "外部媒体の利用規約と引用・要約運用を確認する",
+    "第三者レビュー・実測・口コミは公式sourceと分離した別工程で収集する",
+    "モデル共通型番、他カラーvariant、色違い間の仕様同一性を追加確認する",
+    "2025年モデルのproduct_identityを別途作成し、確認できた場合だけ新旧参照を張る"
+  ],
+  "editorial_notes": [
+    {
+      "topic": "newborn_usage_start_conflict",
+      "text": "公式情報内で使用開始時期の表記が一致していません。IRODORIでは、現時点では取扱説明書および仕様欄に基づき「生後1か月から」を安全側の基準として扱います。",
+      "evidence_status": "conflicting",
+      "supporting_claims": ["clm-melio26-004", "clm-melio26-012", "clm-melio26-014"]
+    }
+  ],
+  "publication_status": "review_required"
+}

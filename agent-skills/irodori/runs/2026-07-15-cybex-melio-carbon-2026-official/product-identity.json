@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.3.0",
+  "record_id": "pid-cybex-melio-carbon-2026-jp",
+  "created_at": "2026-07-15T15:55:00+09:00",
+  "updated_at": "2026-07-15T16:30:42+09:00",
+  "notes": "人間レビューによりブランドCYBEX・正式商品名Melio Carbon・モデル年2026・市場JPをパイロットとして暫定承認。モデル共通型番は未確認。商品コード526000803はCinnamon Yellowのvariantコードでありmodel_numberではない。取扱説明書の表題は『メリオ』のみのためsource側match_statusはprobableを維持。site_product_id '4'は関連付け候補としてprobableであり、同一性の最終確定ではない。",
+  "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+  "official_name": "Melio Carbon",
+  "brand_name": "CYBEX",
+  "manufacturer_name": null,
+  "model_number": null,
+  "model_year": 2026,
+  "market": "JP",
+  "lifecycle_status": "current",
+  "predecessor_of": null,
+  "successor_of": null,
+  "variant_of": null,
+  "variant_axis": null,
+  "category": "stroller",
+  "official_url": "https://www.cybex-online.com/en/jp/p/st-go-melio-carbon-6.html",
+  "identification_status": "provisional",
+  "identification_evidence": [
+    "src-melio26-001",
+    "src-melio26-002",
+    "src-melio26-003",
+    "src-melio26-004"
+  ],
+  "unconfirmed_fields": [
+    "manufacturer_name",
+    "model_number",
+    "successor_of",
+    "variant_specification_equivalence_other_colorways"
+  ],
+  "site_product_id": "4",
+  "site_product_match_status": "probable",
+  "variants": [
+    {
+      "variant_id": "var-cybex-melio-carbon-2026-jp-cinnamon-yellow",
+      "color_name": "Cinnamon Yellow",
+      "product_code": "526000803",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-melio26-009"],
+      "notes": "Cinnamon Yellowの商品コードのみ確認済み。他色との仕様同一性は今回未確認。"
+    }
+  ]
+}
