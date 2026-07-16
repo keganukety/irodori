@@ -293,6 +293,8 @@ export interface ProductIdentity extends BaseContractRecord {
   manufacturer_name: string | null;
   model_number: string | null;
   model_year: number | null;
+  /** Domestic generation label. It must not be promoted to model_year or model_number. */
+  generation_code?: string | null;
   market: Market;
   lifecycle_status: LifecycleStatus;
   predecessor_of: string | null;

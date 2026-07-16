@@ -383,6 +383,9 @@ export function validateProductIdentity(value: unknown): ValidationReport<Produc
     nullableString(item.manufacturer_name, collector, "$.manufacturer_name");
     nullableString(item.model_number, collector, "$.model_number");
     nullableNumber(item.model_year, collector, "$.model_year");
+    if (item.generation_code !== undefined) {
+      nullableString(item.generation_code, collector, "$.generation_code");
+    }
     if (typeof item.model_year === "number"
       && (!Number.isInteger(item.model_year) || item.model_year < 1900 || item.model_year > 2200)) {
       collector.fail("$.model_year", "value.model_year", "1900〜2200の整数が必要です");

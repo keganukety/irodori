@@ -102,6 +102,7 @@
 | `manufacturer_name` | string | 任意 | 製造元(ブランドと異なる場合) | null | P |
 | `model_number` | string \| null | 任意 | 型番(公式表記) | null + `unconfirmed_fields` に記載 | C |
 | `model_year` | number \| null | 任意 | モデル年(西暦) | null + `unconfirmed_fields` に記載。**推測しない** | C |
+| `generation_code` | string \| null | 任意 | 国内世代記号。`model_year` / `model_number` へ自動昇格しない | null | C |
 | `market` | string | 必須 | `JP` / `overseas` / `unknown` | `unknown` | C |
 | `lifecycle_status` | string | 必須 | `current` / `discontinued` / `unknown` | `unknown` | C |
 | `predecessor_of` / `successor_of` | string \| null | 任意 | 新旧関係にある `product_identity_id` | null | C |
