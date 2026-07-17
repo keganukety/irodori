@@ -9,6 +9,18 @@ export type Product = {
   [key: string]: unknown;
 };
 
+/**
+ * 管理画面専用の商品型。管理者だけが取得できる内部管理カラムを含む。
+ * 公開サイト側では使用しないこと(公開側は lib/publicProducts の PublicProduct を使う)。
+ */
+export type AdminProduct = Product & {
+  memo?: string | null;
+  spec_source_url?: string | null;
+  spec_checked_date?: string | null;
+  affiliate_checked_at?: string | null;
+  affiliate_note?: string | null;
+};
+
 export type Brand = {
   id: string;
   slug: string;

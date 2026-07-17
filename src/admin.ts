@@ -1,6 +1,6 @@
 import './admin.css';
 import { supabase } from './lib/supabase';
-import type { ImageRole, Product, ProductAffiliateImage, ProductColor, ProductUploadedImage, UploadedImageMimeType } from './types';
+import type { AdminProduct as Product, ImageRole, ProductAffiliateImage, ProductColor, ProductUploadedImage, UploadedImageMimeType } from './types';
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from './youtube';
 import {
   createRakutenAffiliateCandidate,
@@ -255,7 +255,8 @@ function bindShellEvents() {
 
 async function loadData() {
   const [productResult, imageResult, uploadedImageResult, colorResult] = await Promise.all([
-    supabase.from('products').select('*').order('id', { ascending: true }),
+    // products本体は管理者専用RPC経由で取得する(直接SELECT権限はrevoke済み)。
+    supabase.rpc('list_products'),
     supabase
       .from('product_affiliate_images')
       .select('*')

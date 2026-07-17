@@ -12,9 +12,10 @@ import {
   updateCompareState,
 } from './shared-ui';
 import { supabase } from './lib/supabase';
+import { selectPublicProducts, type PublicProduct as SharedProduct } from './lib/publicProducts';
 import { setupProductQuickView } from './product-quick-view';
 import type { SiteAsset } from './siteAssetTypes';
-import type { Brand, Product as SharedProduct, ProductColor } from './types';
+import type { Brand, ProductColor } from './types';
 
 type Product = {
   id: string | number;
@@ -256,7 +257,7 @@ async function renderPublicPage() {
   `;
 
   const [productsResult, imagesResult, colorsResult, brandsResult, siteAssets] = await Promise.all([
-    supabase.from('products').select('*').order('id', { ascending: true }),
+    selectPublicProducts().order('id', { ascending: true }),
     supabase
       .from('product_affiliate_images')
       .select('product_id, rakuten_image_html, is_primary, display_order')

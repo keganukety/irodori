@@ -1,7 +1,7 @@
 import './admin.css';
 import './affiliateAdmin.css';
 import { supabase } from './lib/supabase';
-import type { Product, ProductAffiliateImage, ProductUploadedImage } from './types';
+import type { AdminProduct as Product, ProductAffiliateImage, ProductUploadedImage } from './types';
 import { normalizeProductDisplayBrand, normalizeProductDisplayName } from './shared-ui';
 
 const appElement = document.querySelector<HTMLDivElement>('#affiliate-admin-app');
@@ -170,7 +170,8 @@ async function renderAdmin(): Promise<void> {
 
 async function loadData(): Promise<void> {
   const [productResult, affiliateImageResult, uploadedImageResult] = await Promise.all([
-    supabase.from('products').select('*').order('id', { ascending: true }),
+    // products本体は管理者専用RPC経由で取得する(直接SELECT権限はrevoke済み)。
+    supabase.rpc('list_products'),
     supabase
       .from('product_affiliate_images')
       .select('product_id, rakuten_image_html, image_url, is_primary, display_order, sort_order')

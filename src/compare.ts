@@ -1,5 +1,6 @@
 import './styles.css';
 import { supabase } from './lib/supabase';
+import { selectPublicProducts } from './lib/publicProducts';
 import {
   clearCompareIds,
   extractImageSrc,
@@ -96,7 +97,7 @@ async function initializeComparePage(): Promise<void> {
   try {
     const selectedIds: string[] = loadCompareProductIds();
 
-    const { data: products, error: productsError } = await supabase.from('products').select('*');
+    const { data: products, error: productsError } = await selectPublicProducts();
 
     if (productsError) {
       throw productsError;

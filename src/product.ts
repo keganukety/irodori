@@ -6,6 +6,7 @@ import {
   normalizeProductDisplayName,
 } from './shared-ui';
 import { supabase } from './lib/supabase';
+import { selectPublicProducts } from './lib/publicProducts';
 import type { Brand, ProductColor, ProductUploadedImage } from './types';
 import { getYouTubeEmbedUrl, getYouTubeThumbnailUrl, isValidYouTubeVideoId } from './youtube';
 
@@ -65,9 +66,7 @@ type Product = {
   manufacturer_country?: string | null;
   brand_country?: string | null;
   country_of_origin?: string | null;
-  precautions?: string | null;
-  notes?: string | null;
-  memo?: string | null;
+  caution_notes?: string | null;
   model_number?: string | null;
   sku?: string | null;
   jan_code?: string | null;
@@ -168,13 +167,13 @@ async function renderProductDetail() {
   app.innerHTML = `<main class="detail-shell"><p class="detail-loading">商品詳細を読み込んでいます。</p></main>`;
 
   const [productResult, imagesResult, allProductsResult, allImagesResult, colorsResult, uploadedColorResult, brandsResult] = await Promise.all([
-    supabase.from('products').select('*').eq('id', productId).maybeSingle(),
+    selectPublicProducts().eq('id', productId).maybeSingle(),
     supabase
       .from('product_affiliate_images')
       .select('*')
       .eq('product_id', productId)
       .order('display_order', { ascending: true }),
-    supabase.from('products').select('*').order('id', { ascending: true }),
+    selectPublicProducts().order('id', { ascending: true }),
     supabase
       .from('product_affiliate_images')
       .select('product_id, rakuten_image_html, is_primary, display_order')
@@ -536,7 +535,9 @@ function getProductSpecificationRows(product: Product): SpecificationRow[] {
   addSpecRow(rows, product, '付属品', [['accessories'], ['included_items']]);
   addSpecRow(rows, product, '保証', [['warranty'], ['guarantee']]);
   addSpecRow(rows, product, 'メーカー所在国', [['manufacturer_country'], ['brand_country'], ['country_of_origin']]);
-  addSpecRow(rows, product, '注意事項', [['precautions'], ['notes'], ['memo']], { notes: true });
+  // 注意事項は公開用カラムcaution_notesだけを使う。管理用の内部テキストへは
+  // フォールバックしない(公開情報が無ければ行ごと非表示になる)。
+  addSpecRow(rows, product, '注意事項', [['caution_notes']], { notes: true });
   addSpecRow(rows, product, '品番', [['model_number'], ['sku'], ['jan_code'], ['product_code']]);
 
   return rows;
@@ -603,7 +604,7 @@ function addSpecRow(
     const value = options.appendUnit ? appendUnitIfNeeded(rawValue, options.appendUnit) : rawValue;
 
     if (!isPresentSpecValue(value)) continue;
-    if (options.notes && isManagementMemo(value)) continue;
+    if (options.notes && isInternalNoteText(value)) continue;
 
     rows.push({
       label,
@@ -825,7 +826,7 @@ function isPresentSpecValue(value: string) {
   return !/不明|未登録/.test(normalized);
 }
 
-function isManagementMemo(value: string) {
+function isInternalNoteText(value: string) {
   return /未確認|要確認|ランキング|調査|source/i.test(value);
 }
 

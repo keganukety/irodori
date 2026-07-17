@@ -3,6 +3,7 @@ import './stroller-guide.css';
 import { applyFadeUpAnimations, mountCommonHeader } from './shared-ui';
 import { fallbackProducts } from './data/fallback-products';
 import { supabase } from './lib/supabase';
+import { selectPublicProducts } from './lib/publicProducts';
 import type { SiteAssetMediaType, SiteAssetMimeType } from './siteAssetTypes';
 
 // mount系より前に宣言する。mountStrollerHeroMedia は同期セグメントで
@@ -629,7 +630,7 @@ async function mountStrollerTypeImages(): Promise<void> {
 
 async function loadGuideProducts(): Promise<GuideProduct[]> {
   try {
-    const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+    const { data, error } = await selectPublicProducts().order('id', { ascending: true });
     if (!error && data?.length) return data as GuideProduct[];
     if (error) console.info('ベビーカータイプ画像はフォールバック商品画像を使用します。', error.message);
   } catch (error) {
