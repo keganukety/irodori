@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1.0",
+  "contract_id": "irodori-ranking-coverage-contract-proposed-v1",
+  "status": "proposed",
+  "publication_status": "draft",
+  "value_status": "proposed",
+  "reference_profile_id": "balanced",
+  "criterion_handling": {
+    "scoreable": {"in_denominator": true, "in_numerator": true},
+    "unknown": {"in_denominator": true, "in_numerator": false},
+    "unresolved_conflict": {"in_denominator": true, "in_numerator": false},
+    "not_comparable": {"in_denominator": true, "in_numerator": false},
+    "analysis_error": {"calculation_result": null},
+    "not_applicable": {"in_denominator": false, "in_numerator": false}
+  },
+  "parent_axes": [
+    {"parent_axis_id": "transport_burden", "minimum_scoreable_criterion_count": 2, "value_status": "proposed"},
+    {"parent_axis_id": "station_space_fit", "minimum_scoreable_criterion_count": 2, "value_status": "proposed"},
+    {"parent_axis_id": "folding_independence", "minimum_scoreable_criterion_count": 2, "value_status": "proposed"},
+    {"parent_axis_id": "carry_assistance", "minimum_scoreable_criterion_count": 2, "value_status": "proposed"}
+  ],
+  "state_precedence": [
+    "analysis_error",
+    "ineligible_for_scenario",
+    "eligible_with_unresolved_conflict",
+    "not_comparable",
+    "eligible_but_insufficient_evidence",
+    "scoreable"
+  ],
+  "score_contract": {
+    "internal_partial_field": "partial_observed_score",
+    "public_total_field": "total_quality_score",
+    "partial_score_may_be_calculated_below_coverage": true,
+    "public_total_requires_confirmed_profile": true,
+    "profile_changes_score_calculation": false,
+    "profile_changes_display_and_ranking_eligibility_only": true
+  },
+  "scenario_contract": {
+    "mix_benchmark_segments": false,
+    "ineligible_score": null,
+    "not_comparable_score": null,
+    "minimum_candidates_for_ranking": 2,
+    "ranking_generation_in_private_analysis": false
+  },
+  "prohibited_quality_inputs": [
+    "basket_capacity",
+    "basket_max_load_kg",
+    "basket_volume_l",
+    "maneuverability",
+    "suspension",
+    "tire_count",
+    "tire_diameter",
+    "review_sentiment",
+    "review_count",
+    "external_ranking",
+    "rakuten_ranking",
+    "rakuten_review_count",
+    "manufacturer_marketing_claim",
+    "affiliate_rate",
+    "market_demand_signal"
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://irodori.example/contracts/ranking-coverage-contract/0.1.0",
+  "title": "IRODORI proposed ranking coverage contract",
+  "description": "Machine-readable design contract for a future DB schema. This is not a migration and all thresholds remain proposed.",
+  "type": "object",
+  "required": ["contract", "profile_set"],
+  "properties": {
+    "contract": {"$ref": "#/$defs/coverageContract"},
+    "profile_set": {"$ref": "#/$defs/profileSet"},
+    "assessment": {"$ref": "#/$defs/candidateAssessment"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "valueStatus": {"const": "proposed"},
+    "criterionEvidenceState": {
+      "enum": ["scoreable", "unknown", "unresolved_conflict", "not_comparable", "analysis_error"]
+    },
+    "criterionApplicability": {"enum": ["applicable", "not_applicable"]},
+    "scoreState": {
+      "enum": [
+        "scoreable",
+        "eligible_but_insufficient_evidence",
+        "eligible_with_unresolved_conflict",
+        "ineligible_for_scenario",
+        "not_comparable",
+        "analysis_error"
+      ]
+    },
+    "parentAxisState": {
+      "enum": ["scoreable", "partially_scoreable", "unassessed", "not_applicable"]
+    },
+    "criterionObservation": {
+      "type": "object",
+      "required": ["criterion_id", "parent_axis_id", "weight", "applicability", "evidence_state", "reason_codes"],
+      "properties": {
+        "criterion_id": {"type": "string", "minLength": 1},
+        "parent_axis_id": {"type": "string", "minLength": 1},
+        "weight": {"type": "number", "exclusiveMinimum": 0},
+        "applicability": {"$ref": "#/$defs/criterionApplicability"},
+        "evidence_state": {"$ref": "#/$defs/criterionEvidenceState"},
+        "reason_codes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "parentAxisRequirement": {
+      "type": "object",
+      "required": ["parent_axis_id", "minimum_scoreable_criterion_count", "value_status"],
+      "properties": {
+        "parent_axis_id": {"type": "string", "minLength": 1},
+        "minimum_scoreable_criterion_count": {"type": "integer", "minimum": 2},
+        "value_status": {"$ref": "#/$defs/valueStatus"}
+      },
+      "additionalProperties": false
+    },
+    "coverageProfile": {
+      "type": "object",
+      "required": [
+        "profile_id", "label", "value_status", "minimum_criterion_coverage",
+        "minimum_parent_axis_coverage", "minimum_represented_parent_count",
+        "minimum_weighted_coverage", "allow_unresolved_conflicts",
+        "required_criterion_ids", "score_display_conditions", "ranking_conditions"
+      ],
+      "properties": {
+        "profile_id": {"enum": ["lenient", "balanced", "strict"]},
+        "label": {"type": "string", "minLength": 1},
+        "value_status": {"$ref": "#/$defs/valueStatus"},
+        "minimum_criterion_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "minimum_parent_axis_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "minimum_represented_parent_count": {"type": "integer", "minimum": 1},
+        "minimum_weighted_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "allow_unresolved_conflicts": {"type": "boolean"},
+        "required_criterion_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "score_display_conditions": {"type": "object"},
+        "ranking_conditions": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "coverageContract": {
+      "type": "object",
+      "required": [
+        "schema_version", "contract_id", "status", "publication_status", "value_status",
+        "reference_profile_id", "criterion_handling", "parent_axes", "state_precedence",
+        "score_contract", "scenario_contract", "prohibited_quality_inputs"
+      ],
+      "properties": {
+        "schema_version": {"const": "0.1.0"},
+        "contract_id": {"type": "string", "minLength": 1},
+        "status": {"const": "proposed"},
+        "publication_status": {"const": "draft"},
+        "value_status": {"$ref": "#/$defs/valueStatus"},
+        "reference_profile_id": {"enum": ["lenient", "balanced", "strict"]},
+        "criterion_handling": {"type": "object"},
+        "parent_axes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/parentAxisRequirement"}},
+        "state_precedence": {"type": "array", "items": {"$ref": "#/$defs/scoreState"}, "uniqueItems": true},
+        "score_contract": {"type": "object"},
+        "scenario_contract": {"type": "object"},
+        "prohibited_quality_inputs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "profileSet": {
+      "type": "object",
+      "required": ["schema_version", "profile_set_id", "status", "publication_status", "notice", "profiles"],
+      "properties": {
+        "schema_version": {"const": "0.1.0"},
+        "profile_set_id": {"type": "string", "minLength": 1},
+        "status": {"const": "proposed"},
+        "publication_status": {"const": "draft"},
+        "notice": {"type": "string", "minLength": 1},
+        "profiles": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/coverageProfile"}}
+      },
+      "additionalProperties": false
+    },
+    "parentAxisCoverage": {
+      "type": "object",
+      "required": [
+        "parent_axis_id", "state", "scoreable_criterion_count", "applicable_criterion_count",
+        "minimum_scoreable_criterion_count", "coverage_ratio", "reason_codes"
+      ],
+      "properties": {
+        "parent_axis_id": {"type": "string"},
+        "state": {"$ref": "#/$defs/parentAxisState"},
+        "scoreable_criterion_count": {"type": "integer", "minimum": 0},
+        "applicable_criterion_count": {"type": "integer", "minimum": 0},
+        "minimum_scoreable_criterion_count": {"type": "integer", "minimum": 2},
+        "coverage_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "reason_codes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "profileAssessment": {
+      "type": "object",
+      "required": [
+        "profile_id", "value_status", "score_state", "gate_results",
+        "score_display_eligibility", "ranking_candidate_eligibility", "ranking_eligibility",
+        "reason_codes"
+      ],
+      "properties": {
+        "profile_id": {"enum": ["lenient", "balanced", "strict"]},
+        "value_status": {"$ref": "#/$defs/valueStatus"},
+        "score_state": {"$ref": "#/$defs/scoreState"},
+        "gate_results": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "score_display_eligibility": {"type": "boolean"},
+        "ranking_candidate_eligibility": {"type": "boolean"},
+        "ranking_eligibility": {"type": "boolean"},
+        "reason_codes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "candidateAssessment": {
+      "type": "object",
+      "required": [
+        "candidate_id", "scenario_id", "criterion_observations", "criterion_coverage",
+        "parent_axis_coverage", "weighted_coverage", "represented_parent_count",
+        "unresolved_conflict_count", "partial_observed_score", "total_quality_score",
+        "total_quality_score_displayed", "profile_assessments"
+      ],
+      "properties": {
+        "candidate_id": {"type": "string"},
+        "scenario_id": {"type": "string"},
+        "criterion_observations": {"type": "array", "items": {"$ref": "#/$defs/criterionObservation"}},
+        "criterion_coverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "parent_axis_coverage": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "array", "items": {"$ref": "#/$defs/parentAxisCoverage"}}
+          ]
+        },
+        "weighted_coverage": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "represented_parent_count": {"type": ["integer", "null"], "minimum": 0},
+        "unresolved_conflict_count": {"type": "integer", "minimum": 0},
+        "partial_observed_score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+        "total_quality_score": {"type": "null"},
+        "total_quality_score_displayed": {"const": false},
+        "profile_assessments": {"type": "array", "items": {"$ref": "#/$defs/profileAssessment"}}
+      },
+      "additionalProperties": true
+    }
+  }
+}

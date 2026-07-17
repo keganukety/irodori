@@ -9,7 +9,11 @@
   "scenario_eligibility_ref": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/scenario-eligibility.json",
   "normalization_rules_ref": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/normalization-rules.json",
   "engine_ref": "agent-skills/irodori/irodori-ranking-engine/scripts/ranking-engine.ts",
-  "engine_calc_version": "calc-train-prototype-0.2.0/private-sensitivity-0.1.0",
+  "coverage_contract_ref": "agent-skills/irodori/irodori-ranking-engine/config/coverage-contract.proposed.json",
+  "coverage_profiles_ref": "agent-skills/irodori/irodori-ranking-engine/config/coverage-profiles.proposed.json",
+  "coverage_schema_ref": "agent-skills/irodori/irodori-ranking-engine/contracts/coverage-contract.schema.json",
+  "coverage_reference_profile_id": "balanced",
+  "engine_calc_version": "calc-train-prototype-0.2.0/private-sensitivity-coverage-0.2.0",
   "allocation_assumption": {
     "status": "proposed_analysis_only",
     "reason": "The current four-parent-axis proposal explicitly leaves point allocation undefined. Equal parent weights and equal child weights within each parent are a neutral trial overlay, not a rubric decision.",
