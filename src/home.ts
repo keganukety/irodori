@@ -1120,6 +1120,7 @@ function renderHomeFooter(): string {
             <a href="/compare.html">比較する</a>
             <a href="/stroller-guide.html">ベビーカー診断</a>
             <a href="/brand.html">ブランド</a>
+            <a href="/privacy">プライバシーポリシー</a>
           </nav>
         </div>
         <div class="home-footer__bottom">
