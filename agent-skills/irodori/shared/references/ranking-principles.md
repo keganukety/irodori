@@ -29,6 +29,20 @@
   + 0.15 × claim reliability`。各成分は0〜1へ正規化する。
 - 上記は架空fixtureで設計を検証する仮値。coverageやconfidenceをobserved_scoreへ加算・乗算しない [C]。
 
+Coverage安全装置の追加契約 [C](分離原則) / [P](profile値):
+
+- 実在商品の非公開coverage分析で`observed_score`を残す場合は、公開total scoreと誤認しない
+  `partial_observed_score`名で出す。正式profile未確定中の`total_quality_score`は生成しない。
+- criterion coverage、parent-axis coverage、weighted coverageを別々に計算する。unknownとconflict、
+  measurement scope等のnot-comparableは適用criterionの分母に残して分子から除外し、
+  scenario上のnot-applicableだけを分母・分子の両方から除外する。
+- parent-axis coverageは親軸別状態と最低評価幅を持ち、1 criterionだけの親軸を十分評価済みへ
+  自動昇格しない。最低評価幅は未確定のため`proposed`にする。
+- score計算、score表示可否、ranking候補可否、同一scenario内のranking生成可否を分離する。
+  proposed profileは表示・ranking可否だけを変更し、criterion scoreやpartial scoreを書き換えない。
+- state、計算式、proposed profileの正本は
+  `irodori-ranking-engine/references/coverage-contract.md`と機械可読config/schemaを参照する。
+
 矛盾軸の参加判定 [C](方針) / [P](設定値):
 
 - 必須軸の未解決矛盾は商品全体を `on_hold`。
@@ -98,6 +112,8 @@
 - 商業条件のスコア反映
 - `products.rank_no` への書き込み(既存サイトの手動順位。本スキル群からは変更しない)
 - 実在商品のランキング決定(identity・調査契約・設定値が人間確認されるまで禁止)
+- 低coverageの`partial_observed_score`を公開total scoreとして表示すること
+- scenario不適合、未解決矛盾、比較不能、分析errorを0点・false・最下位へ変換すること
 
 ## 8. SHA-256入力ハッシュとcanonicalization [C]
 
@@ -114,3 +130,6 @@
   順序に意味がある配列は入力順を保持する。
 - hash計算時は既存の `input_hash` / `input_hash_algorithm` をnullとして除外し、
   同じ意味・同じ設定・同じ計算版なら配列入力順に関係なく同じhashにする。
+- 非公開分析の`input-snapshot`、analysis config、coverage contract/profile/schemaの管理用fingerprintは、
+  checkout環境の差を除くためCRLFだけをLFへ正規化してからSHA-256を計算する。
+  JSONの空白・key順・値と、frozen snapshot内の既存artifact fingerprintは書き換えない。

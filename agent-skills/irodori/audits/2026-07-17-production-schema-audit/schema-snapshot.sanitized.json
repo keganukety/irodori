@@ -1,0 +1,1972 @@
+{
+  "meta": {
+    "generated_at": "2026-07-17T16:47:45+09:00",
+    "source": "PostgREST OpenAPI spec, GET /rest/v1/ (endpoint host <redacted>)",
+    "method": "read-only GET only; no data mutation performed",
+    "notes": [
+      "anon key request to GET /rest/v1/ returned HTTP 401 {\"message\":\"Invalid API key\",\"hint\":\"Only the `service_role` API key can be used for this endpoint.\"} — this Supabase project restricts the OpenAPI/root endpoint to service_role, so the anon-view schema could not be obtained from OpenAPI.",
+      "anon visibility was instead measured empirically via GET/HEAD probes per table (see production-probe-results.md).",
+      "service_role OpenAPI returned HTTP 200 (102,704 bytes)."
+    ]
+  },
+  "service_view": {
+    "tables": {
+      "brands": {
+        "required": [
+          "id",
+          "slug",
+          "display_name",
+          "short_description",
+          "description",
+          "seo_title",
+          "seo_description",
+          "is_published",
+          "created_at",
+          "updated_at"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "slug": {
+            "type": "string",
+            "format": "text"
+          },
+          "display_name": {
+            "type": "string",
+            "format": "text"
+          },
+          "short_description": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "official_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "logo_asset_key": {
+            "type": "string",
+            "format": "text",
+            "description": "Note:\nThis is a Foreign Key to `site_assets.asset_key`.<fk table='site_assets' column='asset_key'/>"
+          },
+          "youtube_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "seo_title": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "seo_description": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "is_published": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "hero_asset_key": {
+            "type": "string",
+            "format": "text",
+            "description": "Brand hero site_assets.asset_key. desktop_image_url is the PC hero and mobile_image_url is the SP hero.\n\nNote:\nThis is a Foreign Key to `site_assets.asset_key`.<fk table='site_assets' column='asset_key'/>"
+          }
+        }
+      },
+      "site_assets": {
+        "required": [
+          "id",
+          "asset_key",
+          "asset_type",
+          "title",
+          "alt_text",
+          "caption",
+          "desktop_image_url",
+          "desktop_storage_path",
+          "desktop_mime_type",
+          "desktop_width",
+          "desktop_height",
+          "display_order",
+          "is_published",
+          "created_at",
+          "updated_at",
+          "media_type"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "asset_key": {
+            "type": "string",
+            "format": "text"
+          },
+          "asset_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "title": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "alt_text": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "caption": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "desktop_image_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "desktop_storage_path": {
+            "type": "string",
+            "format": "text"
+          },
+          "desktop_mime_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "desktop_width": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "desktop_height": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "mobile_image_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "mobile_storage_path": {
+            "type": "string",
+            "format": "text"
+          },
+          "mobile_mime_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "mobile_width": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "mobile_height": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "link_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "display_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 1
+          },
+          "is_published": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "timestamp with time zone"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "timestamp with time zone"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "folder_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Note:\nThis is a Foreign Key to `asset_folders.id`.<fk table='asset_folders' column='id'/>"
+          },
+          "media_type": {
+            "type": "string",
+            "format": "text",
+            "default": "image",
+            "description": "Primary media kind for this site asset. Existing desktop_image_url/mobile_image_url columns store the public media URL for both images and videos."
+          }
+        }
+      },
+      "rakuten_affiliate_shop_settings": {
+        "required": [
+          "shop_key",
+          "me_id",
+          "affiliate_path",
+          "created_at",
+          "updated_at",
+          "id"
+        ],
+        "columns": {
+          "shop_key": {
+            "type": "string",
+            "format": "text",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "me_id": {
+            "type": "string",
+            "format": "text"
+          },
+          "affiliate_path": {
+            "type": "string",
+            "format": "text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()"
+          },
+          "sample_affiliate_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "sample_item_url": {
+            "type": "string",
+            "format": "text"
+          }
+        }
+      },
+      "product_image_backups": {
+        "required": [
+          "product_id",
+          "created_at"
+        ],
+        "columns": {
+          "product_id": {
+            "type": "integer",
+            "format": "bigint",
+            "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>"
+          },
+          "original_image_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "admin_users": {
+        "required": [
+          "user_id",
+          "created_at"
+        ],
+        "columns": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "asset_folders": {
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "sort_order",
+          "created_at",
+          "updated_at"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "name": {
+            "type": "string",
+            "format": "text"
+          },
+          "slug": {
+            "type": "string",
+            "format": "text"
+          },
+          "description": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 100
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "products": {
+        "required": [
+          "id",
+          "name",
+          "category"
+        ],
+        "columns": {
+          "id": {
+            "type": "integer",
+            "format": "bigint",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "name": {
+            "type": "string",
+            "format": "text"
+          },
+          "brand": {
+            "type": "string",
+            "format": "text"
+          },
+          "category": {
+            "type": "string",
+            "format": "text"
+          },
+          "price_yen": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "official_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "amazon_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "yahoo_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "product_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "target_age": {
+            "type": "string",
+            "format": "text"
+          },
+          "weight_kg": {
+            "type": "number",
+            "format": "numeric"
+          },
+          "feature_tags": {
+            "type": "string",
+            "format": "text"
+          },
+          "memo": {
+            "type": "string",
+            "format": "text"
+          },
+          "spec_source_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "spec_checked_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "rank_no": {
+            "type": "integer",
+            "format": "integer"
+          },
+          "image_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "maker_logo_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "award_label": {
+            "type": "string",
+            "format": "text"
+          },
+          "is_recommended": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "price_tax_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "availability_status": {
+            "type": "string",
+            "format": "text"
+          },
+          "availability_note": {
+            "type": "string",
+            "format": "text"
+          },
+          "product_size": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 製品サイズ"
+          },
+          "folded_size": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 収納サイズ"
+          },
+          "applicable_weight": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 適応体重"
+          },
+          "load_capacity": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 耐荷重"
+          },
+          "basket_capacity": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: バスケット容量"
+          },
+          "included_accessories": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 付属品"
+          },
+          "warranty": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 保証"
+          },
+          "manufacturer_country": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: メーカー所在国。製造国ではない。"
+          },
+          "caution_notes": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 注意事項。memoは管理用、caution_notesは公開用。"
+          },
+          "model_number": {
+            "type": "string",
+            "format": "text",
+            "description": "公開用の商品仕様: 品番"
+          },
+          "brand_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Note:\nThis is a Foreign Key to `brands.id`.<fk table='brands' column='id'/>"
+          },
+          "affiliate_checked_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "affiliate_note": {
+            "type": "string",
+            "format": "text"
+          }
+        }
+      },
+      "product_uploaded_images": {
+        "required": [
+          "id",
+          "product_id",
+          "storage_bucket",
+          "storage_path",
+          "public_url",
+          "role",
+          "alt_text",
+          "caption",
+          "is_primary",
+          "display_order",
+          "mime_type",
+          "file_size_bytes",
+          "created_at",
+          "updated_at"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "product_id": {
+            "type": "integer",
+            "format": "bigint",
+            "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>"
+          },
+          "storage_bucket": {
+            "type": "string",
+            "format": "text",
+            "default": "product-images"
+          },
+          "storage_path": {
+            "type": "string",
+            "format": "text"
+          },
+          "public_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "role": {
+            "type": "string",
+            "format": "text",
+            "default": "detail"
+          },
+          "alt_text": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "caption": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "is_primary": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "display_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 1
+          },
+          "original_filename": {
+            "type": "string",
+            "format": "text"
+          },
+          "mime_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "file_size_bytes": {
+            "type": "integer",
+            "format": "bigint"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "brand_aliases": {
+        "required": [
+          "brand_id",
+          "alias",
+          "created_at"
+        ],
+        "columns": {
+          "brand_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `brands.id`.<fk table='brands' column='id'/>"
+          },
+          "alias": {
+            "type": "string",
+            "format": "text",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "site_asset_import_sources": {
+        "required": [
+          "id",
+          "site_asset_id",
+          "source_url",
+          "source_url_hash",
+          "created_at"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "site_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Note:\nThis is a Foreign Key to `site_assets.id`.<fk table='site_assets' column='id'/>"
+          },
+          "source_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "source_url_hash": {
+            "type": "string",
+            "format": "text"
+          },
+          "source_page_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "imported_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      },
+      "product_affiliate_images": {
+        "required": [
+          "id",
+          "product_id",
+          "mall",
+          "role",
+          "rakuten_image_html",
+          "is_primary",
+          "display_order",
+          "created_at",
+          "updated_at",
+          "media_type",
+          "sort_order"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "product_id": {
+            "type": "integer",
+            "format": "bigint",
+            "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>"
+          },
+          "mall": {
+            "type": "string",
+            "format": "text",
+            "default": "rakuten"
+          },
+          "role": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_image_html": {
+            "type": "string",
+            "format": "text"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "display_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 1
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "media_type": {
+            "type": "string",
+            "format": "text",
+            "default": "image",
+            "description": "image for existing affiliate images, youtube for product-detail gallery videos."
+          },
+          "youtube_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "youtube_video_id": {
+            "type": "string",
+            "format": "text",
+            "description": "Validated YouTube video id. Frontend embeds only through youtube-nocookie.com."
+          },
+          "thumbnail_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 1
+          },
+          "image_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "affiliate_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "source_type": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_item_url": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_me_id": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_item_id": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_shop_key": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_affiliate_path": {
+            "type": "string",
+            "format": "text"
+          },
+          "rakuten_image_size": {
+            "type": "string",
+            "format": "text"
+          }
+        }
+      },
+      "product_colors": {
+        "required": [
+          "id",
+          "product_id",
+          "name",
+          "color_family",
+          "swatch_hex",
+          "display_order",
+          "is_default",
+          "created_at",
+          "updated_at"
+        ],
+        "columns": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "default": "gen_random_uuid()",
+            "description": "Note:\nThis is a Primary Key.<pk/>"
+          },
+          "product_id": {
+            "type": "integer",
+            "format": "bigint",
+            "description": "Note:\nThis is a Foreign Key to `products.id`.<fk table='products' column='id'/>"
+          },
+          "name": {
+            "type": "string",
+            "format": "text"
+          },
+          "color_family": {
+            "type": "string",
+            "format": "text",
+            "default": ""
+          },
+          "swatch_hex": {
+            "type": "string",
+            "format": "text"
+          },
+          "display_order": {
+            "type": "integer",
+            "format": "integer",
+            "default": 1
+          },
+          "is_default": {
+            "type": "boolean",
+            "format": "boolean",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "timestamp with time zone",
+            "default": "now()"
+          }
+        }
+      }
+    },
+    "rpc_functions": {
+      "is_admin": {
+        "params": [],
+        "summary": null
+      },
+      "update_site_asset": {
+        "params": [
+          {
+            "name": "p_alt_text",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_asset_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_caption",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_desktop_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_ends_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          },
+          {
+            "name": "p_folder_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_is_published",
+            "type": "boolean",
+            "format": "boolean",
+            "required": true
+          },
+          {
+            "name": "p_link_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_mobile_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_starts_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          },
+          {
+            "name": "p_title",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "create_product_uploaded_image": {
+        "params": [
+          {
+            "name": "p_alt_text",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_caption",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": false
+          },
+          {
+            "name": "p_file_size_bytes",
+            "type": "integer",
+            "format": "bigint",
+            "required": false
+          },
+          {
+            "name": "p_is_primary",
+            "type": "boolean",
+            "format": "boolean",
+            "required": false
+          },
+          {
+            "name": "p_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_original_filename",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_public_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_storage_bucket",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "list_site_assets": {
+        "params": [],
+        "summary": null
+      },
+      "validate_site_asset_input": {
+        "params": [
+          {
+            "name": "p_asset_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_desktop_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_ends_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          },
+          {
+            "name": "p_link_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_mobile_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_starts_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "update_product_affiliate_image_order": {
+        "params": [
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "validate_product_uploaded_image_input": {
+        "params": [
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_file_size_bytes",
+            "type": "integer",
+            "format": "bigint",
+            "required": true
+          },
+          {
+            "name": "p_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_public_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_storage_bucket",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "update_product_affiliate_image": {
+        "params": [
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_is_primary",
+            "type": "boolean",
+            "format": "boolean",
+            "required": false
+          },
+          {
+            "name": "p_rakuten_image_html",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "list_site_asset_folders": {
+        "params": [],
+        "summary": null
+      },
+      "delete_product_affiliate_image": {
+        "params": [
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "normalize_product_uploaded_image_order": {
+        "params": [
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "create_site_asset_folder": {
+        "params": [
+          {
+            "name": "p_name",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_slug",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "remember_rakuten_affiliate_shop_setting": {
+        "params": [
+          {
+            "name": "p_affiliate_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_me_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_sample_affiliate_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_sample_item_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_shop_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "delete_product_uploaded_image": {
+        "params": [
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "validate_rakuten_image_html": {
+        "params": [
+          {
+            "name": "p_html",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "update_product_uploaded_image_metadata": {
+        "params": [
+          {
+            "name": "p_alt_text",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_caption",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "set_product_uploaded_image_primary": {
+        "params": [
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "create_product_affiliate_image": {
+        "params": [
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": false
+          },
+          {
+            "name": "p_is_primary",
+            "type": "boolean",
+            "format": "boolean",
+            "required": false
+          },
+          {
+            "name": "p_mall",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_rakuten_image_html",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "delete_site_asset": {
+        "params": [
+          {
+            "name": "p_asset_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "find_site_asset_import_source": {
+        "params": [
+          {
+            "name": "p_source_url_hash",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "normalize_product_affiliate_media_order": {
+        "params": [
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "update_rakuten_affiliate_shop_setting": {
+        "params": [
+          {
+            "name": "p_affiliate_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_me_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_sample_affiliate_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_sample_item_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_shop_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "infer_site_asset_media_type": {
+        "params": [
+          {
+            "name": "p_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "create_rakuten_affiliate_images_bulk": {
+        "params": [
+          {
+            "name": "p_items",
+            "format": "jsonb",
+            "required": true
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": false
+          }
+        ],
+        "summary": null
+      },
+      "record_site_asset_import_source": {
+        "params": [
+          {
+            "name": "p_site_asset_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_source_page_url",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_source_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_source_url_hash",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "set_product_affiliate_image_primary": {
+        "params": [
+          {
+            "name": "p_image_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "create_site_asset": {
+        "params": [
+          {
+            "name": "p_alt_text",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_caption",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_desktop_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_desktop_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_ends_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          },
+          {
+            "name": "p_folder_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          },
+          {
+            "name": "p_is_published",
+            "type": "boolean",
+            "format": "boolean",
+            "required": true
+          },
+          {
+            "name": "p_link_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_height",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_mobile_image_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_mime_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_storage_path",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_mobile_width",
+            "type": "integer",
+            "format": "integer",
+            "required": true
+          },
+          {
+            "name": "p_starts_at",
+            "type": "string",
+            "format": "timestamp with time zone",
+            "required": true
+          },
+          {
+            "name": "p_title",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "reorder_product_affiliate_media": {
+        "params": [
+          {
+            "name": "p_ordered_ids",
+            "type": "array",
+            "format": "text[]",
+            "required": true
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "link_brand_site_asset": {
+        "params": [
+          {
+            "name": "p_asset_key",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_asset_type",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_brand_id",
+            "type": "string",
+            "format": "uuid",
+            "required": true
+          }
+        ],
+        "summary": null
+      },
+      "get_published_site_assets": {
+        "params": [
+          {
+            "name": "p_asset_key",
+            "type": "string",
+            "format": "text"
+          },
+          {
+            "name": "p_asset_type",
+            "type": "string",
+            "format": "text"
+          }
+        ],
+        "summary": null
+      },
+      "update_product_affiliate_urls": {
+        "params": [
+          {
+            "name": "p_affiliate_checked_at",
+            "type": "string",
+            "format": "date",
+            "required": false
+          },
+          {
+            "name": "p_affiliate_note",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_amazon_url",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_official_url",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_product_name",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_rakuten_url",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_yahoo_url",
+            "type": "string",
+            "format": "text",
+            "required": false
+          }
+        ],
+        "summary": null
+      },
+      "create_product_youtube_media": {
+        "params": [
+          {
+            "name": "p_display_order",
+            "type": "integer",
+            "format": "integer",
+            "required": false
+          },
+          {
+            "name": "p_product_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_role",
+            "type": "string",
+            "format": "text",
+            "required": false
+          },
+          {
+            "name": "p_youtube_url",
+            "type": "string",
+            "format": "text",
+            "required": true
+          },
+          {
+            "name": "p_youtube_video_id",
+            "type": "string",
+            "format": "text",
+            "required": true
+          }
+        ],
+        "summary": null
+      }
+    },
+    "rpc_names": [
+      "create_product_affiliate_image",
+      "create_product_uploaded_image",
+      "create_product_youtube_media",
+      "create_rakuten_affiliate_images_bulk",
+      "create_site_asset",
+      "create_site_asset_folder",
+      "delete_product_affiliate_image",
+      "delete_product_uploaded_image",
+      "delete_site_asset",
+      "find_site_asset_import_source",
+      "get_published_site_assets",
+      "infer_site_asset_media_type",
+      "is_admin",
+      "link_brand_site_asset",
+      "list_site_asset_folders",
+      "list_site_assets",
+      "normalize_product_affiliate_media_order",
+      "normalize_product_uploaded_image_order",
+      "record_site_asset_import_source",
+      "remember_rakuten_affiliate_shop_setting",
+      "reorder_product_affiliate_media",
+      "set_product_affiliate_image_primary",
+      "set_product_uploaded_image_primary",
+      "update_product_affiliate_image",
+      "update_product_affiliate_image_order",
+      "update_product_affiliate_urls",
+      "update_product_uploaded_image_metadata",
+      "update_rakuten_affiliate_shop_setting",
+      "update_site_asset",
+      "validate_product_uploaded_image_input",
+      "validate_rakuten_image_html",
+      "validate_site_asset_input"
+    ]
+  },
+  "anon_view": {
+    "openapi": "unavailable (401, service_role-only endpoint)",
+    "empirical_grants": {
+      "products": "SELECT allowed incl. memo column; 70 of 70 rows visible (no row filtering vs service)",
+      "brands": "SELECT allowed; 42 of 42 rows visible",
+      "brand_aliases": "SELECT allowed; 93 of 93 rows visible",
+      "product_colors": "SELECT allowed; 12 of 12 rows visible",
+      "product_affiliate_images": "SELECT allowed; 582 of 582 rows visible",
+      "product_uploaded_images": "SELECT allowed; 0 rows exist (0 for service too)",
+      "rakuten_affiliate_shop_settings": "SELECT grant exists (HTTP 200) but 0 of 10 rows visible -> RLS row filtering active for anon",
+      "site_assets": "HTTP 401 permission denied (no SELECT grant for anon)",
+      "asset_folders": "HTTP 401 permission denied (no SELECT grant for anon)",
+      "admin_users": "HTTP 401 permission denied (code 42501, no SELECT grant for anon)",
+      "product_image_backups": "HTTP 401 permission denied (no SELECT grant for anon)",
+      "site_asset_import_sources": "HTTP 401 permission denied (no SELECT grant for anon)"
+    },
+    "rpc_visibility": "not verifiable read-only: RPC introspection requires the OpenAPI root (service_role-only) and invoking /rpc/* requires POST, which this audit prohibits. See read-only-audit.sql (pg_proc.proacl) for manual verification."
+  }
+}

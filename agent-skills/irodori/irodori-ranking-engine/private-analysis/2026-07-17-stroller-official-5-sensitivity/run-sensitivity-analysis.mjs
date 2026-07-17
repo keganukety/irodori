@@ -3,7 +3,16 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { calculateRankingResult } from "../../scripts/ranking-engine.ts";
+import {
+  calculateCandidateMetrics,
+  calculateObservedScore,
+  calculateRankingResult,
+} from "../../scripts/ranking-engine.ts";
+import {
+  evaluateCandidateCoverage,
+  finalizeScenarioRankingEligibility,
+  validateCoverageConfiguration,
+} from "../../scripts/coverage-contract.ts";
 import { evaluateScenarioEligibility } from "../../../benchmarks/stroller-official-5/rubric-proposal/validate-rubric-proposal.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +32,11 @@ function sha256Bytes(bytes) {
 
 function sha256File(path) {
   return sha256Bytes(readFileSync(path));
+}
+
+function sha256CanonicalTextFile(path) {
+  const canonicalText = readFileSync(path, "utf8").replaceAll("\r\n", "\n");
+  return sha256Bytes(canonicalText);
 }
 
 function round(value, digits = 6) {
@@ -490,10 +504,10 @@ function entryOutput(config, snapshot, definition, entry, omissions) {
       };
     }),
     parent_axis_contributions: parentContributions(config, entry.per_axis_breakdown),
-    total_score: entry.observed_score,
-    coverage: {
+    partial_observed_score: entry.observed_score,
+    legacy_engine_coverage: {
       criterion_count: entry.data_coverage,
-      parent_axis: activeParents.length === 0 ? 0 : round(coveredParents.length / activeParents.length),
+      represented_parent_presence: activeParents.length === 0 ? 0 : round(coveredParents.length / activeParents.length),
       weighted: entry.weighted_data_coverage,
     },
     confidence: entry.confidence,
@@ -501,7 +515,7 @@ function entryOutput(config, snapshot, definition, entry, omissions) {
       .map((axis) => axis.axis_id)
       .filter((axisId) => !entry.per_axis_breakdown.some((item) => item.axis_id === axisId))
       .map((criterionId) => ({ criterion_id: criterionId, reason: omissions[criterionId] ?? "unavailable" })),
-    baseline_score_delta: null,
+    baseline_partial_score_delta: null,
     baseline_rank_change: null,
   };
 }
@@ -545,7 +559,7 @@ function runPattern(config, snapshot, rubric, scenario, pattern, runtime) {
         product_analysis_id: item.product.analysis_product_id,
         reason_code: "scenario_eligibility_unknown",
         reason: item.result.reasons.join(","),
-        coverage: null,
+      legacy_engine_coverage: null,
         confidence: null,
         quality_interpretation: "not_low_quality",
       })),
@@ -553,7 +567,7 @@ function runPattern(config, snapshot, rubric, scenario, pattern, runtime) {
       product_analysis_id: productIdToAnalysis.get(item.product_identity_id),
       reason_code: item.reason_code,
       reason: item.reason,
-      coverage: { criterion_count: item.data_coverage, weighted: item.weighted_data_coverage },
+      legacy_engine_coverage: { criterion_count: item.data_coverage, weighted: item.weighted_data_coverage },
       confidence: item.confidence,
       quality_interpretation: "not_low_quality",
     })),
@@ -592,7 +606,7 @@ function compareWithBaseline(patternResult, baseline) {
   for (const entry of patternResult.entries) {
     const base = baselineEntries.get(entry.product_analysis_id);
     if (base) {
-      entry.baseline_score_delta = round(entry.total_score - base.total_score);
+      entry.baseline_partial_score_delta = round(entry.partial_observed_score - base.partial_observed_score);
       entry.baseline_rank_change = entry.trial_rank - base.trial_rank;
     }
   }
@@ -694,12 +708,181 @@ function stabilitySummary(scenario, results) {
   };
 }
 
+function partialObservedScore(built, product) {
+  const candidate = built.bundle.input.candidates.find((item) => item.product_identity_id === product.product_identity_id);
+  if (!candidate) return null;
+  const metrics = calculateCandidateMetrics(
+    built.bundle.definition,
+    candidate.feature_refs,
+    built.bundle.normalized_features,
+    built.bundle.evidence_claims,
+    built.bundle.source_records,
+  );
+  return calculateObservedScore(metrics.contexts).observed_score;
+}
+
+function criterionEvidenceState(fact, omissionReason, scoreable) {
+  if (scoreable) return "scoreable";
+  if (fact?.evidence_status === "conflicting" || fact?.conflict === true) return "unresolved_conflict";
+  if (omissionReason === "measurement_scope_not_comparable_in_scenario"
+    || omissionReason?.includes("measurement_scope_mismatch")) return "not_comparable";
+  return "unknown";
+}
+
+function coverageCriterionObservations(config, built, product, eligibilityResult) {
+  const weightMap = new Map(built.bundle.definition.axis_weights.map((axis) => [axis.axis_id, axis.weight]));
+  const scoreableIds = new Set(built.derived.features
+    .filter((feature) => feature.product_identity_id === product.product_identity_id)
+    .map((feature) => feature.axis_id));
+  const omissions = built.derived.omissions.get(product.product_identity_id) ?? {};
+  return config.criteria.map((criterion) => {
+    const fact = product.raw_facts[criterion.raw_fact_id];
+    const scenarioApplicable = !["ineligible", "not_applicable"].includes(eligibilityResult.status);
+    const omissionReason = omissions[criterion.criterion_id]
+      ?? fact?.unavailable_reason
+      ?? (fact?.evidence_status ? `evidence_status_${fact.evidence_status}` : "raw_fact_missing");
+    const scoreable = scenarioApplicable && scoreableIds.has(criterion.criterion_id);
+    return {
+      criterion_id: criterion.criterion_id,
+      parent_axis_id: criterion.parent_axis,
+      weight: weightMap.get(criterion.criterion_id),
+      applicability: scenarioApplicable ? "applicable" : "not_applicable",
+      evidence_state: criterionEvidenceState(fact, omissionReason, scoreable),
+      reason_codes: scoreable ? [] : [omissionReason],
+    };
+  });
+}
+
+function eligibilityConflictCount(product) {
+  const eligibilityFactIds = ["target_age_min_months", "target_age_max_months", "max_child_weight_kg"];
+  return eligibilityFactIds.filter((factId) => {
+    const fact = product.raw_facts[factId];
+    return fact?.conflict === true || fact?.evidence_status === "conflicting";
+  }).length;
+}
+
+function legacyBaselineState(baseline, productAnalysisId) {
+  if (baseline.entries.some((entry) => entry.product_analysis_id === productAnalysisId)) return "trial_scored";
+  const eligibility = baseline.eligibility.find((item) => item.product_analysis_id === productAnalysisId);
+  if (eligibility?.eligibility === "not_applicable" || eligibility?.eligibility === "ineligible") return "not_applicable";
+  if (baseline.on_hold.some((item) => item.product_analysis_id === productAnalysisId)) return "on_hold";
+  return "not_evaluated";
+}
+
+function buildCoverageAnalysis(config, snapshot, rubric, runtime, contract, profileSet, patternResults) {
+  const validation = validateCoverageConfiguration(contract, profileSet);
+  if (validation.result !== "pass") {
+    throw new Error(`coverage configuration invalid: ${JSON.stringify(validation.issues)}`);
+  }
+  const results = [];
+  const scenarioProfileSummary = [];
+  for (const scenario of config.analysis_scenarios) {
+    const pattern = { pattern_id: "baseline", kind: "baseline", changes: {} };
+    const built = buildBundle(config, snapshot, rubric, scenario, pattern, runtime);
+    const baseline = patternResults.find((item) => item.scenario === scenario.scenario_id && item.pattern_id === "baseline");
+    const eligibilityMap = new Map(built.eligibility.map((item) => [item.product.product_identity_id, item.result]));
+    const assessmentInputs = snapshot.products.map((product) => {
+      const eligibility = eligibilityMap.get(product.product_identity_id);
+      return {
+        candidate_id: product.analysis_product_id,
+        scenario_id: scenario.scenario_id,
+        benchmark_segment: product.benchmark_segment,
+        scenario_eligibility: eligibility.status,
+        scenario_reason_codes: eligibility.reasons,
+        eligibility_unresolved_conflict_count: ["eligible", "unknown"].includes(eligibility.status)
+          ? eligibilityConflictCount(product)
+          : 0,
+        partial_observed_score: eligibility.status === "eligible" ? partialObservedScore(built, product) : null,
+        criteria: coverageCriterionObservations(config, built, product, eligibility),
+      };
+    });
+    const assessments = assessmentInputs.map((input) => evaluateCandidateCoverage(input, contract, profileSet));
+    for (const profile of profileSet.profiles) {
+      const participating = assessments
+        .filter((assessment) => assessment.profile_assessments
+          .find((item) => item.profile_id === profile.profile_id)?.score_state !== "ineligible_for_scenario")
+        .map((assessment) => ({
+          candidate_id: assessment.candidate_id,
+          scenario_id: assessment.scenario_id,
+          benchmark_segment: assessment.benchmark_segment,
+          profile_assessment: assessment.profile_assessments.find((item) => item.profile_id === profile.profile_id),
+        }));
+      const finalized = finalizeScenarioRankingEligibility(participating, profile);
+      for (const assessment of assessments) {
+        const profileAssessment = assessment.profile_assessments.find((item) => item.profile_id === profile.profile_id);
+        const candidateResult = finalized.candidate_results.find((item) => item.candidate_id === assessment.candidate_id);
+        profileAssessment.ranking_eligibility = candidateResult?.ranking_eligibility ?? false;
+        if (candidateResult && !candidateResult.ranking_eligibility) {
+          profileAssessment.reason_codes = uniqueSorted([...profileAssessment.reason_codes, ...candidateResult.reason_codes]);
+        }
+      }
+      scenarioProfileSummary.push({
+        scenario_id: scenario.scenario_id,
+        profile_id: profile.profile_id,
+        value_status: "proposed",
+        score_display_eligible_count: assessments.filter((assessment) => assessment.profile_assessments
+          .find((item) => item.profile_id === profile.profile_id)?.score_display_eligibility).length,
+        ranking_candidate_eligible_count: finalized.eligible_candidate_count,
+        ranking_eligible_count: finalized.candidate_results.filter((item) => item.ranking_eligibility).length,
+        minimum_eligible_candidate_count: finalized.minimum_eligible_candidate_count,
+        ranking_generation_eligible: finalized.ranking_generation_eligible,
+        ranking_generated: false,
+        reason_codes: finalized.reason_codes,
+      });
+    }
+    for (const [index, assessment] of assessments.entries()) {
+      const input = assessmentInputs[index];
+      const reference = assessment.profile_assessments.find((item) => item.profile_id === config.coverage_reference_profile_id);
+      const metrics = assessment.metrics;
+      results.push({
+        product_analysis_id: assessment.candidate_id,
+        scenario_id: assessment.scenario_id,
+        benchmark_segment: assessment.benchmark_segment,
+        scenario_eligibility: input.scenario_eligibility,
+        scenario_reason_codes: input.scenario_reason_codes,
+        criterion_observations: assessment.criterion_observations,
+        criterion_coverage: metrics?.criterion_coverage ?? null,
+        parent_axis_coverage: metrics?.parent_axis_coverage ?? null,
+        weighted_coverage: metrics?.weighted_coverage ?? null,
+        represented_parent_count: metrics?.parent_axis_coverage.represented_parent_count ?? null,
+        unresolved_conflict_count: metrics?.unresolved_conflict_count ?? input.eligibility_unresolved_conflict_count,
+        comparison_blockers: metrics?.comparison_blockers ?? [],
+        score_state: reference.score_state,
+        reference_profile_id: config.coverage_reference_profile_id,
+        partial_observed_score: assessment.partial_observed_score,
+        total_quality_score: null,
+        total_quality_score_display_eligibility: reference.score_display_eligibility,
+        total_quality_score_displayed: false,
+        ranking_eligibility: reference.ranking_eligibility,
+        ranking_generated: false,
+        baseline_state_change: {
+          from: legacyBaselineState(baseline, assessment.candidate_id),
+          to: reference.score_state,
+          reason_codes: reference.reason_codes,
+        },
+        analysis_errors: assessment.analysis_errors,
+        profile_assessments: assessment.profile_assessments,
+      });
+    }
+  }
+  return {
+    reference_profile_id: config.coverage_reference_profile_id,
+    profile_value_status: "proposed",
+    ranking_generated: false,
+    total_quality_scores_generated: false,
+    results,
+    scenario_profile_summary: scenarioProfileSummary,
+  };
+}
+
 export function buildAnalysis() {
   const config = readJson(configPath);
   const snapshot = readJson(snapshotPath);
   const verification = verifySnapshot(snapshot);
   if (verification.result !== "pass") throw new Error(`snapshot fingerprint mismatch: ${JSON.stringify(verification.checks.filter((item) => item.result === "fail"))}`);
   const rubric = readJson(resolve(repoRoot, config.rubric_ref));
+  const coverageContract = readJson(resolve(repoRoot, config.coverage_contract_ref));
+  const coverageProfiles = readJson(resolve(repoRoot, config.coverage_profiles_ref));
   const runtime = loadRuntimeRecords(snapshot);
   const patterns = createPatternSuite(config, rubric);
   const patternResults = [];
@@ -711,6 +894,15 @@ export function buildAnalysis() {
     patternResults.push(...results);
     summaries.push(stabilitySummary(scenario, results));
   }
+  const coverageAnalysis = buildCoverageAnalysis(
+    config,
+    snapshot,
+    rubric,
+    runtime,
+    coverageContract,
+    coverageProfiles,
+    patternResults,
+  );
   return {
     analysis_id: config.analysis_id,
     generated_at: fixedTimestamp,
@@ -719,16 +911,29 @@ export function buildAnalysis() {
     private_non_public: true,
     disclaimer: config.output_disclaimer,
     snapshot_id: snapshot.snapshot_id,
-    snapshot_sha256: sha256File(snapshotPath),
-    config_sha256: sha256File(configPath),
+    snapshot_sha256: sha256CanonicalTextFile(snapshotPath),
+    config_sha256: sha256CanonicalTextFile(configPath),
     rubric_id: rubric.rubric_id,
     rubric_version: config.rubric_version,
     engine_calc_version: config.engine_calc_version,
+    coverage_contract: {
+      contract_id: coverageContract.contract_id,
+      status: coverageContract.status,
+      publication_status: coverageContract.publication_status,
+      contract_ref: config.coverage_contract_ref,
+      contract_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_contract_ref)),
+      profile_set_id: coverageProfiles.profile_set_id,
+      profiles_ref: config.coverage_profiles_ref,
+      profiles_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_profiles_ref)),
+      schema_ref: config.coverage_schema_ref,
+      schema_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_schema_ref)),
+    },
     snapshot_verification: verification,
     proposed_settings: {
       allocation: config.allocation_assumption,
       score_policy: config.score_policy,
       sensitivity_patterns: config.sensitivity_patterns,
+      coverage_profiles: coverageProfiles.profiles,
     },
     scenarios: config.analysis_scenarios.map((scenario) => ({
       scenario_id: scenario.scenario_id,
@@ -739,6 +944,7 @@ export function buildAnalysis() {
     })),
     boundary_proximity_audit: boundaryAudit(config, snapshot, rubric),
     stability_summary: summaries,
+    coverage_analysis: coverageAnalysis,
     pattern_results: patternResults,
     safeguards: {
       scenario_segments_disjoint: true,
@@ -751,6 +957,15 @@ export function buildAnalysis() {
       editorial_composite_double_scored: false,
       unconfirmed_scoring_limited_to_analysis_derived_features_from_confirmed_raw: true,
       source_values_rewritten: false,
+      coverage_contract_applied: true,
+      criterion_parent_and_weighted_coverage_separated: true,
+      parent_single_criterion_complete_allowed: false,
+      partial_score_public_total_separated: true,
+      score_display_eligibility_separate: true,
+      ranking_eligibility_separate: true,
+      total_quality_scores_generated: false,
+      rankings_generated_by_coverage_contract: false,
+      coverage_profiles_remain_proposed: true,
     },
   };
 }

@@ -19,6 +19,11 @@ function baseline(analysis, scenario) {
   return analysis.pattern_results.find((item) => item.scenario === scenario && item.pattern_id === "baseline");
 }
 
+function coverageResult(analysis, scenario, productAnalysisId) {
+  return analysis.coverage_analysis.results.find((item) =>
+    item.scenario_id === scenario && item.product_analysis_id === productAnalysisId);
+}
+
 test("the frozen snapshot is reproducible from the official benchmark artifacts", () => {
   assert.deepEqual(buildSnapshot(), snapshot);
   assert.equal(verifySnapshot(snapshot).result, "pass");
@@ -171,4 +176,86 @@ test("all outputs remain draft private trials and source values are not rewritte
   assert.equal(committedResult.status, "proposed_analysis_only");
   assert.equal(committedResult.safeguards.source_values_rewritten, false);
   assert.equal(committedResult.pattern_results.every((pattern) => pattern.calculation_status !== "published"), true);
+});
+
+test("coverage contract separates criterion, parent-axis, and weighted coverage", () => {
+  const p03 = coverageResult(committedResult, "a_type_excluding_accessories_scope_diagnostic", "P03");
+  assert.equal(p03.criterion_coverage.value, 0.214286);
+  assert.equal(p03.parent_axis_coverage.value, 0.28125);
+  assert.equal(p03.weighted_coverage.value, 0.40625);
+  assert.equal(p03.represented_parent_count, 3);
+  assert.notEqual(p03.criterion_coverage.value, p03.parent_axis_coverage.value);
+  assert.notEqual(p03.parent_axis_coverage.value, p03.weighted_coverage.value);
+});
+
+test("the one-criterion 100-point trial is only a partial observed score", () => {
+  const p02 = coverageResult(committedResult, "a_type_primary_strict_scope", "P02");
+  assert.equal(p02.criterion_coverage.scoreable_criterion_count, 1);
+  assert.equal(p02.partial_observed_score, 100);
+  assert.equal(p02.total_quality_score, null);
+  assert.equal(p02.total_quality_score_displayed, false);
+  assert.equal(p02.profile_assessments.every((item) => item.score_display_eligibility === false), true);
+  assert.equal(committedResult.pattern_results.every((pattern) => pattern.entries.every((entry) =>
+    "partial_observed_score" in entry && !("total_score" in entry))), true);
+});
+
+test("balanced reference profile changes trial_scored to insufficient evidence, not low quality", () => {
+  for (const id of ["P02", "P03", "P04"]) {
+    const item = coverageResult(committedResult, "a_type_primary_strict_scope", id);
+    assert.equal(item.baseline_state_change.from, "trial_scored");
+    assert.equal(item.baseline_state_change.to, "eligible_but_insufficient_evidence");
+    assert.equal(item.score_state, "eligible_but_insufficient_evidence");
+  }
+});
+
+test("eligibility conflicts and scenario incompatibility remain distinct states", () => {
+  const conflict = coverageResult(committedResult, "a_type_primary_strict_scope", "P01");
+  const incompatible = coverageResult(committedResult, "a_type_primary_strict_scope", "P05");
+  assert.equal(conflict.unresolved_conflict_count, 2);
+  assert.equal(conflict.score_state, "eligible_with_unresolved_conflict");
+  assert.equal(incompatible.unresolved_conflict_count, 0);
+  assert.equal(incompatible.score_state, "ineligible_for_scenario");
+  assert.equal(incompatible.partial_observed_score, null);
+});
+
+test("proposed profile differences affect eligibility but never generate rankings or totals", () => {
+  const p03 = coverageResult(committedResult, "a_type_excluding_accessories_scope_diagnostic", "P03");
+  const lenient = p03.profile_assessments.find((item) => item.profile_id === "lenient");
+  const balanced = p03.profile_assessments.find((item) => item.profile_id === "balanced");
+  const strict = p03.profile_assessments.find((item) => item.profile_id === "strict");
+  assert.equal(lenient.score_display_eligibility, true);
+  assert.equal(lenient.ranking_eligibility, true);
+  assert.equal(balanced.score_display_eligibility, false);
+  assert.equal(strict.score_display_eligibility, false);
+  assert.equal(p03.total_quality_score, null);
+  assert.equal(committedResult.coverage_analysis.ranking_generated, false);
+  assert.equal(committedResult.coverage_analysis.total_quality_scores_generated, false);
+});
+
+test("single-product B scenario never becomes ranking eligible", () => {
+  const p05 = coverageResult(committedResult, "b_type_compact_strict_scope", "P05");
+  assert.equal(p05.ranking_eligibility, false);
+  const summaries = committedResult.coverage_analysis.scenario_profile_summary.filter((item) =>
+    item.scenario_id === "b_type_compact_strict_scope");
+  assert.equal(summaries.every((item) => item.ranking_generation_eligible === false), true);
+  assert.equal(summaries.every((item) => item.ranking_generated === false), true);
+});
+
+test("measurement-scope mismatch stays a named non-comparable criterion reason", () => {
+  const p03 = coverageResult(committedResult, "a_type_primary_strict_scope", "P03");
+  const weight = p03.criterion_observations.find((item) => item.criterion_id === "transport_burden.body_weight");
+  assert.equal(weight.evidence_state, "not_comparable");
+  assert.deepEqual(weight.reason_codes, ["measurement_scope_not_comparable_in_scenario"]);
+  assert.ok(p03.comparison_blockers.includes("transport_burden.body_weight:measurement_scope_not_comparable_in_scenario"));
+});
+
+test("coverage result keeps all profiles proposed and all publication safeguards closed", () => {
+  assert.equal(committedResult.coverage_contract.status, "proposed");
+  assert.equal(committedResult.coverage_contract.publication_status, "draft");
+  assert.equal(committedResult.safeguards.coverage_profiles_remain_proposed, true);
+  assert.equal(committedResult.safeguards.partial_score_public_total_separated, true);
+  assert.equal(committedResult.safeguards.score_display_eligibility_separate, true);
+  assert.equal(committedResult.safeguards.ranking_eligibility_separate, true);
+  assert.equal(committedResult.safeguards.total_quality_scores_generated, false);
+  assert.equal(committedResult.safeguards.rankings_generated_by_coverage_contract, false);
 });

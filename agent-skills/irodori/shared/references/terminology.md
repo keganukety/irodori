@@ -61,6 +61,12 @@ irodoriスキル群で使う用語の定義。各SKILL.mdはこの定義を再�
 | `data_coverage` | 定義軸数のうち確認済みかつscore可能な軸数の割合 | observed_scoreと混ぜる | [C] |
 | `weighted_data_coverage` | 確認済みかつscore可能な軸のweight合計 ÷ 全定義軸のweight合計 | observed_scoreへ加算・乗算する | [C] |
 | `confidence` | 結果の確からしさ。第2段階は `confidence-proposed-v1` を試作 | AIの主観で付与する / observed_scoreへ加算する | [C](分離) / [P](式) |
+| `partial_observed_score` | 実在商品の非公開coverage分析で、観測済みcriterionだけを再正規化した内部試算値。`observed_score`の用途限定名 | 公開total score・確定品質scoreとして表示する | [C](分離) / [P](名称) |
+| `criterion_coverage` | scenario適用criterionのうちscoreableなcriterionの件数比 | unknown/conflict/not-comparableを分母から落とす | [C](分離) / [P](詳細契約) |
+| `parent_axis_coverage` | 親軸別のscoreable幅を最低評価幅込みで算出した比率と状態 | 1 criterionだけで親軸全体を十分評価済みとする | [C](分離) / [P](式・最低幅) |
+| `total_quality_score` | 確定coverage profileと正式rubricを満たした将来の公開品質score用予約名 | proposed profileやpartial scoreから生成する | [P](予約名) |
+| `score_display_eligibility` | coverage/evidence/profile条件に基づくscore表示gate。公開workflow承認とは別 | trueをpublication_status approvedへ自動変換する | [C](分離) / [P](条件) |
+| `ranking_eligibility` | 個別gateと同一scenario内候補数を満たすranking参加可否 | falseの商品を0点・最下位に置く | [C](分離) / [P](条件) |
 
 ## 5. 評価軸(axis)の初期候補 [P]
 

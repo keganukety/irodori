@@ -1,0 +1,90 @@
+{
+  "schema_version": "0.1.0",
+  "profile_set_id": "irodori-ranking-coverage-profiles-proposed-v1",
+  "status": "proposed",
+  "publication_status": "draft",
+  "notice": "All profile names, thresholds, required criteria, display gates, and ranking gates are analysis-only proposals and are not approved public rules.",
+  "profiles": [
+    {
+      "profile_id": "lenient",
+      "label": "Lenient proposed analysis profile",
+      "value_status": "proposed",
+      "minimum_criterion_coverage": 0.2,
+      "minimum_parent_axis_coverage": 0.25,
+      "minimum_represented_parent_count": 3,
+      "minimum_weighted_coverage": 0.25,
+      "allow_unresolved_conflicts": true,
+      "required_criterion_ids": ["station_space_fit.unfolded_width"],
+      "score_display_conditions": {
+        "require_scenario_eligible": true,
+        "require_partial_observed_score": true,
+        "require_all_coverage_thresholds": true,
+        "require_all_required_criteria": true,
+        "require_conflict_policy_pass": true
+      },
+      "ranking_conditions": {
+        "require_score_display_eligibility": true,
+        "require_no_comparison_blockers": true,
+        "require_same_scenario_and_segment": true,
+        "minimum_eligible_candidate_count": 2
+      }
+    },
+    {
+      "profile_id": "balanced",
+      "label": "Balanced proposed analysis profile",
+      "value_status": "proposed",
+      "minimum_criterion_coverage": 0.25,
+      "minimum_parent_axis_coverage": 0.25,
+      "minimum_represented_parent_count": 3,
+      "minimum_weighted_coverage": 0.35,
+      "allow_unresolved_conflicts": false,
+      "required_criterion_ids": [
+        "transport_burden.body_weight",
+        "station_space_fit.unfolded_width"
+      ],
+      "score_display_conditions": {
+        "require_scenario_eligible": true,
+        "require_partial_observed_score": true,
+        "require_all_coverage_thresholds": true,
+        "require_all_required_criteria": true,
+        "require_conflict_policy_pass": true
+      },
+      "ranking_conditions": {
+        "require_score_display_eligibility": true,
+        "require_no_comparison_blockers": true,
+        "require_same_scenario_and_segment": true,
+        "minimum_eligible_candidate_count": 2
+      }
+    },
+    {
+      "profile_id": "strict",
+      "label": "Strict proposed analysis profile",
+      "value_status": "proposed",
+      "minimum_criterion_coverage": 0.5,
+      "minimum_parent_axis_coverage": 0.5,
+      "minimum_represented_parent_count": 4,
+      "minimum_weighted_coverage": 0.5,
+      "allow_unresolved_conflicts": false,
+      "required_criterion_ids": [
+        "transport_burden.body_weight",
+        "station_space_fit.unfolded_width",
+        "station_space_fit.folded_floor_footprint",
+        "folding_independence.one_hand_fold",
+        "folding_independence.one_hand_unfold"
+      ],
+      "score_display_conditions": {
+        "require_scenario_eligible": true,
+        "require_partial_observed_score": true,
+        "require_all_coverage_thresholds": true,
+        "require_all_required_criteria": true,
+        "require_conflict_policy_pass": true
+      },
+      "ranking_conditions": {
+        "require_score_display_eligibility": true,
+        "require_no_comparison_blockers": true,
+        "require_same_scenario_and_segment": true,
+        "minimum_eligible_candidate_count": 2
+      }
+    }
+  ]
+}
