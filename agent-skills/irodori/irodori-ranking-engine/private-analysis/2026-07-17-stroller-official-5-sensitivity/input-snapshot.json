@@ -1,0 +1,2301 @@
+{
+  "snapshot_id": "snapshot-stroller-official-5-private-sensitivity-2026-07-17",
+  "snapshot_date": "2026-07-17",
+  "origin_main_commit": "6d8c2e86e1a2b45aabcfa67ba03d599789be0a45",
+  "status": "frozen_private_analysis_input",
+  "source_policy": "manufacturer_official_only",
+  "disclaimer": "This snapshot is an internal sensitivity-analysis input, not a product score or published ranking.",
+  "benchmark_artifacts": {
+    "benchmark_manifest": {
+      "path": "agent-skills/irodori/benchmarks/stroller-official-5/benchmark-manifest.json",
+      "sha256": "72e121fa99a954d8a54922d47414f2d802fe2524890e1208f5bcd06967b2811c"
+    },
+    "official_feature_matrix": {
+      "path": "agent-skills/irodori/benchmarks/stroller-official-5/official-feature-matrix.json",
+      "sha256": "4b02b879930cbbe8b3f3beda14c38f19112ce425eed1594a53894e89d5a6feed"
+    },
+    "rubric_proposal": {
+      "path": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/train-commute-rubric-proposal.json",
+      "sha256": "ed69d00b3bc61e1e24c06a7d0be5c729ba944d31cbbfaa6f53a71a34adee44ee"
+    },
+    "scenario_eligibility": {
+      "path": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/scenario-eligibility.json",
+      "sha256": "f7c044c8495c555dac67f52a8f63adca2e4b0bf2aa502c2da498946d06219932"
+    },
+    "normalization_rules": {
+      "path": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/normalization-rules.json",
+      "sha256": "88c1b0629e9ce1511a35155aae4588d16e12d7313e5a44303e4cb7fd81dfc56b"
+    }
+  },
+  "layer_contract": {
+    "raw": "official normalized feature values split without changing meaning",
+    "derived": "deterministic values only; unavailable when required scope/orientation inputs are absent",
+    "editorial": "parent-axis interpretation stays in the analysis overlay and is never written back to product data",
+    "editorial_composite_output": "train_fitness and one_operator_fitness are not independent score inputs"
+  },
+  "products": [
+    {
+      "analysis_product_id": "P01",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "official_name": "Melio Carbon",
+      "brand_name": "CYBEX",
+      "benchmark_segment": "a_type_primary",
+      "segment_basis": "既存パイロット・軽量プレミアム(AB型寄り両対面)",
+      "identity_status": "provisional",
+      "run_dir": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official",
+      "artifact_paths": {
+        "product_identity": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official/product-identity.json",
+        "sources": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official/sources.json",
+        "evidence_claims": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official/evidence-claims.json",
+        "normalized_features": "agent-skills/irodori/runs/2026-07-15-cybex-melio-carbon-2026-official/normalized-features.json"
+      },
+      "artifact_sha256": {
+        "product_identity": "5f9310ccbb33b244b0d0a07ff05214d4aa346adc5ca99e365d3b09abf8fa9fb5",
+        "sources": "03cff5591409aa6e958ab61950777ec111d669fb34ace5b709554704160dc12b",
+        "evidence_claims": "1b879be18bab4560a2cda6de738aabe7cc3b493afd4c8cced1e7897547e7ceb3",
+        "normalized_features": "8665d5827cbd09198f29855fc6c640a7f19a9e75d35aeee78a2a72d953e3585b"
+      },
+      "raw_facts": {
+        "target_age_min_months": {
+          "value": 1,
+          "unit": "month",
+          "evidence_status": "conflicting",
+          "claim_class": "official_spec",
+          "conflict": true,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-target_age",
+          "evidence_claim_ids": [
+            "clm-melio26-004",
+            "clm-melio26-014"
+          ],
+          "source_record_ids": [
+            "src-melio26-001",
+            "src-melio26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "target_age_max_months": {
+          "value": 36,
+          "unit": "month",
+          "evidence_status": "conflicting",
+          "claim_class": "official_spec",
+          "conflict": true,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-target_age",
+          "evidence_claim_ids": [
+            "clm-melio26-004",
+            "clm-melio26-014"
+          ],
+          "source_record_ids": [
+            "src-melio26-001",
+            "src-melio26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "max_child_weight_kg": {
+          "value": 15,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-max_load",
+          "evidence_claim_ids": [
+            "clm-melio26-005",
+            "clm-melio26-013"
+          ],
+          "source_record_ids": [
+            "src-melio26-001",
+            "src-melio26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "body_weight_kg": {
+          "value": 5.9,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-weight_body",
+          "evidence_claim_ids": [
+            "clm-melio26-001"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_scope": {
+          "value": "manufacturer_stated_unspecified",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-weight_body",
+          "evidence_claim_ids": [
+            "clm-melio26-001"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_condition": {
+          "value": "unknown",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-weight_body",
+          "evidence_claim_ids": [
+            "clm-melio26-001"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "approximation_status": {
+          "value": "exact",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-weight_body",
+          "evidence_claim_ids": [
+            "clm-melio26-001"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "unfolded_width_mm": {
+          "value": 490,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-size_open",
+          "evidence_claim_ids": [
+            "clm-melio26-002"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_width_mm": {
+          "value": 490,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-size_folded",
+          "evidence_claim_ids": [
+            "clm-melio26-003"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_depth_mm": {
+          "value": 590,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-size_folded",
+          "evidence_claim_ids": [
+            "clm-melio26-003"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_height_mm": {
+          "value": 290,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-size_folded",
+          "evidence_claim_ids": [
+            "clm-melio26-003"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_dimension_orientation": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "folded_floor_footprint_cm2": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "folded_width_mm",
+            "folded_depth_mm",
+            "folded_dimension_orientation"
+          ],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "one_hand_fold_explicit": {
+          "value": true,
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-folding_ease",
+          "evidence_claim_ids": [
+            "clm-melio26-007"
+          ],
+          "source_record_ids": [
+            "src-melio26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "one_hand_unfold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_step_count": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "official_sequential_operations_not_normalized"
+        },
+        "requires_two_hands": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_bending": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_seat_removal": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_with_seat_attached": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "self_standing_explicit": {
+          "value": true,
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-self_standing",
+          "evidence_claim_ids": [
+            "clm-melio26-017"
+          ],
+          "source_record_ids": [
+            "src-melio26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_lock": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "carry_handle": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_strap": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carrying_position": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_assistance_level": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "carry_handle",
+            "carry_strap",
+            "carrying_position"
+          ],
+          "unavailable_reason": "source_raw_facts_not_normalized"
+        },
+        "basket_max_load_kg": {
+          "value": 5,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-melio26-basket_capacity",
+          "evidence_claim_ids": [
+            "clm-melio26-006",
+            "clm-melio26-015"
+          ],
+          "source_record_ids": [
+            "src-melio26-001",
+            "src-melio26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "basket_volume_l": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "manufacturer_reports_load_not_volume"
+        }
+      }
+    },
+    {
+      "analysis_product_id": "P02",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "official_name": "カルーンエアー メッシュ AC",
+      "brand_name": "アップリカ",
+      "benchmark_segment": "a_type_primary",
+      "segment_basis": "A形両対面。公共交通向けはmanufacturer positioningとして分離",
+      "identity_status": "provisional",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official",
+      "artifact_paths": {
+        "product_identity": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official/product-identity.json",
+        "sources": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official/sources.json",
+        "evidence_claims": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official/evidence-claims.json",
+        "normalized_features": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official/normalized-features.json"
+      },
+      "artifact_sha256": {
+        "product_identity": "4edc3a630f76f03d5a61052c2413dcab41c74a6eb85f045316eab1f5c553ffb0",
+        "sources": "9ce2e7d253f6e2ef84ee1c443e0656ba375aa1dc86874525bfa650aeea1f3edf",
+        "evidence_claims": "8d4c43e92bb3dd2d4d1e7456e3708deb8255d0dadd9198601d29a5eb6fb1b8f9",
+        "normalized_features": "47680e32f302ad44a7a9b348e467a4e6929d9e2d644a51bc1ee74137c0ac61b5"
+      },
+      "raw_facts": {
+        "target_age_min_months": {
+          "value": 1,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-target_age",
+          "evidence_claim_ids": [
+            "clm-krnac-004"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "target_age_max_months": {
+          "value": 36,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-target_age",
+          "evidence_claim_ids": [
+            "clm-krnac-004"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "max_child_weight_kg": {
+          "value": 15,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-max_load",
+          "evidence_claim_ids": [
+            "clm-krnac-005"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "body_weight_kg": {
+          "value": 3.9,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-weight_body",
+          "evidence_claim_ids": [
+            "clm-krnac-001"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_scope": {
+          "value": "manufacturer_stated_unspecified",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-weight_body",
+          "evidence_claim_ids": [
+            "clm-krnac-001"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_condition": {
+          "value": "unknown",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-weight_body",
+          "evidence_claim_ids": [
+            "clm-krnac-001"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "approximation_status": {
+          "value": "exact",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-weight_body",
+          "evidence_claim_ids": [
+            "clm-krnac-001"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "unfolded_width_mm": {
+          "value": 452,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-size_open",
+          "evidence_claim_ids": [
+            "clm-krnac-002"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_width_mm": {
+          "value": 452,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-size_folded",
+          "evidence_claim_ids": [
+            "clm-krnac-003"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_depth_mm": {
+          "value": 311,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-size_folded",
+          "evidence_claim_ids": [
+            "clm-krnac-003"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_height_mm": {
+          "value": 959,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-size_folded",
+          "evidence_claim_ids": [
+            "clm-krnac-003"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_dimension_orientation": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "folded_floor_footprint_cm2": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "folded_width_mm",
+            "folded_depth_mm",
+            "folded_dimension_orientation"
+          ],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "one_hand_fold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-folding_ease",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "one_hand_unfold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_step_count": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "official_sequential_operations_not_normalized"
+        },
+        "requires_two_hands": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_bending": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_seat_removal": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_with_seat_attached": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "self_standing_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-self_standing",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_lock": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "carry_handle": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_strap": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carrying_position": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_assistance_level": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "carry_handle",
+            "carry_strap",
+            "carrying_position"
+          ],
+          "unavailable_reason": "source_raw_facts_not_normalized"
+        },
+        "basket_max_load_kg": {
+          "value": 5,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-krnac-basket_capacity",
+          "evidence_claim_ids": [
+            "clm-krnac-006"
+          ],
+          "source_record_ids": [
+            "src-krnac-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "basket_volume_l": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "manufacturer_reports_load_not_volume"
+        }
+      }
+    },
+    {
+      "analysis_product_id": "P03",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "official_name": "スゴカル エッグショック LA",
+      "brand_name": "コンビ",
+      "benchmark_segment": "a_type_primary",
+      "segment_basis": "標準A型両対面・オート4キャス(取説取得済み)",
+      "identity_status": "provisional",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official",
+      "artifact_paths": {
+        "product_identity": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/product-identity.json",
+        "sources": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/sources.json",
+        "evidence_claims": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/evidence-claims.json",
+        "normalized_features": "agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/normalized-features.json"
+      },
+      "artifact_sha256": {
+        "product_identity": "3127f4e4370bcb536dec43399efacee5e786871aac0bc29334928e3c29811787",
+        "sources": "94fc226df936992759fc29866771f8fcf0e50bf8a187823e5a9708b80b474242",
+        "evidence_claims": "fbb1214cc5e0ce77bea9115ada18a2e0cdb8b3f619b51ae6b56dae7d053be311",
+        "normalized_features": "744a40eddd478871efd4c4747d7f9883cfd24096ed30c1a0fea98b025fb5fe09"
+      },
+      "raw_facts": {
+        "target_age_min_months": {
+          "value": 1,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-target_age",
+          "evidence_claim_ids": [
+            "clm-sgcla-004",
+            "clm-sgcla-012"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001",
+            "src-sgcla-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "target_age_max_months": {
+          "value": 36,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-target_age",
+          "evidence_claim_ids": [
+            "clm-sgcla-004",
+            "clm-sgcla-012"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001",
+            "src-sgcla-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "max_child_weight_kg": {
+          "value": 15,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-max_load",
+          "evidence_claim_ids": [
+            "clm-sgcla-005",
+            "clm-sgcla-013"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001",
+            "src-sgcla-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "body_weight_kg": {
+          "value": 4.6,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-weight_body",
+          "evidence_claim_ids": [
+            "clm-sgcla-001"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_scope": {
+          "value": "excluding_accessories",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-weight_body",
+          "evidence_claim_ids": [
+            "clm-sgcla-001"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_condition": {
+          "value": "ダッコシートを除く本体重量",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-weight_body",
+          "evidence_claim_ids": [
+            "clm-sgcla-001"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "approximation_status": {
+          "value": "exact",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-weight_body",
+          "evidence_claim_ids": [
+            "clm-sgcla-001"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "unfolded_width_mm": {
+          "value": 486,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-size_open",
+          "evidence_claim_ids": [
+            "clm-sgcla-002"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_width_mm": {
+          "value": 486,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-size_folded",
+          "evidence_claim_ids": [
+            "clm-sgcla-003"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_depth_mm": {
+          "value": 425,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-size_folded",
+          "evidence_claim_ids": [
+            "clm-sgcla-003"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_height_mm": {
+          "value": 1012,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-size_folded",
+          "evidence_claim_ids": [
+            "clm-sgcla-003"
+          ],
+          "source_record_ids": [
+            "src-sgcla-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_dimension_orientation": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "folded_floor_footprint_cm2": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "folded_width_mm",
+            "folded_depth_mm",
+            "folded_dimension_orientation"
+          ],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "one_hand_fold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-folding_ease",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "one_hand_unfold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_step_count": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "official_sequential_operations_not_normalized"
+        },
+        "requires_two_hands": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_bending": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_seat_removal": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_with_seat_attached": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "self_standing_explicit": {
+          "value": true,
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-self_standing",
+          "evidence_claim_ids": [
+            "clm-sgcla-015"
+          ],
+          "source_record_ids": [
+            "src-sgcla-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_lock": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "carry_handle": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_strap": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carrying_position": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_assistance_level": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "carry_handle",
+            "carry_strap",
+            "carrying_position"
+          ],
+          "unavailable_reason": "source_raw_facts_not_normalized"
+        },
+        "basket_max_load_kg": {
+          "value": 5,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-sgcla-basket_capacity",
+          "evidence_claim_ids": [
+            "clm-sgcla-014"
+          ],
+          "source_record_ids": [
+            "src-sgcla-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "basket_volume_l": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "manufacturer_reports_load_not_volume"
+        }
+      }
+    },
+    {
+      "analysis_product_id": "P04",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "official_name": "Runfee RB5（ランフィ RB5）",
+      "brand_name": "ピジョン",
+      "benchmark_segment": "a_type_primary",
+      "segment_basis": "大径シングルタイヤ・サスペンションの機構factと25L表記を持つA形(実走性能は未評価)",
+      "identity_status": "provisional",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official",
+      "artifact_paths": {
+        "product_identity": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/product-identity.json",
+        "sources": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/sources.json",
+        "evidence_claims": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/evidence-claims.json",
+        "normalized_features": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/normalized-features.json"
+      },
+      "artifact_sha256": {
+        "product_identity": "2ac7f7a61dab10d33ef6411dc842deb983619fd318081a3164381018eba03d6f",
+        "sources": "b0460ce508412a0a1c0632cc184e067c256a00550c8d8488cb20e2c1b1d59e3a",
+        "evidence_claims": "bd03bc091cf34f50845368eab4e695df616373df2b937e9d2de95bcb98b9e450",
+        "normalized_features": "1d6ebb191f0ae42dc3431f6f1bcd6196a63d17498c2760caee46cb0ec6d718a5"
+      },
+      "raw_facts": {
+        "target_age_min_months": {
+          "value": 1,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-target_age",
+          "evidence_claim_ids": [
+            "clm-rnf5-005"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "target_age_max_months": {
+          "value": 36,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-target_age",
+          "evidence_claim_ids": [
+            "clm-rnf5-005"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "max_child_weight_kg": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-max_load",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "body_weight_kg": {
+          "value": 5.9,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-weight_body",
+          "evidence_claim_ids": [
+            "clm-rnf5-001",
+            "clm-rnf5-014"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001",
+            "src-rnf5-002"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_scope": {
+          "value": "excluding_accessories",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-weight_body",
+          "evidence_claim_ids": [
+            "clm-rnf5-001",
+            "clm-rnf5-014"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001",
+            "src-rnf5-002"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_condition": {
+          "value": "ハグットシートを除く本体重量",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-weight_body",
+          "evidence_claim_ids": [
+            "clm-rnf5-001",
+            "clm-rnf5-014"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001",
+            "src-rnf5-002"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "approximation_status": {
+          "value": "exact",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-weight_body",
+          "evidence_claim_ids": [
+            "clm-rnf5-001",
+            "clm-rnf5-014"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001",
+            "src-rnf5-002"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "unfolded_width_mm": {
+          "value": 516,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-size_open",
+          "evidence_claim_ids": [
+            "clm-rnf5-002",
+            "clm-rnf5-003"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_width_mm": {
+          "value": 516,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-size_folded",
+          "evidence_claim_ids": [
+            "clm-rnf5-004"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_depth_mm": {
+          "value": 380,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-size_folded",
+          "evidence_claim_ids": [
+            "clm-rnf5-004"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_height_mm": {
+          "value": 1030,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-size_folded",
+          "evidence_claim_ids": [
+            "clm-rnf5-004"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_dimension_orientation": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "folded_floor_footprint_cm2": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "folded_width_mm",
+            "folded_depth_mm",
+            "folded_dimension_orientation"
+          ],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "one_hand_fold_explicit": {
+          "value": true,
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-folding_ease",
+          "evidence_claim_ids": [
+            "clm-rnf5-011"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "one_hand_unfold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_step_count": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "official_sequential_operations_not_normalized"
+        },
+        "requires_two_hands": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_bending": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_seat_removal": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_with_seat_attached": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "self_standing_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-self_standing",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_lock": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "carry_handle": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_strap": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carrying_position": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_assistance_level": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "carry_handle",
+            "carry_strap",
+            "carrying_position"
+          ],
+          "unavailable_reason": "source_raw_facts_not_normalized"
+        },
+        "basket_max_load_kg": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "manufacturer_reports_volume_not_load"
+        },
+        "basket_volume_l": {
+          "value": 25,
+          "unit": "L",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-rnf5-basket_capacity",
+          "evidence_claim_ids": [
+            "clm-rnf5-009"
+          ],
+          "source_record_ids": [
+            "src-rnf5-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        }
+      }
+    },
+    {
+      "analysis_product_id": "P05",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "official_name": "Libelle",
+      "brand_name": "CYBEX",
+      "benchmark_segment": "b_type_compact",
+      "segment_basis": "コンパクト・旅行向け(B形セカンド)",
+      "identity_status": "provisional",
+      "run_dir": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official",
+      "artifact_paths": {
+        "product_identity": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/product-identity.json",
+        "sources": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/sources.json",
+        "evidence_claims": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/evidence-claims.json",
+        "normalized_features": "agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/normalized-features.json"
+      },
+      "artifact_sha256": {
+        "product_identity": "ffdb6a2c37bc1b9b3e307908d8a02a467b625e660e5758df2459308f90237500",
+        "sources": "4a57a42f7fe9c6769856846d63a56fd4959f204f1571e3a0cf26b47d912ce5be",
+        "evidence_claims": "048d700dd9f22a46b78fa6d83a40a029871a2b79a6e1b883e13e72090da34bd8",
+        "normalized_features": "174506b6f3efd79f058f67bc291a000888e74eaa5cb5e1a8e78100116fe1e29a"
+      },
+      "raw_facts": {
+        "target_age_min_months": {
+          "value": 6,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-target_age",
+          "evidence_claim_ids": [
+            "clm-lib26-004",
+            "clm-lib26-016"
+          ],
+          "source_record_ids": [
+            "src-lib26-001",
+            "src-lib26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "target_age_max_months": {
+          "value": 48,
+          "unit": "month",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-target_age",
+          "evidence_claim_ids": [
+            "clm-lib26-004",
+            "clm-lib26-016"
+          ],
+          "source_record_ids": [
+            "src-lib26-001",
+            "src-lib26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "max_child_weight_kg": {
+          "value": 22,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-max_load",
+          "evidence_claim_ids": [
+            "clm-lib26-005",
+            "clm-lib26-017"
+          ],
+          "source_record_ids": [
+            "src-lib26-001",
+            "src-lib26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "body_weight_kg": {
+          "value": 6,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-weight_body",
+          "evidence_claim_ids": [
+            "clm-lib26-001"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_scope": {
+          "value": "manufacturer_stated_unspecified",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-weight_body",
+          "evidence_claim_ids": [
+            "clm-lib26-001"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "measurement_condition": {
+          "value": "unknown",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-weight_body",
+          "evidence_claim_ids": [
+            "clm-lib26-001"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "approximation_status": {
+          "value": "exact",
+          "unit": null,
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-weight_body",
+          "evidence_claim_ids": [
+            "clm-lib26-001"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "unfolded_width_mm": {
+          "value": 520,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-size_open",
+          "evidence_claim_ids": [
+            "clm-lib26-002"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_width_mm": {
+          "value": 320,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-size_folded",
+          "evidence_claim_ids": [
+            "clm-lib26-003"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_depth_mm": {
+          "value": 200,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-size_folded",
+          "evidence_claim_ids": [
+            "clm-lib26-003"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_height_mm": {
+          "value": 480,
+          "unit": "mm",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-size_folded",
+          "evidence_claim_ids": [
+            "clm-lib26-003"
+          ],
+          "source_record_ids": [
+            "src-lib26-001"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_dimension_orientation": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "folded_floor_footprint_cm2": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "folded_width_mm",
+            "folded_depth_mm",
+            "folded_dimension_orientation"
+          ],
+          "unavailable_reason": "standing_base_orientation_not_confirmed"
+        },
+        "one_hand_fold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-folding_ease",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "one_hand_unfold_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_step_count": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "official_sequential_operations_not_normalized"
+        },
+        "requires_two_hands": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_bending": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "requires_seat_removal": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "fold_with_seat_attached": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "self_standing_explicit": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-self_standing",
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "folded_lock": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "not_normalized_in_official_benchmark"
+        },
+        "carry_handle": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_strap": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carrying_position": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "no_normalized_feature_bridge"
+        },
+        "carry_assistance_level": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "derived",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [
+            "carry_handle",
+            "carry_strap",
+            "carrying_position"
+          ],
+          "unavailable_reason": "source_raw_facts_not_normalized"
+        },
+        "basket_max_load_kg": {
+          "value": 5,
+          "unit": "kg",
+          "evidence_status": "confirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": "nf-lib26-basket_capacity",
+          "evidence_claim_ids": [
+            "clm-lib26-006",
+            "clm-lib26-018"
+          ],
+          "source_record_ids": [
+            "src-lib26-001",
+            "src-lib26-003"
+          ],
+          "derived_from": [],
+          "unavailable_reason": null
+        },
+        "basket_volume_l": {
+          "value": null,
+          "unit": null,
+          "evidence_status": "unconfirmed",
+          "claim_class": "official_spec",
+          "conflict": false,
+          "comparison_layer": "raw",
+          "normalized_feature_id": null,
+          "evidence_claim_ids": [],
+          "source_record_ids": [],
+          "derived_from": [],
+          "unavailable_reason": "manufacturer_reports_load_not_volume"
+        }
+      }
+    }
+  ]
+}
