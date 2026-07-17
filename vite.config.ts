@@ -14,6 +14,7 @@ export default defineConfig({
         assetsAdmin: 'assets-admin.html',
         affiliateAdmin: 'affiliate-admin.html',
         strollerGuide: 'stroller-guide.html',
+        privacy: 'privacy.html',
       },
     },
   },

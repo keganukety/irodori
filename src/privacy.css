@@ -1,0 +1,206 @@
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--ily-bg);
+  color: var(--ily-text);
+  font-family: var(--font-base);
+  font-weight: 400;
+  letter-spacing: .03em;
+}
+
+.privacy-page {
+  width: min(760px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 72px 0 96px;
+}
+
+.privacy-page__eyebrow {
+  margin: 0 0 10px;
+  color: var(--ily-subtle);
+  font-family: "Libre Baskerville", var(--ily-font-en);
+  font-size: 12px;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+}
+
+.privacy-page__title {
+  margin: 0 0 24px;
+  color: var(--ily-text);
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 3.2vw, 34px);
+  font-weight: 400;
+  letter-spacing: .08em;
+  line-height: 1.5;
+}
+
+.privacy-page__lead {
+  margin: 0 0 48px;
+  color: var(--ily-muted);
+  font-size: 14px;
+  letter-spacing: .04em;
+  line-height: 2;
+}
+
+.privacy-section {
+  margin: 0 0 44px;
+}
+
+.privacy-section h2 {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--ily-border-light);
+  color: var(--ily-text);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: .07em;
+  line-height: 1.6;
+}
+
+.privacy-section p {
+  margin: 0 0 14px;
+  color: #454039;
+  font-size: 14px;
+  letter-spacing: .04em;
+  line-height: 2;
+}
+
+.privacy-section p:last-child {
+  margin-bottom: 0;
+}
+
+.privacy-section ul {
+  margin: 0 0 14px;
+  padding-left: 1.4em;
+  color: #454039;
+  font-size: 14px;
+  letter-spacing: .04em;
+  line-height: 2;
+}
+
+.privacy-section li + li {
+  margin-top: 6px;
+}
+
+.privacy-page__date {
+  margin: 56px 0 0;
+  color: var(--ily-subtle);
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-align: right;
+}
+
+/* Footer — same tone as the home page footer. */
+.privacy-footer {
+  width: 100%;
+  padding: 64px 0 34px;
+  background: #1b1b1b;
+  color: #fff;
+}
+
+.privacy-footer__inner {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.privacy-footer__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+}
+
+.privacy-footer__logo {
+  color: #fff;
+  font-family: "Libre Baskerville", var(--ily-font-en);
+  font-size: 32px;
+  letter-spacing: .12em;
+  text-decoration: none;
+}
+
+.privacy-footer__tagline {
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, .64);
+  font-size: 12px;
+  letter-spacing: .1em;
+  line-height: 2;
+}
+
+.privacy-footer__nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 16px 42px;
+  align-content: start;
+}
+
+.privacy-footer__nav a {
+  color: rgba(255, 255, 255, .9);
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-decoration: none;
+  transition: color .2s ease;
+}
+
+.privacy-footer__nav a:hover,
+.privacy-footer__nav a:focus-visible {
+  color: rgba(255, 255, 255, .58);
+}
+
+.privacy-footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  padding-top: 28px;
+}
+
+.privacy-footer__notice {
+  max-width: 760px;
+  color: rgba(255, 255, 255, .5);
+  font-size: 11px;
+  letter-spacing: .06em;
+  line-height: 1.9;
+}
+
+.privacy-footer__notice p {
+  margin: 0;
+}
+
+.privacy-footer__notice p + p {
+  margin-top: 4px;
+}
+
+.privacy-footer__bottom small {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, .45);
+  font-size: 10px;
+  letter-spacing: .12em;
+}
+
+@media (max-width: 768px) {
+  .privacy-page {
+    width: calc(100% - 32px);
+    padding: 48px 0 72px;
+  }
+
+  .privacy-page__lead {
+    margin-bottom: 40px;
+  }
+
+  .privacy-section {
+    margin-bottom: 38px;
+  }
+
+  .privacy-footer__inner {
+    width: min(100% - 28px, 1120px);
+  }
+
+  .privacy-footer__top,
+  .privacy-footer__bottom {
+    flex-direction: column;
+  }
+
+  .privacy-footer__nav {
+    grid-template-columns: 1fr;
+  }
+}
