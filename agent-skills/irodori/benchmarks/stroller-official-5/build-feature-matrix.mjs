@@ -32,6 +32,28 @@ export const BENCHMARK_AXES = [
   "price",
 ];
 
+export const NUMERIC_COMPARISON_AXES = [
+  "weight_body",
+  "size_open",
+  "size_folded",
+  "target_age",
+  "max_load",
+  "basket_capacity",
+  "price",
+];
+
+export const MEASUREMENT_SCOPES = [
+  "frame_and_seat",
+  "excluding_accessories",
+  "including_standard_accessories",
+  "manufacturer_stated_unspecified",
+  "unknown",
+  "not_applicable",
+];
+
+export const APPROXIMATION_STATUSES = ["exact", "approximate", "range", "unknown"];
+export const COMPARABILITY_STATUSES = ["full", "partial", "unknown", "not_comparable"];
+
 /** 対象5商品のrunディレクトリ(product_identity_id昇順で保持) */
 export const BENCHMARK_RUNS = [
   { run_dir: "2026-07-16-aprica-karoon-air-mesh-ac-official" },
@@ -45,7 +67,7 @@ export const BENCHMARK_RUNS = [
  * 電車移動向けランキング定義の提案weight(fixtures/fictional-train-commute.tsのProposed Default)。
  * 全値が試験値(proposed)であり確定値ではない。scoreには使わずweighted coverage算出のみに使う。
  */
-export const TRAIN_COMMUTE_PROPOSED_WEIGHTS = {
+export const BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS = {
   weight_body: 0.17,
   size_open: 0.13,
   size_folded: 0.12,
@@ -60,6 +82,71 @@ export const TRAIN_COMMUTE_PROPOSED_WEIGHTS = {
 
 const load = (dir, name) => JSON.parse(readFileSync(join(runsDir, dir, name), "utf-8"));
 
+function measurementMetadata(identity, feature, supportingClaims) {
+  const sourceText = supportingClaims
+    .flatMap((claim) => [claim.value_raw, claim.notes, claim.measurement_condition])
+    .filter((value) => typeof value === "string" && value.length > 0)
+    .join(" / ");
+  const statedConditions = [...new Set(supportingClaims
+    .map((claim) => claim.measurement_condition)
+    .filter((value) => typeof value === "string" && value.length > 0))];
+  const measurementCondition = statedConditions.length > 0 ? statedConditions.join(" / ") : "unknown";
+  const hasApproximation = /approx\.|約|頃|ころ|目安/i.test(sourceText);
+  const hasRange = /\d\s*(?:-|–|〜|～)\s*\d/.test(sourceText);
+  const approximationStatus = feature.value === null || feature.evidence_status === "unconfirmed"
+    ? "unknown"
+    : hasApproximation
+      ? "approximate"
+      : hasRange
+        ? "range"
+        : "exact";
+
+  let measurementScope = "not_applicable";
+  let comparabilityStatus = "full";
+  let comparabilityReason = "公式値の単位と対象が明示され、近似・範囲表記を含まない";
+
+  if (feature.value === null || ["unconfirmed", "conflicting"].includes(feature.evidence_status)) {
+    comparabilityStatus = "unknown";
+    comparabilityReason = "値が未確認または未解決矛盾を含むため比較可否を確定できない";
+  } else if (feature.axis_id === "weight_body") {
+    measurementScope = /除く|excluding/i.test(sourceText)
+      ? "excluding_accessories"
+      : "manufacturer_stated_unspecified";
+    if (measurementScope === "manufacturer_stated_unspecified") {
+      comparabilityStatus = "unknown";
+      comparabilityReason = "メーカー公式値だが付属品を含む測定対象が明示されていない";
+    } else {
+      comparabilityStatus = "partial";
+      comparabilityReason = "除外付属品が明示されるが、商品ごとに除外対象が異なるため部分比較に限る";
+    }
+  } else if (feature.axis_id === "basket_capacity") {
+    comparabilityStatus = "not_comparable";
+    comparabilityReason = "5商品内で耐荷重kgと容量Lが混在し、相互換算しない";
+  } else if (feature.axis_id === "price") {
+    comparabilityStatus = "partial";
+    comparabilityReason = "メーカー希望小売価格・公式ストア価格・税込価格の表示種別が異なる";
+  } else if (["size_open", "size_folded"].includes(feature.axis_id) && measurementCondition === "unknown") {
+    comparabilityStatus = "unknown";
+    comparabilityReason = "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない";
+  } else if (approximationStatus !== "exact") {
+    comparabilityStatus = "partial";
+    comparabilityReason = approximationStatus === "approximate"
+      ? "公式値に約・頃・目安表記を含むため部分比較に限る"
+      : "公式値が可変範囲を含むため単一条件の完全比較には使わない";
+  }
+
+  return {
+    comparison_metadata_id: `cmp-${identity.product_identity_id}-${feature.axis_id}`,
+    product_identity_id: identity.product_identity_id,
+    axis_id: feature.axis_id,
+    measurement_scope: measurementScope,
+    measurement_condition: measurementCondition,
+    approximation_status: approximationStatus,
+    comparability_status: comparabilityStatus,
+    comparability_reason: comparabilityReason,
+  };
+}
+
 export function buildMatrix() {
   const products = BENCHMARK_RUNS.map(({ run_dir }) => {
     const identity = load(run_dir, "product-identity.json");
@@ -69,6 +156,7 @@ export function buildMatrix() {
   }).sort((a, b) => a.identity.product_identity_id.localeCompare(b.identity.product_identity_id));
 
   const entries = [];
+  const comparisonMetadata = [];
   for (const { run_dir, identity, claims, features } of products) {
     const claimById = new Map(claims.map((c) => [c.evidence_claim_id, c]));
     for (const axisId of BENCHMARK_AXES) {
@@ -82,6 +170,7 @@ export function buildMatrix() {
         if (!claim) throw new Error(`missing claim ${id} in ${run_dir}`);
         return claim.source_record_id;
       }))].sort();
+      const supportingClaims = supportingClaimIds.map((id) => claimById.get(id));
       entries.push({
         product_identity_id: identity.product_identity_id,
         axis_id: axisId,
@@ -94,11 +183,14 @@ export function buildMatrix() {
         match_status: identity.site_product_match_status,
         human_review_status: "pending",
       });
+      if (NUMERIC_COMPARISON_AXES.includes(axisId)) {
+        comparisonMetadata.push(measurementMetadata(identity, feature, supportingClaims));
+      }
     }
   }
 
-  const trainAxes = Object.keys(TRAIN_COMMUTE_PROPOSED_WEIGHTS).sort();
-  const totalTrainWeight = trainAxes.reduce((sum, axis) => sum + TRAIN_COMMUTE_PROPOSED_WEIGHTS[axis], 0);
+  const trainAxes = Object.keys(BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS).sort();
+  const totalTrainWeight = trainAxes.reduce((sum, axis) => sum + BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS[axis], 0);
   const round4 = (n) => Math.round(n * 10000) / 10000;
 
   const coverage = products.map(({ identity }) => {
@@ -108,18 +200,20 @@ export function buildMatrix() {
       .map((e) => e.axis_id)
       .sort();
     const confirmedTrainAxes = trainAxes.filter((axis) => confirmedAxes.includes(axis));
-    const confirmedTrainWeight = confirmedTrainAxes.reduce((sum, axis) => sum + TRAIN_COMMUTE_PROPOSED_WEIGHTS[axis], 0);
+    const confirmedTrainWeight = confirmedTrainAxes.reduce((sum, axis) => sum + BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS[axis], 0);
     return {
       product_identity_id: pid,
       confirmed_axis_count_benchmark14: confirmedAxes.length,
       data_coverage_benchmark14: round4(confirmedAxes.length / BENCHMARK_AXES.length),
       confirmed_axes_benchmark14: confirmedAxes,
-      train_commute_proposed: {
-        value_status: "proposed",
-        note: "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      baseline_train_commute_coverage: {
+        value_status: "baseline_diagnostic_not_operational",
+        note: "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        point_allocation: false,
+        coverage_threshold_adopted: false,
         confirmed_axis_count_10: confirmedTrainAxes.length,
         data_coverage_10: round4(confirmedTrainAxes.length / trainAxes.length),
-        weighted_data_coverage: round4(confirmedTrainWeight / totalTrainWeight),
+        legacy_weighted_data_coverage: round4(confirmedTrainWeight / totalTrainWeight),
         confirmed_axes: confirmedTrainAxes,
       },
     };
@@ -149,6 +243,7 @@ export function buildMatrix() {
       official_name: identity.official_name,
       brand_name: identity.brand_name,
       model_year: identity.model_year,
+      generation_code: identity.generation_code ?? null,
       market: identity.market,
       identification_status: identity.identification_status,
       site_product_id: identity.site_product_id,
@@ -156,6 +251,14 @@ export function buildMatrix() {
       run_dir: `agent-skills/irodori/runs/${run_dir}`,
     })),
     entries,
+    measurement_metadata_schema: {
+      applies_to_axes: NUMERIC_COMPARISON_AXES,
+      measurement_scope_values: MEASUREMENT_SCOPES,
+      approximation_status_values: APPROXIMATION_STATUSES,
+      comparability_status_values: COMPARABILITY_STATUSES,
+      unknown_rule: "公式sourceに測定対象または条件の記載がなければunknownのまま保持する",
+    },
+    comparison_metadata: comparisonMetadata,
     coverage,
     axis_coverage: axisCoverage,
     ranking_artifacts: "none (ranking_input / ranking_result / observed_score / score / 順位は作成しない)",

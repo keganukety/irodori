@@ -105,6 +105,7 @@
     "commercial_relation": "self_published_by_maker",
     "external_rank_metadata": null,
     "acquisition_status": "skipped",
+    "manual_gate_status": "skipped_terms_acceptance_required",
     "acquisition_failure_reason": "取扱説明書PDFへの到達には利用規約への同意操作が必要であり、同意はユーザー判断事項として本runでは実施しない方針とした。規約はPDF直接リンクを明示的に禁止しているため、直接PDF URLの保存も行わない。",
     "discovery_page_url": "https://www.aprica.jp/products/babycar/detail/reversible_lw/karoonair_mesh_ac/",
     "direct_asset_url": null,

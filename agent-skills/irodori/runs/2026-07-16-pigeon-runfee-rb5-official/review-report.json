@@ -5,13 +5,13 @@
   "updated_at": "2026-07-16T16:15:00+09:00",
   "review_report_id": "rvw-2026-07-16-pigeon-runfee-rb5-official",
   "run_id": "run-2026-07-16-pigeon-runfee-rb5-official",
-  "summary": "ピジョン公式情報限定run。ブランド・正式商品名Runfee RB5・市場JP・現行性をpigeon.infoブランドページ・ピジョン株式会社商品情報ページ・公式一覧ページで確認した。RB5をモデル共通型番としてmodel_numberに採用し、カラー別商品コード(1042807/1042808)はvariantへ分離。モデル年表記がないためmodel_yearはnullでidentification_statusはprovisional。取扱説明書は同意ゲートのため未取得で、max_load・自立・保証・同梱物・警告は未確認。公式情報内の矛盾は検出していない。ローカルproductsに該当候補がなくsite_product_match_statusはunmatched。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "summary": "ピジョン公式情報限定run。ブランド・正式商品名Runfee RB5・市場JP・現行性をpigeon.infoブランドページ・ピジョン株式会社商品情報ページ・公式一覧ページで確認した。商品名中のRB5をgeneration_codeとして保持し、model_number/model_yearには昇格していない。カラー別商品コード(1042807/1042808)はvariantへ分離。取扱説明書は同意ゲートのため未取得で、max_load・自立・保証・同梱物・警告は未確認。機構factとメーカーの走行性能訴求は別claimに分離した。ローカルproductsに該当候補がなくsite_product_match_statusはunmatched。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
   "product_summaries": [
     {
       "product_identity_id": "pid-pigeon-runfee-rb5-jp",
       "identification_status": "provisional",
       "source_count": 5,
-      "claim_count": 19,
+      "claim_count": 20,
       "unconfirmed_axes": ["max_load", "self_standing", "warranty", "included_accessories", "caution"],
       "conflicts": 0
     }
@@ -28,9 +28,9 @@
       "detail": "検索は公式ページの発見経路のみ。claimはサーバ返却HTMLの直接確認に基づく。"
     },
     {
-      "check_name": "audit_03_model_number_rb5_with_variant_codes",
+      "check_name": "audit_03_generation_code_rb5_with_variant_codes",
       "result": "pass",
-      "detail": "RB5をmodel_numberとし、カラー別商品コード(1042807/1042808)はvariants[].product_codeへ分離。"
+      "detail": "RB5をgeneration_codeとし、model_number/model_yearはnull。カラー別商品コード(1042807/1042808)はvariants[].product_codeへ分離。"
     },
     {
       "check_name": "audit_04_manual_gate_recorded_as_skipped",

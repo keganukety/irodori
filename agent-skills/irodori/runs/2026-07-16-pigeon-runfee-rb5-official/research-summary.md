@@ -14,15 +14,16 @@
 | ブランド | ピジョン | 公式ブランドページ(src-rnf5-001) |
 | 製造者 | ピジョン株式会社 | 商品情報サイト(products.pigeon.co.jp)の運営表記(src-rnf5-002) |
 | 正式商品名 | Runfee RB5（ランフィ RB5） | 商品情報ページタイトル・一覧ページ |
+| generation_code | **RB5** | 公式商品名に含まれる世代識別記号。model_year / model_numberへは昇格しない |
 | モデル年 | null(未確認) | ピジョンはモデル年表記を用いず世代記号(RB5)で区別 |
 | 対象市場 | JP(日本) | 日本公式サイト掲載・円建て価格・安全基準A形表記 |
-| モデル共通型番 | **RB5** | 商品名にカラー共通で含まれる世代識別記号(全カラー共通) |
+| モデル共通型番 | null(未確認) | RB5はgeneration_codeとして分離し、型番とはみなさない |
 | 確認済みvariant | キャメル 1042807 / ストーングレー 1042808(仕様同一性unverified) | 商品情報ページの商品コード欄 |
 
 - lifecycle_status: `current`(公式一覧に掲載。販売終了品は【販売終了】表記で区別される)
 - 公式商品URL: https://pigeon.info/stroller/runfee/
 - 公式取扱説明書: https://support.pigeon.co.jp/manual/download-100.html の存在まで確認。**『同意してダウンロード』ゲートがあるため未取得(skipped)**
-- model_numberがあってもmodel_yearが未確認のため`identified`にはせず`provisional`を維持
+- model_number / model_yearが未確認のため`provisional`を維持
 
 ### ローカルproductsとの関連付け
 ローカルproductsにランフィの登録候補が存在しないため、`site_product_id: null` / `site_product_match_status: "unmatched"`。

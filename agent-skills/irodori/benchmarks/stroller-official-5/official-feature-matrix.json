@@ -25,6 +25,7 @@
       "official_name": "カルーンエアー メッシュ AC",
       "brand_name": "アップリカ",
       "model_year": null,
+      "generation_code": "AC",
       "market": "JP",
       "identification_status": "provisional",
       "site_product_id": "5",
@@ -36,6 +37,7 @@
       "official_name": "スゴカル エッグショック LA",
       "brand_name": "コンビ",
       "model_year": null,
+      "generation_code": "LA",
       "market": "JP",
       "identification_status": "provisional",
       "site_product_id": "3",
@@ -47,6 +49,7 @@
       "official_name": "Libelle",
       "brand_name": "CYBEX",
       "model_year": 2026,
+      "generation_code": null,
       "market": "JP",
       "identification_status": "provisional",
       "site_product_id": "7",
@@ -58,6 +61,7 @@
       "official_name": "Melio Carbon",
       "brand_name": "CYBEX",
       "model_year": 2026,
+      "generation_code": null,
       "market": "JP",
       "identification_status": "provisional",
       "site_product_id": "4",
@@ -69,6 +73,7 @@
       "official_name": "Runfee RB5（ランフィ RB5）",
       "brand_name": "ピジョン",
       "model_year": null,
+      "generation_code": "RB5",
       "market": "JP",
       "identification_status": "provisional",
       "site_product_id": null,
@@ -1223,6 +1228,390 @@
       "human_review_status": "pending"
     }
   ],
+  "measurement_metadata_schema": {
+    "applies_to_axes": [
+      "weight_body",
+      "size_open",
+      "size_folded",
+      "target_age",
+      "max_load",
+      "basket_capacity",
+      "price"
+    ],
+    "measurement_scope_values": [
+      "frame_and_seat",
+      "excluding_accessories",
+      "including_standard_accessories",
+      "manufacturer_stated_unspecified",
+      "unknown",
+      "not_applicable"
+    ],
+    "approximation_status_values": [
+      "exact",
+      "approximate",
+      "range",
+      "unknown"
+    ],
+    "comparability_status_values": [
+      "full",
+      "partial",
+      "unknown",
+      "not_comparable"
+    ],
+    "unknown_rule": "公式sourceに測定対象または条件の記載がなければunknownのまま保持する"
+  },
+  "comparison_metadata": [
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-weight_body",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "weight_body",
+      "measurement_scope": "manufacturer_stated_unspecified",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "メーカー公式値だが付属品を含む測定対象が明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-size_open",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "size_open",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-size_folded",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "size_folded",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-target_age",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "target_age",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "full",
+      "comparability_reason": "公式値の単位と対象が明示され、近似・範囲表記を含まない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-max_load",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "max_load",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "full",
+      "comparability_reason": "公式値の単位と対象が明示され、近似・範囲表記を含まない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-basket_capacity",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "basket_capacity",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "not_comparable",
+      "comparability_reason": "5商品内で耐荷重kgと容量Lが混在し、相互換算しない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-aprica-karoon-air-mesh-ac-jp-price",
+      "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+      "axis_id": "price",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "partial",
+      "comparability_reason": "メーカー希望小売価格・公式ストア価格・税込価格の表示種別が異なる"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-weight_body",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "weight_body",
+      "measurement_scope": "excluding_accessories",
+      "measurement_condition": "ダッコシートを除く本体重量",
+      "approximation_status": "exact",
+      "comparability_status": "partial",
+      "comparability_reason": "除外付属品が明示されるが、商品ごとに除外対象が異なるため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-size_open",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "size_open",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "range",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-size_folded",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "size_folded",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-target_age",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "target_age",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "approximate",
+      "comparability_status": "partial",
+      "comparability_reason": "公式値に約・頃・目安表記を含むため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-max_load",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "max_load",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "approximate",
+      "comparability_status": "partial",
+      "comparability_reason": "公式値に約・頃・目安表記を含むため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-basket_capacity",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "basket_capacity",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "not_comparable",
+      "comparability_reason": "5商品内で耐荷重kgと容量Lが混在し、相互換算しない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-combi-sugocal-eggshock-la-jp-price",
+      "product_identity_id": "pid-combi-sugocal-eggshock-la-jp",
+      "axis_id": "price",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "partial",
+      "comparability_reason": "メーカー希望小売価格・公式ストア価格・税込価格の表示種別が異なる"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-weight_body",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "weight_body",
+      "measurement_scope": "manufacturer_stated_unspecified",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "メーカー公式値だが付属品を含む測定対象が明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-size_open",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "size_open",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-size_folded",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "size_folded",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-target_age",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "target_age",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "一人すわりができることが条件",
+      "approximation_status": "approximate",
+      "comparability_status": "partial",
+      "comparability_reason": "公式値に約・頃・目安表記を含むため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-max_load",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "max_load",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "approximate",
+      "comparability_status": "partial",
+      "comparability_reason": "公式値に約・頃・目安表記を含むため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-basket_capacity",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "basket_capacity",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "not_comparable",
+      "comparability_reason": "5商品内で耐荷重kgと容量Lが混在し、相互換算しない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-libelle-2026-jp-price",
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "axis_id": "price",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "unknown",
+      "comparability_status": "unknown",
+      "comparability_reason": "値が未確認または未解決矛盾を含むため比較可否を確定できない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-weight_body",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "weight_body",
+      "measurement_scope": "manufacturer_stated_unspecified",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "unknown",
+      "comparability_reason": "メーカー公式値だが付属品を含む測定対象が明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-size_open",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "size_open",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "range",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-size_folded",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "size_folded",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "most compact(最小折りたたみ状態)",
+      "approximation_status": "exact",
+      "comparability_status": "full",
+      "comparability_reason": "公式値の単位と対象が明示され、近似・範囲表記を含まない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-target_age",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "target_age",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "approximate",
+      "comparability_status": "unknown",
+      "comparability_reason": "値が未確認または未解決矛盾を含むため比較可否を確定できない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-max_load",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "max_load",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "full",
+      "comparability_reason": "公式値の単位と対象が明示され、近似・範囲表記を含まない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-basket_capacity",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "basket_capacity",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "not_comparable",
+      "comparability_reason": "5商品内で耐荷重kgと容量Lが混在し、相互換算しない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-cybex-melio-carbon-2026-jp-price",
+      "product_identity_id": "pid-cybex-melio-carbon-2026-jp",
+      "axis_id": "price",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "unknown",
+      "comparability_status": "unknown",
+      "comparability_reason": "値が未確認または未解決矛盾を含むため比較可否を確定できない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-weight_body",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "weight_body",
+      "measurement_scope": "excluding_accessories",
+      "measurement_condition": "ハグットシートを除く本体重量",
+      "approximation_status": "exact",
+      "comparability_status": "partial",
+      "comparability_reason": "除外付属品が明示されるが、商品ごとに除外対象が異なるため部分比較に限る"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-size_open",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "size_open",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "背面位(最大寸法) / 対面位(最大寸法)",
+      "approximation_status": "range",
+      "comparability_status": "partial",
+      "comparability_reason": "公式値が可変範囲を含むため単一条件の完全比較には使わない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-size_folded",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "size_folded",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "range",
+      "comparability_status": "unknown",
+      "comparability_reason": "展開・折りたたみ状態以外の測定条件が公式sourceで明示されていない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-target_age",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "target_age",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "full",
+      "comparability_reason": "公式値の単位と対象が明示され、近似・範囲表記を含まない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-max_load",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "max_load",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "unknown",
+      "comparability_status": "unknown",
+      "comparability_reason": "値が未確認または未解決矛盾を含むため比較可否を確定できない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-basket_capacity",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "basket_capacity",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "not_comparable",
+      "comparability_reason": "5商品内で耐荷重kgと容量Lが混在し、相互換算しない"
+    },
+    {
+      "comparison_metadata_id": "cmp-pid-pigeon-runfee-rb5-jp-price",
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "axis_id": "price",
+      "measurement_scope": "not_applicable",
+      "measurement_condition": "unknown",
+      "approximation_status": "exact",
+      "comparability_status": "partial",
+      "comparability_reason": "メーカー希望小売価格・公式ストア価格・税込価格の表示種別が異なる"
+    }
+  ],
   "coverage": [
     {
       "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
@@ -1241,12 +1630,14 @@
         "warranty",
         "weight_body"
       ],
-      "train_commute_proposed": {
-        "value_status": "proposed",
-        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      "baseline_train_commute_coverage": {
+        "value_status": "baseline_diagnostic_not_operational",
+        "note": "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        "point_allocation": false,
+        "coverage_threshold_adopted": false,
         "confirmed_axis_count_10": 4,
         "data_coverage_10": 0.4,
-        "weighted_data_coverage": 0.47,
+        "legacy_weighted_data_coverage": 0.47,
         "confirmed_axes": [
           "basket_capacity",
           "size_folded",
@@ -1274,12 +1665,14 @@
         "warranty",
         "weight_body"
       ],
-      "train_commute_proposed": {
-        "value_status": "proposed",
-        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      "baseline_train_commute_coverage": {
+        "value_status": "baseline_diagnostic_not_operational",
+        "note": "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        "point_allocation": false,
+        "coverage_threshold_adopted": false,
         "confirmed_axis_count_10": 5,
         "data_coverage_10": 0.5,
-        "weighted_data_coverage": 0.55,
+        "legacy_weighted_data_coverage": 0.55,
         "confirmed_axes": [
           "basket_capacity",
           "self_standing",
@@ -1306,12 +1699,14 @@
         "warranty",
         "weight_body"
       ],
-      "train_commute_proposed": {
-        "value_status": "proposed",
-        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      "baseline_train_commute_coverage": {
+        "value_status": "baseline_diagnostic_not_operational",
+        "note": "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        "point_allocation": false,
+        "coverage_threshold_adopted": false,
         "confirmed_axis_count_10": 4,
         "data_coverage_10": 0.4,
-        "weighted_data_coverage": 0.47,
+        "legacy_weighted_data_coverage": 0.47,
         "confirmed_axes": [
           "basket_capacity",
           "size_folded",
@@ -1337,12 +1732,14 @@
         "warranty",
         "weight_body"
       ],
-      "train_commute_proposed": {
-        "value_status": "proposed",
-        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      "baseline_train_commute_coverage": {
+        "value_status": "baseline_diagnostic_not_operational",
+        "note": "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        "point_allocation": false,
+        "coverage_threshold_adopted": false,
         "confirmed_axis_count_10": 6,
         "data_coverage_10": 0.6,
-        "weighted_data_coverage": 0.68,
+        "legacy_weighted_data_coverage": 0.68,
         "confirmed_axes": [
           "basket_capacity",
           "folding_ease",
@@ -1368,12 +1765,14 @@
         "target_age",
         "weight_body"
       ],
-      "train_commute_proposed": {
-        "value_status": "proposed",
-        "note": "weightはfictional-train-commute fixtureの試験値(Proposed Default)。scoreではなくデータ充足率のみ",
+      "baseline_train_commute_coverage": {
+        "value_status": "baseline_diagnostic_not_operational",
+        "note": "c1646c9以前の10軸coverage診断を履歴として保持。現在の4親軸ルーブリック、配点、coverage閾値ではない",
+        "point_allocation": false,
+        "coverage_threshold_adopted": false,
         "confirmed_axis_count_10": 5,
         "data_coverage_10": 0.5,
-        "weighted_data_coverage": 0.6,
+        "legacy_weighted_data_coverage": 0.6,
         "confirmed_axes": [
           "basket_capacity",
           "folding_ease",

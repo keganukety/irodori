@@ -13,7 +13,16 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildMatrix, BENCHMARK_AXES, BENCHMARK_RUNS, TRAIN_COMMUTE_PROPOSED_WEIGHTS } from "./build-feature-matrix.mjs";
+import {
+  buildMatrix,
+  BENCHMARK_AXES,
+  BENCHMARK_RUNS,
+  BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS,
+  NUMERIC_COMPARISON_AXES,
+  MEASUREMENT_SCOPES,
+  APPROXIMATION_STATUSES,
+  COMPARABILITY_STATUSES,
+} from "./build-feature-matrix.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const runsDir = join(here, "..", "..", "runs");
@@ -44,6 +53,49 @@ check(
     .flatMap((pid) => BENCHMARK_AXES.map((axis) => `${pid}::${axis}`))),
 );
 check("エントリ数 = 5商品 × 14軸 = 70", matrixOnDisk.entries.length === 70);
+
+// 2a) 数値軸の測定条件・比較可能性metadata
+const comparisonMetadata = matrixOnDisk.comparison_metadata ?? [];
+const comparisonKeys = comparisonMetadata.map((item) => `${item.product_identity_id}::${item.axis_id}`);
+const expectedComparisonKeys = [...matrixOnDisk.products.map((p) => p.product_identity_id)].sort()
+  .flatMap((pid) => NUMERIC_COMPARISON_AXES.map((axis) => `${pid}::${axis}`));
+check(
+  "数値軸measurement metadata = 5商品 × 7軸 = 35",
+  comparisonMetadata.length === 35 && JSON.stringify(comparisonKeys) === JSON.stringify(expectedComparisonKeys),
+);
+check("measurement metadataキーが一意", new Set(comparisonKeys).size === comparisonKeys.length);
+const requiredMeasurementFields = [
+  "measurement_scope",
+  "measurement_condition",
+  "approximation_status",
+  "comparability_status",
+  "comparability_reason",
+];
+check(
+  "measurement metadata 5項目が全行に存在",
+  comparisonMetadata.every((item) => requiredMeasurementFields.every((field) => Object.hasOwn(item, field))),
+);
+check(
+  "measurement metadata enumとreasonが妥当",
+  comparisonMetadata.every((item) => MEASUREMENT_SCOPES.includes(item.measurement_scope)
+    && APPROXIMATION_STATUSES.includes(item.approximation_status)
+    && COMPARABILITY_STATUSES.includes(item.comparability_status)
+    && typeof item.measurement_condition === "string"
+    && item.measurement_condition.length > 0
+    && typeof item.comparability_reason === "string"
+    && item.comparability_reason.length > 0),
+);
+const weightMetadata = comparisonMetadata.filter((item) => item.axis_id === "weight_body");
+check(
+  "重量scope不明をunknownのまま保持",
+  weightMetadata.filter((item) => item.measurement_scope === "manufacturer_stated_unspecified")
+    .every((item) => item.measurement_condition === "unknown" && item.comparability_status === "unknown"),
+);
+check(
+  "除外付属品付き重量はpartialで条件を保持",
+  weightMetadata.filter((item) => item.measurement_scope === "excluding_accessories")
+    .every((item) => item.measurement_condition !== "unknown" && item.comparability_status === "partial"),
+);
 
 // 3) matrix→runの参照整合性
 const runsByPid = new Map();
@@ -79,26 +131,37 @@ for (const entry of matrixOnDisk.entries) {
 }
 check("matrixのclaim/source参照がrunsに実在", refOk);
 check("matrixの値・単位・evidence_statusがrunのnormalized_featureと一致", valueOk);
+check(
+  "matrixのgeneration_codeがrun identityと一致し非昇格",
+  matrixOnDisk.products.every((product) => {
+    const identity = runsByPid.get(product.product_identity_id)?.identity;
+    return identity
+      && product.generation_code === (identity.generation_code ?? null)
+      && !(identity.generation_code && (identity.model_year === identity.generation_code || identity.model_number === identity.generation_code));
+  }),
+);
 
 // 4) coverage再現性(matrix内のcoverageを独立に再計算)
 const round4 = (n) => Math.round(n * 10000) / 10000;
-const trainAxes = Object.keys(TRAIN_COMMUTE_PROPOSED_WEIGHTS).sort();
-const totalTrainWeight = trainAxes.reduce((sum, axis) => sum + TRAIN_COMMUTE_PROPOSED_WEIGHTS[axis], 0);
+const trainAxes = Object.keys(BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS).sort();
+const totalTrainWeight = trainAxes.reduce((sum, axis) => sum + BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS[axis], 0);
 let coverageOk = true;
 for (const cov of matrixOnDisk.coverage) {
   const confirmed = matrixOnDisk.entries
     .filter((e) => e.product_identity_id === cov.product_identity_id && e.evidence_status === "confirmed")
     .map((e) => e.axis_id);
   const confirmedTrain = trainAxes.filter((axis) => confirmed.includes(axis));
-  const weighted = round4(confirmedTrain.reduce((s, a) => s + TRAIN_COMMUTE_PROPOSED_WEIGHTS[a], 0) / totalTrainWeight);
+  const weighted = round4(confirmedTrain.reduce((s, a) => s + BASELINE_TRAIN_COMMUTE_COVERAGE_WEIGHTS[a], 0) / totalTrainWeight);
   if (cov.confirmed_axis_count_benchmark14 !== confirmed.length
     || cov.data_coverage_benchmark14 !== round4(confirmed.length / BENCHMARK_AXES.length)
-    || cov.train_commute_proposed.weighted_data_coverage !== weighted
-    || cov.train_commute_proposed.value_status !== "proposed") {
+    || cov.baseline_train_commute_coverage.legacy_weighted_data_coverage !== weighted
+    || cov.baseline_train_commute_coverage.value_status !== "baseline_diagnostic_not_operational"
+    || cov.baseline_train_commute_coverage.coverage_threshold_adopted !== false
+    || cov.baseline_train_commute_coverage.point_allocation !== false) {
     coverageOk = false;
   }
 }
-check("coverage計算の再現性(独立再計算と一致・weightはproposed明記)", coverageOk);
+check("baseline coverage診断の再現性(現行配点・閾値ではない)", coverageOk);
 
 // 5) 公式ドメイン限定・第三者媒体/楽天データ不使用
 const OFFICIAL_HOSTS = new Set([

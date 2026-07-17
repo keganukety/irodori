@@ -2,60 +2,71 @@
 
 監査日: 2026-07-17
 
+監査範囲: 保存済みメーカー日本公式source、claim、normalized feature、5商品matrix、提案ルーブリック、生成・validator・テスト。外部Web再調査、実在商品の得点・順位・感度分析は行っていない。
+
+## baseline_audit
+
 対象commit: `6bf90ce Add five-product official stroller benchmark`
 
-監査範囲: 保存済みのメーカー日本公式source、claim、normalized feature、5商品matrix、生成・検証スクリプト。外部Web再調査は行っていない。
-判定集計: **PASS 18 / FAIL 2 / UNKNOWN 0 / NOT_APPLICABLE 0**
+集計: **PASS 18 / FAIL 2 / UNKNOWN 0**
 
-この監査は事実・参照・比較可能性を検査する。実在商品の得点、順位、星、勝者、おすすめ認定は作成しない。FAILは元データを推測修正せず、比較ルーブリック側で保留・除外する。
-
-## 監査結果
-
-| # | 監査項目 | 判定 | 結論と根拠 |
+| # | 監査項目 | 判定 | baseline結論 |
 |---:|---|---|---|
-| 1 | 5商品のidentityが分離されている | PASS | 5つの`product_identity_id`とrunが一意。`benchmark-manifest.json`と各`product-identity.json`が対応する。 |
-| 2 | 旧モデル・海外仕様が混在していない | PASS | 保存sourceの対象市場はJPで、別年・海外仕様のclaim混入は検出されなかった。 |
-| 3 | model_year不明を推測で埋めていない | PASS | 国内3商品は`model_year: null`。CYBEX 2商品だけが2026表記の公式根拠を持つ。 |
-| 4 | カラーコードがvariant側にある | PASS | 確認された9カラーコードは`variants[].product_code`にあり、モデル共通型番と分離される。 |
-| 5 | 国内世代記号が勝手にmodel_year化されていない | PASS | AC / LA / RB5を西暦年へ変換していない。ただしRB5は`model_number`へ置かれており、今後は`generation_code`候補として保持する必要がある。 |
-| 6 | sourceからclaimへ追跡可能 | PASS | 全87 claimの`source_record_id`が各runの`sources.json`に実在する。 |
-| 7 | claimからnormalized featureへ追跡可能 | PASS | 値を持つfeatureはclaimを参照し、matrixの参照もrunと一致する。 |
-| 8 | manufacturer claimと客観仕様が分離されている | PASS | `manufacturer_claim`と`official_spec`は区別され、メーカー訴求だけを客観値へ昇格していない。例: `clm-sgcla-010`（機構）と`clm-sgcla-011`（訴求）。 |
-| 9 | 不明値がnullである | PASS | 未確認featureは`value: null`、`supporting_claims: []`、`independent_source_count: 0`を保持する。 |
-| 10 | 公式情報内の矛盾が保持されている | PASS | Melioの対象月齢等の矛盾を`clm-melio26-004,012,014,025,026`と`conflicting`で保持する。 |
-| 11 | 単位が正しく保存されている | PASS | kg / L / mm / months等を原単位の意味のまま保持し、basketのkgとLを換算していない。 |
-| 12 | 異なる測定条件を同じ値として比較していない | **FAIL** | matrixは重量の付属品除外差、開寸法の背面・対面・可変範囲差を`comparability_status`なしで同一軸のconfirmed値として並べる。根拠: `clm-sgcla-001`、`clm-rnf5-001,014`、`clm-melio26-002`、`clm-sgcla-002`、`clm-rnf5-002,003`。 |
-| 13 | coverage計算が再現可能 | PASS | `build-feature-matrix.mjs`と`validate-benchmark.mjs`による独立再計算が保存matrixと一致する。 |
-| 14 | weighted coverageが試験値と明示されている | PASS | `value_status: proposed`であり、得点ではなく試験的な充足率と明記される。新ルーブリックの有効性根拠には使わない。 |
-| 15 | 実在商品のscore・順位がない | PASS | 5 runとbenchmarkに`ranking_input` / `ranking_result`、実在商品の得点・順位・星・勝者がない。 |
-| 16 | 第三者媒体・楽天データが混ざっていない | PASS | sourceはメーカー公式ドメインとメーカー発信のみ。第三者媒体、EC、楽天参照はない。 |
-| 17 | 既存CYBEX runが不必要に変更されていない | PASS | commit `6bf90ce`は既存Melio runを変更せず参照している。 |
-| 18 | 実在商品の優劣を断定していない | **FAIL** | `selection-report.md` / `benchmark-manifest.json`に、タイヤ・サスペンションという機構事実から「走行安定性」役を示唆する表現と「優位」の語が残る。実走性能の断定には第三者の標準化実測が必要。 |
-| 19 | ローカル商品IDがconfirmedへ過剰昇格していない | PASS | site matchはprobable以下、Runfeeはunmatched。ローカル差異は`identity-review.md`に未解決のまま保持される。 |
-| 20 | 5商品matrixの参照整合性がある | PASS | 70行（5商品×14軸）のproduct / feature / claim / source / value / unit / status参照が整合する。 |
+| 1 | 5商品のidentity分離 | PASS | 5つの一意なproduct identityとrunを確認。 |
+| 2 | 旧モデル・海外仕様混入なし | PASS | JP公式sourceのみ。 |
+| 3 | model_year不明を推測しない | PASS | 国内3商品はnull。 |
+| 4 | variant code分離 | PASS | カラーコードはvariant側。 |
+| 5 | 国内世代記号を年式へ変換しない | PASS | AC / LA / RB5を西暦年へ変換していない。 |
+| 6 | source→claim追跡 | PASS | claim参照がsourceに実在。 |
+| 7 | claim→normalized feature追跡 | PASS | supporting claim参照が整合。 |
+| 8 | manufacturer claim分離 | PASS | claim classを区別。 |
+| 9 | 不明値null保持 | PASS | 未確認を0/falseにしない。 |
+| 10 | 公式情報内矛盾保持 | PASS | Melioの対象月齢矛盾をconflictingで保持。 |
+| 11 | 原単位保持 | PASS | kg / L等を換算しない。 |
+| 12 | 測定条件差の構造化 | **FAIL** | matrixに`measurement_scope`、`measurement_condition`、`approximation_status`、`comparability_status`、`comparability_reason`がなく、validatorも欠落を検出しない。 |
+| 13 | matrix再現性 | PASS | generator再計算と一致。 |
+| 14 | coverageは得点ではない | PASS | データ充足率として分離。 |
+| 15 | 実在score・順位なし | PASS | ranking成果物なし。 |
+| 16 | 第三者・楽天混入なし | PASS | メーカー公式のみ。 |
+| 17 | 既存CYBEX run保全 | PASS | 不必要な変更なし。 |
+| 18 | 機構factから実走性能を示唆しない | **FAIL** | タイヤ/サスペンション機構と「段差乗り越えに優れた」訴求が`clm-rnf5-008`のofficial spec/factへ混在し、選定文にも性能を示唆する表現が残る。 |
+| 19 | local product紐付けを過剰昇格しない | PASS | probable以下、Runfeeはunmatched。 |
+| 20 | 70行matrix参照整合 | PASS | product / feature / claim / sourceが整合。 |
 
-上表はcommit `6bf90ce`を独立監査した時点の判定を固定している。この変更では項目18の実在商品表現を機構fact中心へ中立化した。項目12は元runの測定条件を推測変更せず、提案ルーブリックで`partial` / `unknown`として保留するため、監査FAILを解消済みと偽装しない。
+## final_audit
 
-## 比較不能・未確認として保持する事項
+対象: 今回の変更後worktree（commit前最終成果物）
 
-- 重量: Combiはダッコシート除外、Runfeeはハグットシート除外、他3商品は包含範囲不明。異なる既知scope同士は`partial`、不明scopeを含む比較は`unknown`とする。
-- 寸法: Runfeeの背面位採用、対面・可変範囲、折りたたみ床置き方向が未統一。向きが確定しない床占有面積は算出しない。
-- バスケット: `clm-melio26-006`、`clm-krnac-006`、`clm-sgcla-014`、`clm-rnf5-009`、`clm-lib26-006`はkg / Lが混在する。単一容量軸へ統合しない。
-- 折りたたみ: `clm-melio26-007`、`clm-rnf5-011`、`clm-sgcla-024`等の明示範囲を超えて片手展開、手数、屈曲、シート脱着を推測しない。
-- 走行性: タイヤ数・径・サスペンション・オート4輪・メーカーの押しやすさ訴求は保存できるが、小回り、段差、直進性の得点根拠にはしない。
-- 対象月齢: 「約」表記を精密な境界として扱わず、境界付近は精度状態と人間確認を要求する。
+集計: **PASS 19 / FAIL 0 / UNKNOWN 1**
 
-## 同意ゲートとローカル差異
+| # | 監査項目 | 判定 | final結論と根拠 |
+|---:|---|---|---|
+| 1 | 5商品のidentity・variant分離 | PASS | `benchmark-manifest.json`、各`product-identity.json`、全5 `validate-run.mjs`が整合。 |
+| 2 | 旧モデル・海外仕様・第三者データ混入なし | PASS | `validate-benchmark.mjs`が公式host・メーカー発信・第三者/楽天不存在を検証。 |
+| 3 | generation_codeを年式・型番へ昇格しない | PASS | AC / LA / RB5を`generation_code`へ置き、`model_year` / `model_number`はnull。各runとrubric validatorで検証。 |
+| 4 | source→claim→feature→matrix参照整合 | PASS | 全5 runと70行matrixの参照・値・単位・statusがvalidatorを通過。 |
+| 5 | 不明・矛盾を推測補完しない | PASS | null/unconfirmed/conflictingを維持し、unknownを0/falseにしない。 |
+| 6 | measurement metadata 5項目 | PASS | `official-feature-matrix.json`の数値7軸×5商品=35件に5項目を構造化。`validate-benchmark.mjs`が必須・enum・reason・件数を検証。 |
+| 7 | 不明weight scopeをunknown保持 | PASS | scope非明示は`manufacturer_stated_unspecified` + condition/comparability unknown。除外付属品明示値はcondition保持 + partial。 |
+| 8 | weight scope pairwise規則 | PASS | same known/full、unspecified同士・approximate/partial、included対excluded・lightest対standard/not_comparable、判別不能/unknownをfixtureで検証。partial→full自動昇格なし。 |
+| 9 | 4つの主観軸分類 | PASS | `axis-classification.json`、README、decision logが4軸すべて同じ分類。validatorが完全一致を検査。 |
+| 10 | 4scenario eligibility | PASS | 1/6/7/7か月開始、36か月または15kg上限、newborn/seat非必須、compactの重量・折りたたみ寸法必須を検証。ineligible非0点、unknown/on_hold。 |
+| 11 | Proposed boundary grid | PASS | 指定4 gridをproposed / provisional_approved / non-permanent / sensitivity requiredで保持。配点未定義。 |
+| 12 | 約表記の暫定±5% | PASS | 元値非書換え、境界跨ぎは隣接band候補、誤差・公差でないことをvalidator/testで確認。 |
+| 13 | Fold step暫定定義 | PASS | 明示された機構状態変更操作、除外5操作、同時/順次規則、不明null/unconfirmedを構造化し検証。 |
+| 14 | Optional欠損 | PASS | 0/falseにせずcoverageを下げ、全subaxis欠損はparent unavailable。required欠損はon_hold。coverage閾値未採用。 |
+| 15 | kg/L非換算とbounding-box意味制限 | PASS | basket単位変換を拒否し、外接直方体を実占有体積としない。 |
+| 16 | 二重加点防止 | PASS | body weightは`transport_burden`のみ。carry fact、seat-removal semantic alias、editorial compositeの再加点をvalidator/testで防止。 |
+| 17 | 機構factとメーカー訴求の分離 | PASS | `clm-rnf5-008`は機構fact、`clm-rnf5-020`はmanufacturer claim。選定理由もmanufacturer positioning / claimとして明示。maneuverabilityはunscored。 |
+| 18 | Maneuverability将来試験候補 | PASS | 180度旋回、スラローム、段差、直進偏位、荷重、路面、タイヤ、操作者/手順を構造化。条件確定までunscored。 |
+| 19 | 実在商品score・順位・感度分析結果不存在 | PASS | 禁止key/成果物名を全実在run・benchmarkで走査。実在商品のscore、rank、ordinal、星、勝者、おすすめ認定、感度分析結果なし。 |
+| 20 | 同意gate先の取説由来情報 | **UNKNOWN** | アップリカ・ピジョンは`manual_gate_status: skipped_terms_acceptance_required`。AIは同意せず、取説由来値は人間取得まで確認不能。Known limitationでありPR blockingではない。 |
 
-アップリカ `src-krnac-003`、ピジョン `src-rnf5-005`について、AIは利用規約同意操作を行っていない。状態は`skipped_terms_acceptance_required`として提案ルーブリックに保持し、人間が正式取得して提供するまでは取説由来の未確認値を埋めない。
+## 前回FAIL 2件の処理
 
-次の差異はDB工程へ送らず、`identity-review.md`の既存問題として保持する。
+1. **測定条件差**: generatorが数値比較行へ5 metadataを決定論的に生成し、matrixに35件を保存。validatorが欠落・enum・参照・unknown保持をFAIL可能にした。`selection-report.md`の「5商品中最軽量」断定も削除した。
+2. **走行性能表現**: Runfeeの機構factと段差訴求を別claimへ分離。benchmark / rubric文書ではタイヤ、サスペンション、オート4輪等を実走性能へ昇格せず、manufacturer claimまたはselection rationaleとして明示した。
 
-- スゴカルLAのローカル価格差
-- Libelleのローカル重量差
-- Runfeeのローカル商品未登録
-- `site_product_id`の変更候補
+## 最終判断
 
-## 独立監査の最終判断
-
-参照整合性、公式source限定、coverage再現性、実在商品の得点・順位不存在は確認できた。一方、測定条件の比較可能性と、機構事実から性能を示唆する表現は修正前提である。したがって、この5商品matrixをそのまま電車移動向け得点へ入力することは**不可**。利用できるのはraw fact候補、欠損・矛盾、比較可能性、scenario eligibility候補までである。
+最終20項目は**FAIL 0**。実在5商品はraw fact、比較可能性、measurement scope、scenario eligibility候補まで利用できる。score・順位・感度分析へは未進行で、配点、coverage閾値、第三者走行試験の具体条件、取説同意gate先の情報は未確定のまま残す。

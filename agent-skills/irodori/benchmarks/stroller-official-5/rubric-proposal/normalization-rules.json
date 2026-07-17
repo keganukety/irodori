@@ -1,16 +1,107 @@
 {
-  "schema_version":"1.0.0","proposal_id":"stroller-train-normalization-v1","status":"proposed",
-  "comparison_layers":["raw","derived","editorial"],"comparability_statuses":["full","partial","unknown","not_applicable"],
-  "measurement_scopes":["frame_and_seat","excluding_accessories","including_standard_accessories","manufacturer_stated_unspecified","unknown"],
-  "precision_statuses":["exact_as_stated","approximate_as_stated","range_as_stated","unknown"],
-  "allowed_unit_conversions":[{"dimension":"mass","from":"g","to":"kg","formula":"g / 1000"},{"dimension":"mass","from":"kg","to":"g","formula":"kg * 1000"},{"dimension":"length","from":"cm","to":"mm","formula":"cm * 10"},{"dimension":"length","from":"mm","to":"cm","formula":"mm / 10"},{"dimension":"volume","from":"mL","to":"L","formula":"mL / 1000"},{"dimension":"volume","from":"L","to":"mL","formula":"L * 1000"},{"dimension":"area","from":"mm2","to":"cm2","formula":"mm2 / 100"}],
-  "forbidden_unit_conversions":[{"from_dimension":"mass","to_dimension":"volume","examples":["kg_to_L","g_to_mL"],"reason":"density is unknown"},{"from_dimension":"volume","to_dimension":"mass","examples":["L_to_kg","mL_to_g"],"reason":"density is unknown"}],
-  "basket_rules":{"separate_fields":["basket_max_load_kg","basket_volume_l","basket_dimensions","basket_access","basket_opening","basket_measurement_scope"],"single_capacity_score_allowed":false,"cross_unit_ranking_allowed":false,"assumed_density_allowed":false,"different_manufacturer_test_scope_equivalence_allowed":false},
-  "weight_rules":{"required_fields":["body_weight_kg","weight_measurement_scope","weight_is_approximate"],"full_comparability":"same known measurement_scope and compatible included configuration","partial_comparability":"different known scopes or different explicitly excluded standard accessories","unknown_comparability":"either scope is manufacturer_stated_unspecified or unknown","approximate_rule":"preserve approximate status; do not imply precision beyond the manufacturer's wording","lightest_configuration_rule":"do not select a minimum configuration unless that configuration is the scenario-standard configuration"},
-  "dimension_rules":{"orientation_required_for_floor_footprint":true,"folded_bounding_box_formula":"width_mm * depth_mm * height_mm / 1000000","folded_bounding_box_unit":"L","folded_bounding_box_label":"axis-aligned folded bounding-box volume proxy","forbidden_label":"actual occupied volume","variable_configuration_rule":"back-facing, parent-facing, world-facing, handle-height, and range conditions remain separate"},
-  "folding_rules":{"subjective_raw_axis_forbidden":"folding_ease","fields":["one_hand_fold_explicit","one_hand_unfold_explicit","fold_step_count","requires_two_hands","requires_bending","requires_seat_removal","self_standing_explicit","standing_orientation","carry_handle","carry_strap","folded_lock","fold_with_seat_attached"],"one_hand_true_rule":"true only when the manufacturer explicitly states the corresponding fold or unfold operation","no_statement_rule":"null with evidence_status unconfirmed; never false","visual_inference_allowed":false},
-  "claim_rules":{"manufacturer_claim_objective_promotion_allowed":false,"maneuverability_from_mechanism_allowed":false,"maneuverability_required_evidence":["standardized third-party turning-radius measurement","standardized step-obstacle measurement","standardized straight-line tracking measurement"],"mechanism_facts_preserved":["wheel_count","wheel_diameter","tire_type","suspension","auto_four_wheel_mechanism"]},
-  "conflict_rules":{"required_or_critical":"on_hold","optional":"exclude_axis","unknown_is_zero":false,"false_requires_explicit_evidence":true},
-  "identity_rules":{"generation_code_target_field":"generation_code","promote_generation_code_to_model_year":false,"promote_generation_code_to_model_number":false},
-  "manual_consent_gate":{"allowed_states":["skipped_terms_acceptance_required","user_provided_manual_pending","human_download_required"],"ai_terms_acceptance_allowed":false,"unconfirmed_manual_axes_rule":"keep null until a human lawfully obtains and provides the manual"}
+  "schema_version": "1.1.0",
+  "proposal_id": "stroller-train-normalization-v1",
+  "status": "proposed",
+  "human_approval_status": "provisional_approved",
+  "comparison_layers": ["raw", "derived", "editorial", "editorial_composite_output"],
+  "comparability_statuses": ["full", "partial", "unknown", "not_comparable", "not_applicable"],
+  "measurement_scopes": ["frame_and_seat", "excluding_accessories", "including_standard_accessories", "manufacturer_stated_unspecified", "unknown", "not_applicable"],
+  "approximation_statuses": ["exact", "approximate", "range", "unknown"],
+  "allowed_unit_conversions": [
+    {"dimension":"mass","from":"g","to":"kg","formula":"g / 1000"},
+    {"dimension":"mass","from":"kg","to":"g","formula":"kg * 1000"},
+    {"dimension":"length","from":"cm","to":"mm","formula":"cm * 10"},
+    {"dimension":"length","from":"mm","to":"cm","formula":"mm / 10"},
+    {"dimension":"area","from":"mm2","to":"cm2","formula":"mm2 / 100"}
+  ],
+  "forbidden_unit_conversions": [
+    {"from_dimension":"mass","to_dimension":"volume","reason":"density and test conditions are unknown"},
+    {"from_dimension":"volume","to_dimension":"mass","reason":"density and test conditions are unknown"}
+  ],
+  "basket_rules": {
+    "separate_fields": ["basket_max_load_kg", "basket_volume_l", "basket_dimensions", "basket_access", "basket_opening", "basket_measurement_scope"],
+    "single_capacity_score_allowed": false,
+    "cross_unit_ranking_allowed": false,
+    "assumed_density_allowed": false,
+    "status": "descriptive_only_until_comparable_conditions"
+  },
+  "weight_rules": {
+    "required_fields": ["body_weight_kg", "measurement_scope", "measurement_condition", "approximation_status"],
+    "pairwise_rules": [
+      {"when":"same known measurement_scope or same explicitly stated measurement condition","result":"full"},
+      {"when":"both manufacturer_stated_unspecified","result":"partial"},
+      {"when":"some included-accessory coverage remains unclear","result":"partial"},
+      {"when":"either value is approximate","result":"partial"},
+      {"when":"including_standard_accessories versus excluding_accessories","result":"not_comparable"},
+      {"when":"lightest configuration versus standard configuration","result":"not_comparable"},
+      {"when":"measurement target cannot be identified","result":"unknown"}
+    ],
+    "partial_ranking_rule": "may enter later sensitivity analysis but final ranking requires human approval",
+    "automatic_partial_to_full_promotion": false
+  },
+  "approximate_boundary_rule": {
+    "status": "proposed",
+    "human_approval_status": "provisional_approved",
+    "provisional_hold_percent": 5,
+    "interval_formula": "displayed_value * [0.95, 1.05]",
+    "crossing_rule": "if the provisional interval crosses a candidate boundary, evaluate both adjacent bands",
+    "permanent_rule": false,
+    "interpretation_prohibition": "do not describe ±5% as measurement error or manufacturer tolerance",
+    "source_value_rewrite_allowed": false
+  },
+  "dimension_rules": {
+    "orientation_required_for_floor_footprint": true,
+    "folded_floor_footprint_formula": "standing-base width_mm * depth_mm / 100",
+    "folded_bounding_box_formula": "width_mm * depth_mm * height_mm / 1000000",
+    "folded_bounding_box_label": "axis-aligned folded bounding-box volume reference",
+    "forbidden_label": "actual occupied volume"
+  },
+  "fold_step_definition": {
+    "status": "proposed_definition",
+    "human_approval_status": "provisional_approved",
+    "definition": "number of explicit sequential operations in an official manual or official explanation that change the folding mechanism state",
+    "excluded_actions": ["approach_product", "remove_child", "remove_luggage", "apply_brake", "lift_or_carry_after_folding"],
+    "simultaneous_rule": "count as one only when the official instructions explicitly describe the operations as simultaneous",
+    "sequential_rule": "count sequential operations separately",
+    "unclear_rule": {"fold_step_count": null, "evidence_status": "unconfirmed"},
+    "video_impression_completion_allowed": false
+  },
+  "optional_missing_rules": {
+    "missing_optional_is_zero": false,
+    "missing_optional_is_false": false,
+    "guessing_allowed": false,
+    "coverage_effect": "decrease_coverage",
+    "explanation_rule": "explain with available subaxes only",
+    "all_parent_subaxes_missing": "parent_axis_unavailable",
+    "required_item_missing": "participation_status_on_hold",
+    "coverage_threshold_adopted": false
+  },
+  "claim_rules": {
+    "manufacturer_claim_objective_promotion_allowed": false,
+    "maneuverability_from_mechanism_allowed": false,
+    "mechanism_facts_preserved": ["single_tire", "auto_four_wheel", "wheel_diameter", "suspension", "wheel_count"],
+    "maneuverability_status_until_protocol_approved": "unscored",
+    "future_third_party_protocol_candidates": [
+      "180_degree_turn_within_specified_width",
+      "slalom_at_fixed_interval",
+      "fixed_height_step_obstacle",
+      "straight_line_deviation_over_fixed_distance",
+      "fixed_load_condition",
+      "same_surface",
+      "same_tire_condition",
+      "same_operator_or_operation_procedure"
+    ]
+  },
+  "identity_rules": {
+    "generation_code_target_field": "generation_code",
+    "approved_name_derived_codes": {"Runfee RB5":"RB5", "スゴカル エッグショック LA":"LA", "カルーンエアー メッシュ AC":"AC"},
+    "promote_generation_code_to_model_year": false,
+    "promote_generation_code_to_model_number": false
+  },
+  "manual_consent_gate": {
+    "allowed_states": ["skipped_terms_acceptance_required", "human_download_required", "user_provided_manual_pending"],
+    "ai_terms_acceptance_allowed": false,
+    "unconfirmed_manual_axes_rule": "keep null until a human lawfully obtains and provides the manual",
+    "pull_request_blocking": false
+  }
 }

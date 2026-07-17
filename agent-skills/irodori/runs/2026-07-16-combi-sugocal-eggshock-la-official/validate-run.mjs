@@ -57,8 +57,11 @@ check("claim→identity 参照", claims.every((c) => c.product_identity_id === i
 check("source→identity 参照", sources.every((s) => s.target_product === null || s.target_product === identity.product_identity_id));
 check("identity.identification_evidence→source 参照", identity.identification_evidence.every((id) => sourceIds.has(id)));
 check(
-  "variant.product_codeとmodel_numberを分離",
+  "generation_code LAをmodel_number/model_yearへ昇格しない",
   identity.model_number === null
+    && identity.model_year === null
+    && identity.generation_code === "LA"
+    && identity.official_name.includes(identity.generation_code)
     && identity.variants.length === 3
     && identity.variants.every((v) => v.product_code !== identity.model_number),
 );

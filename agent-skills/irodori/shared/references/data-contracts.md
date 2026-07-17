@@ -179,6 +179,7 @@
 | `external_rank_metadata` | object \| null | 任意 | 他媒体の順位・星の**参考メタデータ**(得点化禁止)。`{rank_label, rank_value, scale_note}` | null | C(禁止則)/P(形式) |
 | `acquisition_status` | string | 必須 | `acquired` / `partial` / `failed` / `skipped` | 省略不可 | C |
 | `acquisition_failure_reason` | string \| null | 条件付き必須 | `failed` / `skipped` の場合必須 | — | C |
+| `manual_gate_status` | string | 任意 | `skipped_terms_acceptance_required` / `human_download_required` / `user_provided_manual_pending`。AIは同意操作で状態を進めない | — | C |
 | `discovery_page_url` | string \| null | official_manualで0.3.0以降必須 | 直接資産へ到達した公式親ページ | null | C |
 | `direct_asset_url` | string \| null | official_manualで0.3.0以降必須 | PDF等の直接URL | null | C |
 | `discovered_via_official_page` | boolean \| null | official_manualで0.3.0以降必須 | 公式ページから直接到達した確認。trueでなければ公式資料扱いしない | null | C |

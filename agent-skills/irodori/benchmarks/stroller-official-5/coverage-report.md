@@ -3,7 +3,7 @@
 - 作成日: 2026-07-16
 - 数値の出所: `official-feature-matrix.json`(`build-feature-matrix.mjs`で決定論的に生成。`validate-benchmark.mjs`が独立再計算で一致を検証)
 - **本報告はデータ充足率のみを扱う。score・observed_score・順位・優劣は一切含まない。**
-- weighted coverageのweightは `irodori-ranking-engine/fixtures/fictional-train-commute.ts` のProposed Default(**試験値**)であり、確定値ではない。
+- 旧10軸のweighted coverageはbaseline再現用の診断値であり、今回の4親軸ルーブリック、配点、coverage閾値として採用していない。
 
 ## 1. 商品別の通常data coverage(ベンチマーク14軸ベース)
 
@@ -72,7 +72,7 @@ confirmedのみを充足とみなす(conflicting / unconfirmedは不算入)。
 
 | 軸 | 定義差 |
 |---|---|
-| `basket_capacity` | CYBEX×2・アップリカ・コンビは**耐荷重(kg)**、ピジョンは**容量(L)**を公表。proposed scoring ruleの単位はLのため、kg値4商品はそのままscore入力できない |
+| `basket_capacity` | CYBEX×2・アップリカ・コンビは**耐荷重(kg)**、ピジョンは**容量(L)**を公表。相互換算せず、初期scoreから除外して説明用に限る |
 | `weight_body` | コンビは「ダッコシート除く」、ピジョンは「ハグットシート除く」の条件付き。CYBEX・アップリカは条件表記なし。付属シート込み/抜きの条件を跨いだ比較には条件正規化ルールが必要 |
 | `size_open` | アップリカ・CYBEXは単一値、コンビは奥行/高さが可変範囲、ピジョンは背面位/対面位の2状態。現状は「最大値・背面位」への正規化を各runのnotesに明記 |
 | `price` | メーカー希望小売価格(アップリカ)/公式ストア税込価格(コンビ)/税込価格(ピジョン)と表記種別が異なり、CYBEXは非表示 |
@@ -86,7 +86,9 @@ confirmedのみを充足とみなす(conflicting / unconfirmedは不算入)。
 4. `folding_ease` — boolean(片手可)の判定基準(『ワンタッチ開閉』を片手可とみなすか等)の明文化
 5. terminology未定義の候補軸 — リクライニング角度・タイヤ/ホイール仕様・安全基準・シート向き(seat_direction)・ハンドル高さ調節・携行補助(carry_assistance)・トラベルシステム互換・折りたたみ手順数(fold_steps)・バスケットアクセス。現在はaxis_id: nullのclaimとして保持しており、比較軸に昇格するにはdata-contracts.mdのバージョン管理に従う語彙追加が必要
 
-## 9. minimum coverage 0.7 / 0.75(いずれもproposed)を適用した場合の影響
+## 9. Baseline coverage閾値診断(不採用)
+
+以下は基準時点の再現用履歴であり、現在のoperational decisionではない。coverage閾値は未採用である。
 
 **(a) ベンチマーク14軸のdata coverageに min_data_coverage 0.7(proposed)を当てた場合**
 

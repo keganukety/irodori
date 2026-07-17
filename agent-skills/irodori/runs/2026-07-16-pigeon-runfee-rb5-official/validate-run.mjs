@@ -57,10 +57,13 @@ check("claim→identity 参照", claims.every((c) => c.product_identity_id === i
 check("source→identity 参照", sources.every((s) => s.target_product === null || s.target_product === identity.product_identity_id));
 check("identity.identification_evidence→source 参照", identity.identification_evidence.every((id) => sourceIds.has(id)));
 check(
-  "variant.product_codeとmodel_number(RB5)を分離",
-  identity.model_number === "RB5"
+  "generation_code RB5をmodel_number/model_yearへ昇格しない",
+  identity.model_number === null
+    && identity.model_year === null
+    && identity.generation_code === "RB5"
+    && identity.official_name.includes(identity.generation_code)
     && identity.variants.length === 2
-    && identity.variants.every((v) => v.product_code !== identity.model_number),
+    && identity.variants.every((v) => v.product_code !== identity.generation_code),
 );
 check(
   "variant.supporting_claims→claim 参照",
@@ -120,6 +123,7 @@ const skippedManualGate = sources.find((s) => s.acquisition_status === "skipped"
 check(
   "取説同意ゲートをskipped+理由付きで記録",
   Boolean(skippedManualGate)
+    && skippedManualGate.manual_gate_status === "skipped_terms_acceptance_required"
     && typeof skippedManualGate.acquisition_failure_reason === "string"
     && skippedManualGate.acquisition_failure_reason.length > 0
     && skippedManualGate.direct_asset_url === null,

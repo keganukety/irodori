@@ -12,16 +12,7 @@ export const trainCommuteRubric = load("train-commute-rubric-proposal.json");
 export const fictionalFixtureSet = load(join("fixtures", "fictional-strollers.json"));
 
 const OBJECTIVE_CLAIM_CLASSES = new Set(["official_spec", "manual_safety", "third_party_measured"]);
-const UNKNOWN_SCOPES = new Set(["manufacturer_stated_unspecified", "unknown"]);
-const OPTIONAL_FACTS = [
-  "carry_handle",
-  "carry_strap",
-  "self_standing_explicit",
-  "requires_bending",
-  "requires_seat_removal",
-  "folded_lock",
-  "fold_with_seat_attached",
-];
+const UNKNOWN_SCOPES = new Set(["unknown"]);
 
 function deepMerge(base, override) {
   if (Array.isArray(override)) return structuredClone(override);
@@ -39,7 +30,7 @@ function deepMerge(base, override) {
 
 export function materializeFixtureCase(caseId) {
   const fixtureCase = fictionalFixtureSet.cases.find((entry) => entry.case_id === caseId);
-  if (!fixtureCase) throw new Error("unknown fictional fixture case: " + caseId);
+  if (!fixtureCase) throw new Error(`unknown fictional fixture case: ${caseId}`);
   const candidate = deepMerge(fictionalFixtureSet.base_candidate, fixtureCase.overrides ?? {});
   candidate.fixture_id = fixtureCase.case_id;
   candidate.product_name = fixtureCase.product_name;
@@ -70,7 +61,7 @@ function scenarioById(scenarioOrId) {
   return scenarioEligibility.scenarios.find((entry) => entry.scenario_id === scenarioOrId) ?? null;
 }
 
-function result(status, reasons, missingRequired = []) {
+function eligibilityResult(status, reasons, missingRequired = []) {
   const disposition = status === "eligible"
     ? "candidate_without_rank"
     : status === "unknown"
@@ -78,43 +69,39 @@ function result(status, reasons, missingRequired = []) {
       : status === "ineligible"
         ? "exclude_without_zero_or_last_place"
         : "exclude_without_evaluation";
-  return { status, disposition, reasons, missing_required_axes: missingRequired };
+  const participationStatus = status === "eligible"
+    ? "candidate"
+    : status === "unknown"
+      ? "on_hold"
+      : status === "ineligible"
+        ? "excluded"
+        : "not_applicable";
+  return { status, disposition, participation_status: participationStatus, reasons, missing_required_inputs: missingRequired };
 }
 
 export function evaluateScenarioEligibility(candidate, scenarioOrId) {
   const scenario = scenarioById(scenarioOrId);
-  if (!scenario) return result("not_applicable", ["unknown_scenario"]);
-  if (candidate?.category !== "stroller") return result("not_applicable", ["category_not_stroller"]);
+  if (!scenario || candidate?.category !== "stroller") return eligibilityResult("not_applicable", ["scenario_or_category_not_applicable"]);
 
   const minAge = usableValue(candidate, "target_age_min_months");
-  const maxAge = usableValue(candidate, "target_age_max_months");
-  if (minAge === null || maxAge === null) {
-    return result("unknown", ["target_age_unknown"], [
-      ...(minAge === null ? ["target_age_min_months"] : []),
-      ...(maxAge === null ? ["target_age_max_months"] : []),
-    ]);
-  }
-  const failures = [];
-  if (minAge > scenario.minimum_child_age_months) failures.push("target_age_minimum_not_covered");
-  if (maxAge < scenario.maximum_child_age_months) failures.push("target_age_maximum_not_covered");
-  if (scenario.newborn_use_required) {
-    const newborn = usableValue(candidate, "newborn_use_explicit");
-    if (newborn === null) return result("unknown", ["newborn_use_unknown"], ["newborn_use_explicit"]);
-    if (newborn !== true) failures.push("newborn_use_requirement_not_met");
-  }
-  if (scenario.seat_direction_requirement !== "any") {
-    const direction = usableValue(candidate, "seat_direction");
-    if (direction === null) return result("unknown", ["seat_direction_unknown"], ["seat_direction"]);
-    const accepted = scenario.seat_direction_requirement === "parent_facing_or_reversible"
-      ? ["parent_facing", "reversible"]
-      : ["world_facing", "reversible"];
-    if (!accepted.includes(direction)) failures.push("seat_direction_requirement_not_met");
-  }
-  if (failures.length > 0) return result("ineligible", failures);
+  if (minAge === null) return eligibilityResult("unknown", ["target_age_minimum_unknown"], ["target_age_min_months"]);
+  if (minAge > scenario.maximum_start_age_months) return eligibilityResult("ineligible", ["target_age_minimum_not_covered"]);
 
-  const missing = scenario.required_axes.filter((axisId) => !factIsUsable(candidate, axisId));
-  if (missing.length > 0) return result("unknown", ["required_axis_missing_or_conflicting"], missing);
-  return result("eligible", []);
+  const maxAge = usableValue(candidate, "target_age_max_months");
+  const maxWeight = usableValue(candidate, "max_child_weight_kg");
+  const ageCovers = typeof maxAge === "number" && maxAge >= scenario.minimum_end_age_months;
+  const weightCovers = typeof maxWeight === "number" && maxWeight >= scenario.alternative_minimum_child_weight_kg;
+  if (!ageCovers && !weightCovers) {
+    if (maxAge === null || maxWeight === null) {
+      return eligibilityResult("unknown", ["upper_coverage_unknown"], ["target_age_max_months_or_max_child_weight_kg"]);
+    }
+    return eligibilityResult("ineligible", ["upper_coverage_not_met"]);
+  }
+
+  const directRequired = scenario.participation_required_inputs.filter((input) => input !== "target_age_max_months_or_max_child_weight_kg");
+  const missing = directRequired.filter((input) => !factIsUsable(candidate, input));
+  if (missing.length > 0) return eligibilityResult("unknown", ["required_input_missing_or_conflicting"], missing);
+  return eligibilityResult("eligible", []);
 }
 
 function triStateBoolean(candidate, factId) {
@@ -127,13 +114,13 @@ export function deriveIndicators(candidate) {
   const depth = usableValue(candidate, "folded_depth_mm");
   const height = usableValue(candidate, "folded_height_mm");
   const orientation = usableValue(candidate, "folded_dimension_orientation");
-  const allFoldedDimensions = [width, depth, height].every((value) => typeof value === "number");
+  const allDimensions = [width, depth, height].every((value) => typeof value === "number");
   const fold = triStateBoolean(candidate, "one_hand_fold_explicit");
   const unfold = triStateBoolean(candidate, "one_hand_unfold_explicit");
   const twoHands = triStateBoolean(candidate, "requires_two_hands");
-  const verifiedOneHand = fold === "unknown" || unfold === "unknown"
+  const verifiedOneHand = fold === "unknown" || unfold === "unknown" || twoHands === "unknown"
     ? "unknown"
-    : fold === true && unfold === true && twoHands !== true;
+    : fold === true && unfold === true && twoHands === false;
   const handle = triStateBoolean(candidate, "carry_handle");
   const strap = triStateBoolean(candidate, "carry_strap");
   const carryAssistance = handle === "unknown" || strap === "unknown"
@@ -146,15 +133,12 @@ export function deriveIndicators(candidate) {
           ? "strap_only"
           : "none_explicit";
   const stepCount = usableValue(candidate, "fold_step_count");
-  const requiredCount = scenarioEligibility.scenarios[0].required_axes.length;
-  const confirmedCount = scenarioEligibility.scenarios[0].required_axes
-    .filter((axisId) => factIsUsable(candidate, axisId)).length;
 
   return {
     folded_bounding_box_volume_l: {
-      value: allFoldedDimensions ? (width * depth * height) / 1_000_000 : null,
+      value: allDimensions ? (width * depth * height) / 1_000_000 : null,
       unit: "L",
-      label: "axis-aligned folded bounding-box volume proxy",
+      label: "axis-aligned folded bounding-box volume reference",
       is_actual_occupied_volume: false,
     },
     folded_floor_footprint_cm2: {
@@ -167,45 +151,68 @@ export function deriveIndicators(candidate) {
     verified_one_hand_operation: verifiedOneHand,
     verified_self_standing: triStateBoolean(candidate, "self_standing_explicit"),
     carry_assistance_level: carryAssistance,
-    required_fold_actions: typeof stepCount === "number"
+    required_fold_actions: Number.isInteger(stepCount) && stepCount >= 1
       ? {
-          manufacturer_stated_step_count: stepCount,
-          requires_two_hands: twoHands,
-          requires_bending: triStateBoolean(candidate, "requires_bending"),
-          requires_seat_removal: triStateBoolean(candidate, "requires_seat_removal"),
-          summed_action_count: null,
+          fold_step_count: stepCount,
+          fold_step_band: stepCount >= 4 ? "4_or_more" : String(stepCount),
+          summed_with_other_flags: false,
         }
       : null,
-    specification_completeness: requiredCount === 0 ? null : confirmedCount / requiredCount,
-    basket_facts: {
-      basket_max_load_kg: usableValue(candidate, "basket_max_load_kg"),
-      basket_volume_l: usableValue(candidate, "basket_volume_l"),
-      converted_between_mass_and_volume: false,
-    },
     maneuverability_evidence: {
-      status: "unscorable_with_current_evidence",
+      status: "unscored",
       manufacturer_claim_excluded: fact(candidate, "manufacturer_maneuverability_claim")?.claim_class === "manufacturer_claim",
       third_party_measurement_required: true,
     },
   };
 }
 
+function measurementScope(candidate) {
+  return usableValue(candidate, "measurement_scope") ?? usableValue(candidate, "weight_measurement_scope");
+}
+
+function approximationStatus(candidate) {
+  return usableValue(candidate, "approximation_status")
+    ?? fact(candidate, "body_weight_kg")?.approximation_status
+    ?? "unknown";
+}
+
+function measurementCondition(candidate) {
+  return usableValue(candidate, "measurement_condition")
+    ?? fact(candidate, "body_weight_kg")?.measurement_condition
+    ?? "unknown";
+}
+
 export function compareMeasurementScope(candidateA, candidateB) {
   if (candidateA?.category !== "stroller" || candidateB?.category !== "stroller") return "not_applicable";
-  const scopeA = usableValue(candidateA, "weight_measurement_scope");
-  const scopeB = usableValue(candidateB, "weight_measurement_scope");
+  const scopeA = measurementScope(candidateA);
+  const scopeB = measurementScope(candidateB);
   if (scopeA === null || scopeB === null || UNKNOWN_SCOPES.has(scopeA) || UNKNOWN_SCOPES.has(scopeB)) return "unknown";
-  return scopeA === scopeB ? "full" : "partial";
+  if (scopeA === "manufacturer_stated_unspecified" && scopeB === "manufacturer_stated_unspecified") return "partial";
+  if (scopeA === "manufacturer_stated_unspecified" || scopeB === "manufacturer_stated_unspecified") return "unknown";
+
+  const incompatibleScopes = new Set([scopeA, scopeB]);
+  if (incompatibleScopes.has("including_standard_accessories") && incompatibleScopes.has("excluding_accessories")) {
+    return "not_comparable";
+  }
+  const configA = usableValue(candidateA, "weight_configuration");
+  const configB = usableValue(candidateB, "weight_configuration");
+  if (new Set([configA, configB]).has("lightest") && new Set([configA, configB]).has("standard")) return "not_comparable";
+
+  const approximate = [approximationStatus(candidateA), approximationStatus(candidateB)].some((value) => value === "approximate");
+  const sameCondition = measurementCondition(candidateA) !== "unknown"
+    && measurementCondition(candidateA) === measurementCondition(candidateB);
+  if (scopeA === scopeB || sameCondition) return approximate ? "partial" : "full";
+  return "partial";
 }
 
 const UNIT_FACTORS = new Map([
-  ["g:kg", 0.001], ["kg:g", 1000], ["cm:mm", 10], ["mm:cm", 0.1], ["mL:L", 0.001], ["L:mL", 1000],
+  ["g:kg", 0.001], ["kg:g", 1000], ["cm:mm", 10], ["mm:cm", 0.1], ["mm2:cm2", 0.01],
 ]);
 
 export function convertUnit(value, fromUnit, toUnit) {
   if (typeof value !== "number" || !Number.isFinite(value)) return null;
   if (fromUnit === toUnit) return value;
-  const factor = UNIT_FACTORS.get(fromUnit + ":" + toUnit);
+  const factor = UNIT_FACTORS.get(`${fromUnit}:${toUnit}`);
   return factor === undefined ? null : value * factor;
 }
 
@@ -226,110 +233,120 @@ export function validateBasketSeparation(candidate) {
   };
 }
 
+export function evaluateApproximateBoundary(value, candidateValues, status = "exact") {
+  if (typeof value !== "number" || !Number.isFinite(value)) return { status: "unknown", candidate_band_indexes: [] };
+  const thresholds = candidateValues.filter((item) => typeof item === "number").sort((a, b) => a - b);
+  const bandIndex = (number) => thresholds.filter((threshold) => number > threshold).length;
+  if (status !== "approximate") {
+    return { status: "single_band", candidate_band_indexes: [bandIndex(value)], provisional_interval: null };
+  }
+  const percent = normalizationRules.approximate_boundary_rule.provisional_hold_percent / 100;
+  const interval = [value * (1 - percent), value * (1 + percent)];
+  const firstBand = bandIndex(interval[0]);
+  const lastBand = bandIndex(interval[1]);
+  const bands = Array.from({ length: lastBand - firstBand + 1 }, (_, index) => firstBand + index);
+  return {
+    status: bands.length > 1 ? "boundary_hold_adjacent_bands" : "single_band",
+    candidate_band_indexes: bands,
+    provisional_interval: interval,
+    interval_is_measurement_error_or_tolerance: false,
+    permanent_rule: false,
+    human_approval_required: true,
+  };
+}
+
+export function validateFoldStepObservation(candidate) {
+  const item = fact(candidate, "fold_step_count");
+  if (!item || item.value === null) {
+    return {
+      result: item?.evidence_status === "unconfirmed" ? "pass" : "fail",
+      availability: "unconfirmed",
+      fold_step_count: null,
+    };
+  }
+  const valid = item.evidence_status === "confirmed" && Number.isInteger(item.value) && item.value >= 1;
+  return {
+    result: valid ? "pass" : "fail",
+    availability: valid ? "confirmed" : "invalid",
+    fold_step_count: valid ? item.value : null,
+    fold_step_band: valid ? (item.value >= 4 ? "4_or_more" : String(item.value)) : null,
+  };
+}
+
 export function detectDoubleCounting(rubric = trainCommuteRubric) {
-  const allocations = rubric?.scoring_rules?.raw_fact_allocations ?? [];
+  const contract = rubric?.raw_fact_contribution_contract ?? [];
   const byFact = new Map();
-  for (const allocation of allocations) {
-    const current = byFact.get(allocation.raw_fact_id) ?? [];
-    current.push(allocation);
-    byFact.set(allocation.raw_fact_id, current);
+  for (const item of contract) {
+    const current = byFact.get(item.raw_fact_id) ?? [];
+    current.push(item);
+    byFact.set(item.raw_fact_id, current);
   }
   const violations = [];
   for (const [rawFactId, entries] of byFact) {
-    const effective = entries.filter((entry) => entry.maximum_points > 0);
-    const maximumAllowed = Math.min(...entries.map((entry) => entry.max_contribution_count ?? 1));
-    const sceneAxes = new Set(effective.map((entry) => entry.scene_axis_id));
-    if (effective.length > maximumAllowed || sceneAxes.size > 1) {
-      violations.push({ raw_fact_id: rawFactId, effective_contribution_count: effective.length, scene_axes: [...sceneAxes].sort() });
+    const positiveAxes = new Set(entries.map((entry) => entry.positive_contribution_axis).filter(Boolean));
+    const maximum = Math.min(...entries.map((entry) => entry.maximum_positive_contribution_axes ?? 1));
+    if (positiveAxes.size > maximum) violations.push({ raw_fact_id: rawFactId, positive_axes: [...positiveAxes].sort() });
+  }
+  const byId = new Map(contract.map((item) => [item.raw_fact_id, item]));
+  for (const item of contract.filter((entry) => entry.semantic_alias_of)) {
+    const target = byId.get(item.semantic_alias_of);
+    if (!target
+      || item.contribution_group !== target.contribution_group
+      || item.positive_contribution_axis !== target.positive_contribution_axis) {
+      violations.push({ raw_fact_id: item.raw_fact_id, semantic_alias_mismatch: item.semantic_alias_of });
     }
+  }
+  if (byId.get("body_weight_kg")?.positive_contribution_axis !== "transport_burden") {
+    violations.push({ raw_fact_id: "body_weight_kg", reason: "body_weight_must_only_contribute_to_transport_burden" });
+  }
+  if (rubric.editorial_composite_outputs.some((item) => item.independent_positive_contribution !== false)) {
+    violations.push({ raw_fact_id: "editorial_composite_output", reason: "independent_positive_contribution_forbidden" });
   }
   return { result: violations.length === 0 ? "pass" : "fail", violations };
 }
 
-function bandPoints(value, firstBoundary, secondBoundary, points) {
-  if (value <= firstBoundary) return points[0];
-  if (value <= secondBoundary) return points[1];
-  return points[2];
+function parentAxisCoverage(candidate) {
+  return Object.fromEntries(trainCommuteRubric.comparison_axes.map((axis) => {
+    const rawInputs = axis.primary_inputs.filter((input) => !["folded_floor_footprint_cm2", "carry_assistance_level"].includes(input));
+    const confirmed = rawInputs.filter((input) => factIsUsable(candidate, input));
+    const status = confirmed.length === 0
+      ? "unavailable"
+      : confirmed.length === rawInputs.length
+        ? "available_complete"
+        : "available_partial";
+    return [axis.axis_id, { status, confirmed_input_count: confirmed.length, input_count: rawInputs.length }];
+  }));
 }
 
-function booleanSupportPoints(state, maximum, preferred) {
-  if (state === "unknown") return null;
-  return state === preferred ? maximum : 0;
-}
-
-export function calculateFictionalPoints(candidate) {
-  const derived = deriveIndicators(candidate);
-  const weight = usableValue(candidate, "body_weight_kg");
-  const openWidth = usableValue(candidate, "unfolded_width_mm");
-  const stepCount = usableValue(candidate, "fold_step_count");
-  const carryPoints = derived.carry_assistance_level === "unknown"
-    ? null
-    : derived.carry_assistance_level === "both"
-      ? 10
-      : derived.carry_assistance_level === "handle_only" || derived.carry_assistance_level === "strap_only"
-        ? 7
-        : 0;
-  const groups = {
-    carry_weight: typeof weight === "number" ? bandPoints(weight, 5.5, 7.5, [20, 12, 4]) : null,
-    carry_assistance: carryPoints,
-    open_width: typeof openWidth === "number" ? bandPoints(openWidth, 480, 520, [10, 6, 2]) : null,
-    folded_footprint: typeof derived.folded_floor_footprint_cm2.value === "number"
-      ? bandPoints(derived.folded_floor_footprint_cm2.value, 1600, 2400, [15, 9, 3])
-      : null,
-    one_hand_operation: derived.verified_one_hand_operation === "unknown"
-      ? null
-      : derived.verified_one_hand_operation ? 14 : 0,
-    fold_actions: typeof stepCount === "number" ? bandPoints(stepCount, 1, 2, [10, 6, 2]) : null,
-    self_standing: booleanSupportPoints(derived.verified_self_standing, 6, true),
-    bending: booleanSupportPoints(triStateBoolean(candidate, "requires_bending"), 4, false),
-    seat_removal: booleanSupportPoints(triStateBoolean(candidate, "requires_seat_removal"), 4, false),
-    folded_lock: booleanSupportPoints(triStateBoolean(candidate, "folded_lock"), 4, true),
-    seat_attached: booleanSupportPoints(triStateBoolean(candidate, "fold_with_seat_attached"), 3, true),
-  };
-  const maximumByGroup = {carry_weight:20,carry_assistance:10,open_width:10,folded_footprint:15,one_hand_operation:14,fold_actions:10,self_standing:6,bending:4,seat_removal:4,folded_lock:4,seat_attached:3};
-  const knownGroups = Object.entries(groups).filter(([, value]) => typeof value === "number");
-  return {
-    total_points: knownGroups.reduce((sum, [, value]) => sum + value, 0),
-    maximum_observed_points: knownGroups.reduce((sum, [key]) => sum + maximumByGroup[key], 0),
-    component_points: groups,
-    output_kind: "fictional_fixture_points_only",
-  };
-}
-
-export function evaluateFictionalCandidate(candidate, scenarioOrId, rubric = trainCommuteRubric) {
+export function evaluateFictionalCandidate(candidate, scenarioOrId) {
   if (candidate?.fixture_only !== true || new URL(candidate.official_url).hostname !== "example.invalid") {
     throw new Error("real product evaluation is prohibited");
   }
   const eligibility = evaluateScenarioEligibility(candidate, scenarioOrId);
   const base = {
     fixture_id: candidate.fixture_id,
-    product_name: candidate.product_name,
     fixture_only: true,
     eligibility,
-    rank_generated: false,
+    ranking_generated: false,
     ordinal_output_generated: false,
-    human_approval_required: rubric.human_approval_required,
+    point_allocation_applied: false,
+    boundary_candidates_applied: false,
   };
-  if (eligibility.status === "ineligible" || eligibility.status === "not_applicable") {
-    return {...base, calculation_status:"not_calculated", total_points:null, component_points:{}, excluded_without_zero:true};
+  if (eligibility.status !== "eligible") {
+    return {
+      ...base,
+      evaluation_status: eligibility.status === "unknown" ? "on_hold" : "not_evaluated",
+      excluded_without_zero_or_last_place: true,
+    };
   }
-  if (eligibility.status === "unknown") {
-    return {...base, calculation_status:"on_hold", total_points:null, component_points:{}, excluded_without_zero:true};
-  }
-  const doubleCounting = detectDoubleCounting(rubric);
-  if (doubleCounting.result === "fail") {
-    return {...base, calculation_status:"on_hold", total_points:null, component_points:{}, double_counting_violations:doubleCounting.violations};
-  }
-  const points = calculateFictionalPoints(candidate);
-  const missingOptional = OPTIONAL_FACTS.filter((factId) => !factIsUsable(candidate, factId));
   return {
     ...base,
-    calculation_status: missingOptional.length > 0 ? "calculated_partial" : "calculated",
-    ...points,
-    missing_optional_axes: missingOptional,
+    evaluation_status: "descriptive_axes_only",
+    parent_axis_coverage: parentAxisCoverage(candidate),
+    derived_indicators: deriveIndicators(candidate),
     basket: validateBasketSeparation(candidate),
-    excluded_inputs: ["manufacturer_maneuverability_claim", "basket_capacity_single_score"],
-    double_counting_violations: [],
+    excluded_inputs: trainCommuteRubric.initial_score_exclusions,
+    double_counting_violations: detectDoubleCounting().violations,
   };
 }
 
@@ -337,13 +354,13 @@ export function validateFixtureIsolation() {
   const issues = [];
   for (const fixtureCase of fictionalFixtureSet.cases) {
     const { candidate } = materializeFixtureCase(fixtureCase.case_id);
-    if (!candidate.product_name.startsWith("架空")) issues.push(fixtureCase.case_id + ":name");
-    if (new URL(candidate.official_url).hostname !== "example.invalid") issues.push(fixtureCase.case_id + ":domain");
-    if (candidate.fixture_only !== true) issues.push(fixtureCase.case_id + ":fixture_only");
+    if (!candidate.product_name.startsWith("架空")) issues.push(`${fixtureCase.case_id}:name`);
+    if (new URL(candidate.official_url).hostname !== "example.invalid") issues.push(`${fixtureCase.case_id}:domain`);
+    if (candidate.fixture_only !== true) issues.push(`${fixtureCase.case_id}:fixture_only`);
   }
   const serialized = JSON.stringify(fictionalFixtureSet).toLowerCase();
   for (const token of ["cybex", "aprica", "combi", "pigeon", "libelle", "melio", "runfee", "sugocal"]) {
-    if (serialized.includes(token)) issues.push("real_product_token:" + token);
+    if (serialized.includes(token)) issues.push(`real_product_token:${token}`);
   }
   return { result: issues.length === 0 ? "pass" : "fail", issues };
 }
@@ -359,14 +376,16 @@ function walkFiles(directory) {
 }
 
 function collectForbiddenKeys(value, path = "$", output = []) {
+  const forbidden = new Set([
+    "ranking_input", "ranking_input_id", "ranking_result", "ranking_result_id", "observed_score", "score",
+    "rank", "rank_no", "ordinal_score", "stars", "winner", "recommendation_badge", "sensitivity_analysis_result",
+  ]);
   if (Array.isArray(value)) {
-    value.forEach((item, index) => collectForbiddenKeys(item, path + "[" + index + "]", output));
+    value.forEach((item, index) => collectForbiddenKeys(item, `${path}[${index}]`, output));
   } else if (value !== null && typeof value === "object") {
     for (const [key, item] of Object.entries(value)) {
-      if (["ranking_input_id", "ranking_result_id", "observed_score", "score", "rank", "ordinal_score", "rank_no"].includes(key)) {
-        output.push(path + "." + key);
-      }
-      collectForbiddenKeys(item, path + "." + key, output);
+      if (forbidden.has(key)) output.push(`${path}.${key}`);
+      collectForbiddenKeys(item, `${path}.${key}`, output);
     }
   }
   return output;
@@ -375,21 +394,23 @@ function collectForbiddenKeys(value, path = "$", output = []) {
 export function validateNoRealScoringArtifacts() {
   const irodoriRoot = resolve(here, "../../..");
   const repoRoot = resolve(irodoriRoot, "../..");
-  const manifest = JSON.parse(readFileSync(join(here, "..", "benchmark-manifest.json"), "utf8"));
-  const files = manifest.products.flatMap((product) => walkFiles(resolve(repoRoot, product.run_dir)));
-  files.push(join(here, "..", "official-feature-matrix.json"));
+  const benchmarkRoot = resolve(here, "..");
+  const manifest = JSON.parse(readFileSync(join(benchmarkRoot, "benchmark-manifest.json"), "utf8"));
+  const files = manifest.products.flatMap((product) => walkFiles(resolve(repoRoot, product.run_dir)))
+    .concat(walkFiles(benchmarkRoot).filter((file) => !file.includes(`${join("rubric-proposal", "fixtures")}`)));
   const issues = [];
   for (const file of files) {
     const basename = file.split(/[\\/]/).at(-1).toLowerCase();
-    if (/^ranking[-_](input|result)\./.test(basename)) issues.push("forbidden_file:" + file);
+    if (/^ranking[-_](input|result)\./.test(basename)) issues.push(`forbidden_file:${file}`);
     if (!file.endsWith(".json")) continue;
     const value = JSON.parse(readFileSync(file, "utf8"));
-    for (const keyPath of collectForbiddenKeys(value)) issues.push(file + ":" + keyPath);
+    for (const keyPath of collectForbiddenKeys(value)) issues.push(`${file}:${keyPath}`);
   }
   return { result: issues.length === 0 ? "pass" : "fail", issues, inspected_file_count: files.length };
 }
 
 export function validateNoHighConfidenceSecrets() {
+  const irodoriRoot = resolve(here, "../../..");
   const secretPatterns = [
     /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
     /AKIA[0-9A-Z]{16}/,
@@ -397,8 +418,8 @@ export function validateNoHighConfidenceSecrets() {
     /sk-[A-Za-z0-9_-]{30,}/,
   ];
   const issues = [];
-  for (const file of walkFiles(here)) {
-    if (!/\.(?:json|md|mjs)$/.test(file)) continue;
+  for (const file of walkFiles(irodoriRoot)) {
+    if (!/\.(?:json|md|mjs|ts)$/.test(file)) continue;
     const text = readFileSync(file, "utf8");
     if (secretPatterns.some((pattern) => pattern.test(text))) issues.push(file);
   }
@@ -408,20 +429,98 @@ export function validateNoHighConfidenceSecrets() {
 export function validateProposalBundle() {
   const checks = [];
   const add = (name, ok, detail = "") => checks.push({ name, result: ok ? "pass" : "fail", detail });
-  add("rubric_status_proposed", trainCommuteRubric.status === "proposed");
+  add("proposal_status", [axisClassification, scenarioEligibility, normalizationRules, trainCommuteRubric]
+    .every((item) => item.status === "proposed" && item.human_approval_status === "provisional_approved"));
   add("real_product_application_disabled", trainCommuteRubric.applies_to_real_products === false);
-  add("human_approval_required", trainCommuteRubric.human_approval_required === true);
-  add("four_scenarios", scenarioEligibility.scenarios.length === 4 && scenarioEligibility.scenarios.every((item) => item.status === "proposed"));
-  add("four_eligibility_states", ["eligible","ineligible","unknown","not_applicable"].every((state) => scenarioEligibility.eligibility_states.includes(state)));
-  add("basket_mass_volume_separate", normalizationRules.basket_rules.single_capacity_score_allowed === false && normalizationRules.basket_rules.cross_unit_ranking_allowed === false);
-  add("kg_l_conversion_forbidden", convertUnit(1, "kg", "L") === null && convertUnit(1, "L", "kg") === null);
-  add("folding_ease_deprecated", axisClassification.legacy_axis_classification.some((axis) => axis.axis_id === "folding_ease" && axis.classification === "deprecate"));
-  add("maneuverability_requires_third_party", axisClassification.legacy_axis_classification.some((axis) => axis.axis_id === "maneuverability" && axis.classification === "requires_third_party_measurement"));
-  add("bounding_box_not_actual_volume", trainCommuteRubric.derived_indicators.some((item) => item.indicator_id === "folded_bounding_box_volume_l" && item.semantic_limit.includes("never actual occupied volume")));
-  const requiredBoundaryFields = ["proposed_boundary","rationale","supporting_dataset","sensitivity_concern","human_approval_status","affected_scenarios"];
-  add("boundary_metadata_complete", trainCommuteRubric.scoring_rules.boundaries.every((boundary) => requiredBoundaryFields.every((field) => Object.hasOwn(boundary, field)) && boundary.human_approval_status === "pending"));
-  add("boundaries_not_from_five_product_distribution", trainCommuteRubric.scoring_rules.boundaries.every((boundary) => /fictional|scenario_design/.test(boundary.supporting_dataset)));
+
+  const expectedClassifications = new Map([
+    ["portability", "split_into_subaxes"],
+    ["train_fitness", "editorial_composite_output"],
+    ["maneuverability", "requires_third_party_measurement"],
+    ["one_operator_fitness", "editorial_composite_output"],
+  ]);
+  const actualClassifications = new Map(axisClassification.subjective_axis_classification.map((item) => [item.axis_id, item.classification]));
+  add("four_subjective_axes_classified", expectedClassifications.size === actualClassifications.size
+    && [...expectedClassifications].every(([id, classification]) => actualClassifications.get(id) === classification));
+  add("one_operator_no_weight_reuse", axisClassification.subjective_axis_classification
+    .find((item) => item.axis_id === "one_operator_fitness")?.body_weight_reuse_allowed === false);
+
+  const expectedScenarios = new Map([
+    ["primary_from_1_month", [1, 36]],
+    ["primary_from_6_months", [6, 36]],
+    ["second_stroller_from_7_months", [7, 36]],
+    ["compact_travel_from_7_months", [7, 36]],
+  ]);
+  add("four_scenarios", scenarioEligibility.scenarios.length === 4
+    && scenarioEligibility.scenarios.every((item) => JSON.stringify(item.target_use_window_months) === JSON.stringify(expectedScenarios.get(item.scenario_id))
+      && item.newborn_use_required === false
+      && item.status === "proposed"
+      && item.human_approval_status === "provisional_approved"));
+  add("compact_travel_no_airline_inference", scenarioEligibility.scenarios
+    .find((item) => item.scenario_id === "compact_travel_from_7_months")?.airline_carry_on_inference_allowed === false);
+
+  const expectedBoundaryGrid = new Map([
+    ["body_weight_kg", [4, 5, 6, 7]],
+    ["unfolded_width_mm", [460, 480, 500, 530]],
+    ["folded_floor_footprint_cm2", [800, 1200, 1600, 2200]],
+  ]);
+  add("boundary_grid_values", trainCommuteRubric.boundary_grid.length === 4
+    && [...expectedBoundaryGrid].every(([id, values]) => JSON.stringify(trainCommuteRubric.boundary_grid.find((item) => item.boundary_id === id)?.candidate_values) === JSON.stringify(values))
+    && JSON.stringify(trainCommuteRubric.boundary_grid.find((item) => item.boundary_id === "fold_step_count")?.candidate_values) === JSON.stringify([1,2,3,{minimum:4,label:"4_or_more"}]));
+  add("boundary_metadata", trainCommuteRubric.boundary_grid.every((item) => item.status === "proposed"
+    && item.permanent_threshold === false
+    && item.sensitivity_test_required === true
+    && item.human_approval_status === "provisional_approved"
+    && item.supporting_dataset === "five_product_official_benchmark"
+    && item.limitation === "5商品だけでは恒久境界を決定できない"));
+
+  const approximateRule = normalizationRules.approximate_boundary_rule;
+  add("approximate_plus_minus_five_percent", approximateRule.status === "proposed"
+    && approximateRule.human_approval_status === "provisional_approved"
+    && approximateRule.provisional_hold_percent === 5
+    && approximateRule.permanent_rule === false
+    && approximateRule.source_value_rewrite_allowed === false);
+  const foldDefinition = normalizationRules.fold_step_definition;
+  add("fold_step_proposed_definition", foldDefinition.status === "proposed_definition"
+    && foldDefinition.human_approval_status === "provisional_approved"
+    && foldDefinition.excluded_actions.length === 5
+    && foldDefinition.unclear_rule.fold_step_count === null
+    && foldDefinition.unclear_rule.evidence_status === "unconfirmed");
+  add("weight_scope_rules", normalizationRules.weight_rules.pairwise_rules.some((item) => item.result === "not_comparable")
+    && normalizationRules.weight_rules.automatic_partial_to_full_promotion === false);
+  add("optional_missing_rules", normalizationRules.optional_missing_rules.missing_optional_is_zero === false
+    && normalizationRules.optional_missing_rules.missing_optional_is_false === false
+    && normalizationRules.optional_missing_rules.all_parent_subaxes_missing === "parent_axis_unavailable");
+
+  const protocol = normalizationRules.claim_rules.future_third_party_protocol_candidates;
+  add("maneuverability_future_protocol", protocol.length === 8
+    && normalizationRules.claim_rules.maneuverability_status_until_protocol_approved === "unscored");
+  add("basket_mass_volume_separate", normalizationRules.basket_rules.single_capacity_score_allowed === false
+    && convertUnit(1, "kg", "L") === null
+    && convertUnit(1, "L", "kg") === null);
+  add("allocation_not_defined", trainCommuteRubric.allocation_status.status === "not_defined"
+    && trainCommuteRubric.allocation_status.point_allocation_finalized === false
+    && trainCommuteRubric.allocation_status.sensitivity_analysis_completed === false);
   add("double_counting", detectDoubleCounting().result === "pass");
+
+  const irodoriRoot = resolve(here, "../../..");
+  const generationCases = [
+    ["runs/2026-07-16-aprica-karoon-air-mesh-ac-official/product-identity.json", "AC"],
+    ["runs/2026-07-16-combi-sugocal-eggshock-la-official/product-identity.json", "LA"],
+    ["runs/2026-07-16-pigeon-runfee-rb5-official/product-identity.json", "RB5"],
+  ];
+  add("generation_codes_not_promoted", generationCases.every(([path, code]) => {
+    const identity = JSON.parse(readFileSync(join(irodoriRoot, path), "utf8"));
+    return identity.generation_code === code && identity.model_year === null && identity.model_number === null && identity.official_name.includes(code);
+  }));
+  add("manual_consent_gate", normalizationRules.manual_consent_gate.ai_terms_acceptance_allowed === false
+    && normalizationRules.manual_consent_gate.pull_request_blocking === false
+    && normalizationRules.manual_consent_gate.allowed_states.length === 3);
+  const independentAudit = readFileSync(join(here, "..", "independent-audit.md"), "utf8");
+  add("baseline_and_final_audit_separated", independentAudit.includes("## baseline_audit")
+    && independentAudit.includes("## final_audit")
+    && independentAudit.includes("PASS 18 / FAIL 2 / UNKNOWN 0")
+    && independentAudit.includes("PASS 19 / FAIL 0 / UNKNOWN 1"));
   add("fixture_isolation", validateFixtureIsolation().result === "pass");
   add("no_real_scoring_artifacts", validateNoRealScoringArtifacts().result === "pass");
   add("no_high_confidence_secrets", validateNoHighConfidenceSecrets().result === "pass");
@@ -431,7 +530,7 @@ export function validateProposalBundle() {
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 if (isMain) {
   const report = validateProposalBundle();
-  for (const check of report.checks) console.log(`${check.result === "pass" ? "PASS" : "FAIL"}  ${check.name}${check.detail ? " — " + check.detail : ""}`);
+  for (const check of report.checks) console.log(`${check.result === "pass" ? "PASS" : "FAIL"}  ${check.name}${check.detail ? ` — ${check.detail}` : ""}`);
   console.log(report.result === "pass" ? "\nALL RUBRIC PROPOSAL CHECKS PASSED" : "\nRUBRIC PROPOSAL CHECKS FAILED");
   process.exit(report.result === "pass" ? 0 : 1);
 }

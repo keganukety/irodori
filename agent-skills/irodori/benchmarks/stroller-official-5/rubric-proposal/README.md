@@ -1,108 +1,78 @@
 # 電車移動向け比較ルーブリック提案
 
-このディレクトリは、5商品公式情報ベンチマークから得た課題を固定ルールへ変換するための**提案**である。実在5商品へ得点、順位、星、勝者、おすすめ認定を付けない。計算処理は`fixtures/fictional-strollers.json`にある架空名と`example.invalid`だけに適用する。
+このディレクトリは、5商品公式ベンチマークを根拠にした次工程向けの**提案契約**である。`status: proposed`、`human_approval_status: provisional_approved`であり、恒久境界・配点・実在商品の得点・順位・感度分析結果は確定していない。実在5商品へ適用できるのは、比較可能性、scenario eligibility候補、measurement scopeまでである。
 
-`status: proposed`の境界・配点・scenarioは人間承認前の試験値である。5商品の分布を恒久的な閾値の根拠にしていない。
+## 4つの主観軸の分類
 
-## 成果物
+| 旧軸 | 分類 | 最終扱い |
+|---|---|---|
+| `portability` | `split_into_subaxes` | `transport_burden`と`carry_assistance`へ分割し、独立入力は廃止 |
+| `train_fitness` | `editorial_composite_output` | `station_space_fit`、`transport_burden`、`folding_independence`、`carry_assistance`から作る結果。raw input禁止 |
+| `maneuverability` | `requires_third_party_measurement` | 公式機構factだけでは`unscored` |
+| `one_operator_fitness` | `editorial_composite_output` | `folding_independence`と`carry_assistance`から作る結果。body weightの再加点禁止 |
 
-- `axis-classification.json`: 全フィールドのraw / derived / editorial層と旧主観軸の扱い。
-- `scenario-eligibility.json`: 4 scenarioの参加条件と4つのeligibility状態。
-- `normalization-rules.json`: 単位、測定scope、精度、矛盾、同意ゲートの固定規則。
-- `train-commute-rubric-proposal.json`: 架空fixture専用の提案配点、欠損・矛盾・二重加点方針。
-- `double-counting-map.md`: raw factごとの唯一の寄与先と禁止重複。
-- `boundary-cases.md`: 境界値メタデータと架空fixtureの検証ケース。
-- `decision-log.md`: 採用・不採用・未決定事項。
-- `validate-rubric-proposal.mjs`: eligibility、派生、scope、単位、二重加点、実在得点不存在の実行時検証。
-- `fixtures/fictional-strollers.json`: 架空商品だけの入力。
-- `tests/rubric-proposal.test.mjs`: 27件の新規テスト。
+## 初期比較の4親軸
 
-## 三層構造
+- `transport_burden`: `body_weight_kg`、`measurement_scope`、`approximation_status`、carry handle/strap。重量値が直接正の寄与候補になるのはこの親軸だけ。carry factはここではcontextであり、正の寄与候補は`carry_assistance`へ集約する。
+- `station_space_fit`: 展開幅、折りたたみ3辺、立置き床面外接矩形。外接直方体体積は参考値で、実占有体積ではない。
+- `folding_independence`: 片手fold/unfold、明示操作数、両手・屈曲・seat脱着、自立、lock、seat装着状態。
+- `carry_assistance`: handle、strap、carrying position、明示factからのassistance level。
 
-### Layer 1: raw facts
-
-メーカー日本公式sourceが直接明示した値だけを置く。値、単位、測定条件、精度、claim class、evidence status、矛盾を保持する。記載なしは`null` / `unconfirmed`であり、`false`や0ではない。
-
-主な群は次のとおり。
-
-- 重量: `body_weight_kg`, `weight_measurement_scope`, `weight_is_approximate`
-- 寸法: 展開・折りたたみの各辺、`folded_dimension_orientation`
-- 対象: 対象月齢下限・上限、最大体重、シート向き
-- 折りたたみ: 片手fold/unfold、手数、両手、屈曲、シート脱着、自立、向き、carry補助、lock、seat装着状態
-- バスケット: kg、L、寸法、access、opening、測定scopeを別フィールド
-- 走行機構: wheel count/diameter、tire、suspension。実走性能とはしない
-- メーカー訴求: `manufacturer_maneuverability_claim`として保存できるが、客観factや配点入力へ昇格しない
-
-### Layer 2: deterministic derived indicators
-
-固定式だけを使い、人間の印象を入れない。
-
-- `folded_bounding_box_volume_l = width_mm × depth_mm × height_mm ÷ 1,000,000`
-- `folded_floor_footprint_cm2 = 明示された床面2辺の積 ÷ 100`
-- `verified_one_hand_operation`: foldとunfoldがともに明示trueの場合だけtrue。片方不明はunknown
-- `verified_self_standing`: 明示値を保持し、記載なしはunknown
-- `carry_assistance_level`: handle / strapの明示組合せ。欠損があればunknown
-- `required_fold_actions`: 明示step countと追加操作フラグを別々に保持し、勝手に合算しない
-- `target_age_eligibility`: scenario必要条件への決定論的判定
-- `specification_completeness`: 性能ではなく確認済み情報の充足率
-
-折りたたみ外接直方体は形状の凹凸を含む**bounding-box proxy**であり、実占有体積ではない。
-
-### Layer 3: editorial or scene suitability
-
-`train_transport_burden`、`station_space_fit`、`folding_independence`、`one_operator_support`、`maneuverability_evidence`、`train_commute_suitability`は利用場面への編集判断である。固定ルーブリック検証と人間承認前には生成しない。今回、実在5商品には生成していない。
+バスケット、maneuverability、suspension、タイヤ数・径、review sentiment、外部順位、楽天順位、manufacturer marketing claimは初期score入力から除外する。basketのkg/Lは換算しない。配点自体はこの工程で定義しない。
 
 ## Scenario eligibility
 
-| scenario | 月齢窓（proposed） | newborn | シート向き | 不適合・不明の扱い |
+| scenario | 対象窓 | 開始条件 | 上限条件 | 追加条件 |
 |---|---:|---|---|---|
-| `primary_from_1_month` | 1–36か月 | 必須 | 対面または両対面 | 不適合はrank対象外。不明はon_hold |
-| `primary_from_6_months` | 6–36か月 | 不要 | 指定なし | 同上 |
-| `second_stroller_from_7_months` | 7–36か月 | 不要 | 背面または両対面 | 同上 |
-| `compact_travel_from_7_months` | 7–48か月 | 不要 | 背面または両対面 | 同上 |
+| `primary_from_1_month` | 1–36か月 | 1か月以下 | 36か月以上または15kg以上 | newborn不要、seat方向不問 |
+| `primary_from_6_months` | 6–36か月 | 6か月以下 | 36か月以上または15kg以上 | newborn不要 |
+| `second_stroller_from_7_months` | 7–36か月 | 7か月以下 | 36か月以上または15kg以上 | 対面機能不要 |
+| `compact_travel_from_7_months` | 7–36か月 | 7か月以下 | 36か月以上または15kg以上 | 本体重量と折りたたみ3辺を確認。機内持込は推測せず航空会社規定を別確認 |
 
-状態は`eligible` / `ineligible` / `unknown` / `not_applicable`を区別する。`ineligible`を0点や最下位へ変換しない。`unknown`はon_holdであり、欠損を悪い性能とみなさない。
+月齢条件を満たさない場合は`ineligible`であり0点・最下位にしない。必要情報不足は`unknown` / `participation_status: on_hold`とする。
 
-A形・B形のラベル自体は配点しない。利用開始月齢と必要期間をscenario gateにすることで、1か月から必要な商品と7か月からのセカンド用途を同じ参加集合へ無条件に並べない。
+## Proposed boundary grid
 
-## バスケット
+| boundary | candidate values |
+|---|---|
+| body weight | 4.0 / 5.0 / 6.0 / 7.0 kg |
+| unfolded width | 460 / 480 / 500 / 530 mm |
+| folded floor footprint | 800 / 1200 / 1600 / 2200 cm² |
+| fold step count | 1 / 2 / 3 / 4以上 |
 
-`basket_max_load_kg`と`basket_volume_l`は異なる物理量である。kg↔L変換、密度仮定、異なる試験条件の同一視、kg/L混在の単一順位化をvalidatorが拒否する。寸法、access、opening、測定scopeも別フィールドであり、現時点では情報表示だけで総合点へ寄与しない。
+各境界は`status: proposed`、`permanent_threshold: false`、`sensitivity_test_required: true`、`human_approval_status: provisional_approved`、`supporting_dataset: five_product_official_benchmark`である。5商品だけでは恒久境界を決定できない。
 
-## 本体重量
+## 「約」表記
 
-重量には`frame_and_seat` / `excluding_accessories` / `including_standard_accessories` / `manufacturer_stated_unspecified` / `unknown`のscopeを持たせる。同じ既知scopeだけが`full`、異なる既知scopeは`partial`、unspecifiedまたはunknownを含む比較は`unknown`である。
+公式値は書き換えない。感度分析準備の暫定規則として表示値の±5%を境界保留範囲とし、候補境界をまたぐときは隣接する両bandを次工程で評価する。これは測定誤差やメーカー公差ではなく、恒久規則でもない。
 
-除外付属品が異なる商品、両対面状態の条件が異なる商品、最軽量構成だけの商品を完全比較しない。「約」は`approximate_as_stated`として保持し、精密な境界値とみなさない。
+## Fold stepの暫定定義
 
-## 折りたたみ
+`fold_step_count`は、取扱説明書または公式説明で、折りたたみ機構の状態を変えるため順番に必要と明示された操作数である。商品へ近づく、子どもを降ろす、荷物を出す、ブレーキをかける、折りたたみ後に持ち上げて運ぶ操作は数えない。公式説明で同時操作と明示されたものは1操作、順番に行う操作は別操作とする。不明瞭なら`fold_step_count: null` / `evidence_status: unconfirmed`で、動画の印象から補わない。定義状態は`proposed_definition` / `provisional_approved`である。
 
-旧`folding_ease`はdeprecateする。片手で閉じることと開くことを分離し、メーカーが該当操作を明示した場合だけtrueにする。動画の印象、説明画像、機構名から推測しない。自立、屈曲、シート脱着、lock、carry handle/strapも記載なしをfalseにしない。
+## Weight scope
 
-## 主観4軸とmaneuverability
+同じ既知scopeまたは同じ測定条件は`full`。unspecified同士、付属品範囲が一部不明、approximateを含む場合は`partial`。付属品込み対除外、最軽量構成対標準構成は`not_comparable`。測定対象が判別できなければ`unknown`である。`partial`は次工程の感度分析候補にできるが、確定ランキングには人間承認が必要であり、`full`へ自動昇格しない。
 
-- `portability`: `split_into_subaxes`
-- `train_fitness`: `editorial_only`
-- `maneuverability`: `requires_third_party_measurement`
-- `one_operator_fitness`: `split_into_subaxes`
+## Optional欠損
 
-シングルタイヤ、オート4輪、タイヤ径、サスペンションは公式機構factとして保存できる。メーカーの「押しやすい」はmanufacturer claimである。小回り、段差、直進性を比較するには、標準化した第三者の旋回半径、段差通過、直進保持等の実測が必要であり、今回の配点から除外した。
+optional欠損は0点・false・推測値にしない。coverageを下げ、確認できるsubaxisだけで説明する。親軸の全subaxisが欠損なら親軸は`unavailable`。required欠損は`participation_status: on_hold`。coverage閾値は未採用である。
 
-## 架空fixtureの計算
+## Identityと取説同意ゲート
 
-提案配点はcarry 30、station space 25、folding independence 30、one-operator support 15の合計100点枠だが、出力は`fictional_fixture_points_only`であり実在商品へ適用できない。scenario不適合・必須欠損・必須矛盾の場合は計算しない。任意欠損は0点化せず当該groupを除外し、`calculated_partial`と確認可能最大点を併記する。順位やordinal outputは生成しない。
+公式商品名を根拠に、Runfee RB5=`RB5`、スゴカル エッグショック LA=`LA`、カルーンエアー メッシュ AC=`AC`を`generation_code`として保持する。`model_year` / `model_number`には昇格しない。
 
-## 実行
+アップリカとピジョンの取説同意操作はAIが行わない。`skipped_terms_acceptance_required`、`human_download_required`、`user_provided_manual_pending`のいずれかで保持する。この不足はKnown limitationであり、今回のPRを妨げる重大FAILではない。
+
+## Maneuverability
+
+シングルタイヤ、オート4輪、タイヤ径、サスペンション、車輪数、メーカーの押しやすさ訴求は実走性能の得点根拠にしない。将来試験候補は、規定幅での180度旋回、一定間隔のスラローム、一定高さの段差通過、一定距離の直進偏位、一定荷重、同一路面、同じタイヤ状態、同じ操作者または操作手順である。試験条件が確定するまで`unscored`とする。
+
+## 検証
 
 ```powershell
 node agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/validate-rubric-proposal.mjs
-node --no-warnings --experimental-strip-types --test --test-isolation=none agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/tests/rubric-proposal.test.mjs
+node --test --test-isolation=none agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/tests/rubric-proposal.test.mjs
 ```
 
-## 同意ゲート
-
-アップリカ・ピジョンの取扱説明書利用規約への同意をAIが行わない。`skipped_terms_acceptance_required`、`user_provided_manual_pending`、`human_download_required`のいずれかで止め、人間が正式取得して提供するまで取説由来軸を推測しない。
-
-## 次工程の条件
-
-実在5商品の感度分析へ進む前に、人間がscenario月齢窓、数値境界、配点、必須／任意軸、約表記の境界処理、第三者走行試験プロトコル、手数の数え方、許容measurement scopeを承認する必要がある。承認前に実在商品へ得点や順位を生成してはならない。
+validatorは4軸分類、4scenario、boundary metadata、約±5%、fold step、weight scope、optional欠損、generation_code、同意gate、将来試験条件、二重加点、実在商品score・順位不存在、秘密情報を検証する。

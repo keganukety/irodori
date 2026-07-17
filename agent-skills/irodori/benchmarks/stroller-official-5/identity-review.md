@@ -6,18 +6,18 @@
 
 ## 1. 商品別identity要約
 
-| 商品 | brand | model_number | model_year | market | lifecycle | variant数 | identity確度 |
-|---|---|---|---|---|---|---|---|
-| Melio Carbon | CYBEX | null(未確認) | 2026 | JP | current | 1(Cinnamon Yellow 526000803) | provisional |
-| カルーンエアー メッシュ AC | アップリカ | null(色別品番のみ) | null(世代AC・発売2024年9月) | JP | current | 2(BE 2206924 / GR 2206925) | provisional |
-| スゴカル エッグショック LA | コンビ | null(型式LA表記は未昇格) | null(世代LA・発売2024/7/19) | JP | current | 3(119376/119377/119767) | provisional |
-| Runfee RB5 | ピジョン | **RB5** | null(世代RB5) | JP | current | 2(1042807/1042808) | provisional |
-| Libelle | CYBEX | null(未確認) | 2026 | JP | current | 1(Cinnamon Yellow 526001009) | provisional |
+| 商品 | brand | generation_code | model_number | model_year | market | lifecycle | variant数 | identity確度 |
+|---|---|---|---|---|---|---|---|---|
+| Melio Carbon | CYBEX | null | null(未確認) | 2026 | JP | current | 1(Cinnamon Yellow 526000803) | provisional |
+| カルーンエアー メッシュ AC | アップリカ | **AC** | null(色別品番のみ) | null | JP | current | 2(BE 2206924 / GR 2206925) | provisional |
+| スゴカル エッグショック LA | コンビ | **LA** | null(未確認) | null | JP | current | 3(119376/119377/119767) | provisional |
+| Runfee RB5 | ピジョン | **RB5** | null(未確認) | null | JP | current | 2(1042807/1042808) | provisional |
+| Libelle | CYBEX | null | null(未確認) | 2026 | JP | current | 1(Cinnamon Yellow 526001009) | provisional |
 
 ### model_numberとvariantの扱い(方針の確認)
 
 - カラー別の品番/商品コードはすべて`variants[].product_code`へ分離し、`model_number`に入れていない(バリデーターで機械検証)
-- ピジョンRB5のみ、色をまたぐ世代記号RB5をモデル共通型番として採用。ただしmodel_yearが未確認のためidentifiedには昇格させない
+- 国内3商品のAC / LA / RB5は公式商品名に含まれる`generation_code`として保持し、`model_year` / `model_number`へ昇格させない
 - コンビの『型式: LA』(取説DLページ表記)は、モデル共通型番かグレード記号かの公式定義が未確認のためsource/claimへの保持に留めた(人間判断事項)
 - 全variantの色間仕様同一性は`specification_equivalence_status: unverified`(色別仕様表が存在しないため)
 
@@ -37,6 +37,6 @@
 ## 3. identity分離の検証結果(ベンチマーク目的1・2への回答)
 
 - **同名ブランド内の分離**: CYBEXでMelio Carbon(2026)/Melio Carbon(2025)/Libelle(2026)/Libelle(2025)を別identityとして分離できた(公式一覧の併載とダウンロードセンターの年式表記が根拠)
-- **モデル年 vs 世代記号**: CYBEXは年式(2026)、国内3社はモデル年表記を持たず世代記号(AC/LA/RB5)+発売日で区別する。契約のmodel_year(数値)には国内3社の値を安全に入れられないため、**世代記号の置き場(モデル年に相当する契約フィールドまたは表記規則)が今後の設計課題**
+- **モデル年 vs 世代記号**: CYBEXは年式(2026)、国内3社は公式商品名に含まれるAC / LA / RB5を`generation_code`として保持する。これらを`model_year` / `model_number`へ自動昇格しない
 - **market**: 5商品ともJP専用ページ・日本語資料・円建て(または日本語取説)で確認。海外仕様の混入なし
 - **variant**: 5商品とも色別コードをvariantへ分離できた(計9variant)

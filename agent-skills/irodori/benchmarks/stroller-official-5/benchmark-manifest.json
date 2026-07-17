@@ -3,7 +3,7 @@
   "benchmark_id": "stroller-official-5",
   "name": "ベビーカー5商品 公式情報比較ベンチマーク",
   "created_at": "2026-07-16T17:30:00+09:00",
-  "updated_at": "2026-07-17T00:00:00+09:00",
+  "updated_at": "2026-07-17T10:00:00+09:00",
   "purpose": "現行日本モデル5商品の公式情報を同一契約形式へ揃え、identity分離・variant区別・軸取得可能性・未確認項目・データ充足率を確認する(ランキング順位・得点は作成しない)",
   "contracts_version": "0.4.0",
   "source_policy": "メーカー日本公式情報のみ(公式商品ページ・公式取扱説明書・公式ダウンロードセンター・公式一覧ページ)。検索エンジンは発見のみ。第三者媒体・EC・楽天データは不使用",
@@ -12,8 +12,10 @@
     "ranking_result",
     "observed_score",
     "score",
+    "ordinal_score",
     "総合順位・シーン別順位・おすすめ順位",
-    "星評価・勝者・優劣の断定"
+    "電車移動順位・星評価・勝者・おすすめ認定",
+    "実在商品の感度分析結果・優劣の断定"
   ],
   "products": [
     {
@@ -30,7 +32,7 @@
       "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
       "official_name": "カルーンエアー メッシュ AC",
       "brand_name": "アップリカ",
-      "role": "軽量・公共交通向け(A形両対面)",
+      "role": "A形両対面。公共交通向けはmanufacturer positioningとして分離",
       "run_dir": "agent-skills/irodori/runs/2026-07-16-aprica-karoon-air-mesh-ac-official",
       "run_status": "created_in_this_benchmark",
       "site_product_id": "5",
@@ -50,7 +52,7 @@
       "product_identity_id": "pid-pigeon-runfee-rb5-jp",
       "official_name": "Runfee RB5（ランフィ RB5）",
       "brand_name": "ピジョン",
-      "role": "大径シングルタイヤ・サスペンション機構と25L表記を持つA形(実走性能は未評価)",
+      "role": "大径シングルタイヤ・サスペンションの機構factと25L表記を持つA形(実走性能は未評価)",
       "run_dir": "agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official",
       "run_status": "created_in_this_benchmark",
       "site_product_id": null,
@@ -110,7 +112,9 @@
     "node agent-skills/irodori/runs/2026-07-16-combi-sugocal-eggshock-la-official/validate-run.mjs",
     "node agent-skills/irodori/runs/2026-07-16-pigeon-runfee-rb5-official/validate-run.mjs",
     "node agent-skills/irodori/runs/2026-07-16-cybex-libelle-2026-official/validate-run.mjs",
-    "node agent-skills/irodori/benchmarks/stroller-official-5/validate-benchmark.mjs"
+    "node agent-skills/irodori/benchmarks/stroller-official-5/validate-benchmark.mjs",
+    "node agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/validate-rubric-proposal.mjs",
+    "node --test --test-isolation=none agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/tests/rubric-proposal.test.mjs"
   ],
   "publication_status": "review_required"
 }
