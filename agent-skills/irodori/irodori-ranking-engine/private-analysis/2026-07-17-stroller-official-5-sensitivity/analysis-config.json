@@ -1,0 +1,105 @@
+{
+  "analysis_id": "private-stroller-official-5-sensitivity-2026-07-17",
+  "status": "proposed_analysis_only",
+  "publication_status": "draft",
+  "private_non_public": true,
+  "snapshot_date": "2026-07-17",
+  "rubric_ref": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/train-commute-rubric-proposal.json",
+  "rubric_version": "1.1.0",
+  "scenario_eligibility_ref": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/scenario-eligibility.json",
+  "normalization_rules_ref": "agent-skills/irodori/benchmarks/stroller-official-5/rubric-proposal/normalization-rules.json",
+  "engine_ref": "agent-skills/irodori/irodori-ranking-engine/scripts/ranking-engine.ts",
+  "engine_calc_version": "calc-train-prototype-0.2.0/private-sensitivity-0.1.0",
+  "allocation_assumption": {
+    "status": "proposed_analysis_only",
+    "reason": "The current four-parent-axis proposal explicitly leaves point allocation undefined. Equal parent weights and equal child weights within each parent are a neutral trial overlay, not a rubric decision.",
+    "parent_weight_total": 1,
+    "normalization": "vary one parent by a relative delta, then rescale all parent weights to keep the total at one",
+    "parent_weights": {
+      "transport_burden": 0.25,
+      "station_space_fit": 0.25,
+      "folding_independence": 0.25,
+      "carry_assistance": 0.25
+    }
+  },
+  "criteria": [
+    {"criterion_id":"transport_burden.body_weight","parent_axis":"transport_burden","raw_fact_id":"body_weight_kg","rule_kind":"ordinal_lower_better","boundary_id":"body_weight_kg","positive_contribution_group":"body_weight"},
+    {"criterion_id":"station_space_fit.unfolded_width","parent_axis":"station_space_fit","raw_fact_id":"unfolded_width_mm","rule_kind":"ordinal_lower_better","boundary_id":"unfolded_width_mm","positive_contribution_group":"unfolded_width"},
+    {"criterion_id":"station_space_fit.folded_floor_footprint","parent_axis":"station_space_fit","raw_fact_id":"folded_floor_footprint_cm2","rule_kind":"ordinal_lower_better","boundary_id":"folded_floor_footprint_cm2","positive_contribution_group":"folded_floor_footprint"},
+    {"criterion_id":"folding_independence.one_hand_fold","parent_axis":"folding_independence","raw_fact_id":"one_hand_fold_explicit","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"one_hand_operation"},
+    {"criterion_id":"folding_independence.one_hand_unfold","parent_axis":"folding_independence","raw_fact_id":"one_hand_unfold_explicit","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"one_hand_unfold"},
+    {"criterion_id":"folding_independence.fold_step_count","parent_axis":"folding_independence","raw_fact_id":"fold_step_count","rule_kind":"ordinal_lower_better","boundary_id":"fold_step_count","positive_contribution_group":"fold_step_count"},
+    {"criterion_id":"folding_independence.requires_two_hands","parent_axis":"folding_independence","raw_fact_id":"requires_two_hands","rule_kind":"boolean","preferred_value":false,"positive_contribution_group":"two_hand_requirement"},
+    {"criterion_id":"folding_independence.requires_bending","parent_axis":"folding_independence","raw_fact_id":"requires_bending","rule_kind":"boolean","preferred_value":false,"positive_contribution_group":"bending_requirement"},
+    {"criterion_id":"folding_independence.seat_attached_operation","parent_axis":"folding_independence","raw_fact_id":"fold_with_seat_attached","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"seat_attached_operation"},
+    {"criterion_id":"folding_independence.self_standing","parent_axis":"folding_independence","raw_fact_id":"self_standing_explicit","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"self_standing"},
+    {"criterion_id":"folding_independence.folded_lock","parent_axis":"folding_independence","raw_fact_id":"folded_lock","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"folded_lock"},
+    {"criterion_id":"carry_assistance.handle","parent_axis":"carry_assistance","raw_fact_id":"carry_handle","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"carry_handle"},
+    {"criterion_id":"carry_assistance.strap","parent_axis":"carry_assistance","raw_fact_id":"carry_strap","rule_kind":"boolean","preferred_value":true,"positive_contribution_group":"carry_strap"},
+    {"criterion_id":"carry_assistance.level","parent_axis":"carry_assistance","raw_fact_id":"carry_assistance_level","rule_kind":"ordinal_higher_better","positive_contribution_group":"carry_assistance_level"}
+  ],
+  "analysis_scenarios": [
+    {
+      "scenario_id": "a_type_primary_strict_scope",
+      "benchmark_segment": "a_type_primary",
+      "eligibility_scenario_id": "primary_from_1_month",
+      "weight_scope_policy": "exclude_when_multiple_scopes",
+      "purpose": "A形相当の1か月開始群。異なる重量scopeを単一試算へ混ぜない。"
+    },
+    {
+      "scenario_id": "a_type_excluding_accessories_scope_diagnostic",
+      "benchmark_segment": "a_type_primary",
+      "eligibility_scenario_id": "primary_from_1_month",
+      "weight_scope_policy": "allow_partial_same_scope",
+      "weight_scope_filter": "excluding_accessories",
+      "purpose": "A形相当のうち付属品除外scopeだけを分離した、重量criterionの非公開診断。"
+    },
+    {
+      "scenario_id": "b_type_compact_strict_scope",
+      "benchmark_segment": "b_type_compact",
+      "eligibility_scenario_id": "compact_travel_from_7_months",
+      "weight_scope_policy": "single_product_diagnostic",
+      "purpose": "B形相当のcompact群。A形相当商品を混在させない。"
+    }
+  ],
+  "sensitivity_patterns": {
+    "relative_parent_weight_deltas": [0.05, 0.1],
+    "boundary_shift_fraction": 0.05,
+    "coverage_thresholds": [0.25, 0.5, 0.75, 1],
+    "numeric_input_nudge_fraction": 0.01,
+    "related_parent_exclusions": [
+      {"pattern_id":"exclude_related.portability_components","parent_axes":["transport_burden","carry_assistance"]},
+      {"pattern_id":"exclude_related.station_and_operation","parent_axes":["station_space_fit","folding_independence"]}
+    ]
+  },
+  "score_policy": {
+    "band_points": {"very_low":0,"low":25,"medium":50,"high":75,"very_high":100},
+    "baseline_coverage_threshold": 0,
+    "missing_axis": "exclude_from_score_without_zero_or_false",
+    "below_coverage": "on_hold_not_low_quality",
+    "confidence_formula_ref": "confidence-proposed-v1",
+    "confidence_score_impact": "none",
+    "analysis_derived_inference_evidence_status": "unconfirmed",
+    "analysis_derived_inference_requires_confirmed_raw_fact": true,
+    "tie_rule": "tie_allowed",
+    "precision": 6
+  },
+  "prohibited_quality_inputs": [
+    "basket_capacity",
+    "basket_max_load_kg",
+    "basket_volume_l",
+    "maneuverability",
+    "suspension",
+    "tire_count",
+    "tire_diameter",
+    "review_sentiment",
+    "review_count",
+    "external_ranking",
+    "rakuten_ranking",
+    "rakuten_review_count",
+    "manufacturer_marketing_claim",
+    "affiliate_rate",
+    "market_demand_signal"
+  ],
+  "output_disclaimer": "非公開感度分析の試算。実在商品の確定score、公開順位、推奨、販売判断ではない。"
+}
