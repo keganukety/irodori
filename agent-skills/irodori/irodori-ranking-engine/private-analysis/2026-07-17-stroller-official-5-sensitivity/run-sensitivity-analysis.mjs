@@ -34,6 +34,11 @@ function sha256File(path) {
   return sha256Bytes(readFileSync(path));
 }
 
+function sha256CanonicalTextFile(path) {
+  const canonicalText = readFileSync(path, "utf8").replaceAll("\r\n", "\n");
+  return sha256Bytes(canonicalText);
+}
+
 function round(value, digits = 6) {
   const factor = 10 ** digits;
   return Math.round((value + Number.EPSILON) * factor) / factor;
@@ -906,8 +911,8 @@ export function buildAnalysis() {
     private_non_public: true,
     disclaimer: config.output_disclaimer,
     snapshot_id: snapshot.snapshot_id,
-    snapshot_sha256: sha256File(snapshotPath),
-    config_sha256: sha256File(configPath),
+    snapshot_sha256: sha256CanonicalTextFile(snapshotPath),
+    config_sha256: sha256CanonicalTextFile(configPath),
     rubric_id: rubric.rubric_id,
     rubric_version: config.rubric_version,
     engine_calc_version: config.engine_calc_version,
@@ -916,12 +921,12 @@ export function buildAnalysis() {
       status: coverageContract.status,
       publication_status: coverageContract.publication_status,
       contract_ref: config.coverage_contract_ref,
-      contract_sha256: sha256File(resolve(repoRoot, config.coverage_contract_ref)),
+      contract_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_contract_ref)),
       profile_set_id: coverageProfiles.profile_set_id,
       profiles_ref: config.coverage_profiles_ref,
-      profiles_sha256: sha256File(resolve(repoRoot, config.coverage_profiles_ref)),
+      profiles_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_profiles_ref)),
       schema_ref: config.coverage_schema_ref,
-      schema_sha256: sha256File(resolve(repoRoot, config.coverage_schema_ref)),
+      schema_sha256: sha256CanonicalTextFile(resolve(repoRoot, config.coverage_schema_ref)),
     },
     snapshot_verification: verification,
     proposed_settings: {

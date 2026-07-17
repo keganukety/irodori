@@ -3,6 +3,10 @@
 第1検証フェーズの差異監査（`../2026-07-17-supabase-gap/README.md`、以下「元監査」）で
 **[U] Unverified** とされていた本番Supabaseの実態を、read-onlyで確認した追補記録。
 
+> **監査後の現在状態:** 本書はセキュリティ修正前の監査時点を保持した記録です。
+> memo露出問題は修正済みです。修正内容・確認結果・migration履歴は
+> [監査後セキュリティ修正追補](post-audit-remediation.md)を参照してください。
+
 - 元監査は履歴保持のため**一切変更しない**（追補方式。`audits/<date>-<topic>/` 慣例に従い本ディレクトリを新設）。
 - 基点commit: `fe9a531942f805f14a8f5f6f0960a17ece72ad67`（実施時点の `origin/main` 最新）
 - 実施ブランチ: `claude/irodori-production-schema-audit-ae5eb6`（専用worktree）
@@ -198,6 +202,7 @@ anon実行可能RPC）は **未実行のSELECT専用スクリプト** [read-only
 | ファイル | 内容 |
 |---|---|
 | [README.md](README.md)（本書） | 追補レポート・Confirmed/Refuted分類・5商品差分表・RLS/memo露出監査 |
+| [post-audit-remediation.md](post-audit-remediation.md) | 監査後のmemo露出修正・現在状態・migration履歴・残存リスク |
 | [schema-snapshot.sanitized.json](schema-snapshot.sanitized.json) | service OpenAPI由来のsanitizedスキーマスナップショット（key/URL/refなし） |
 | [production-probe-results.md](production-probe-results.md) | 実行した全probe（GET/HEAD）の記録・実測値・実行/未実行の区別 |
 | [read-only-audit.sql](read-only-audit.sql) | **未実行**。SQL Editor手動実行用のSELECT専用スクリプト（Still unknown 1〜6の確認用） |

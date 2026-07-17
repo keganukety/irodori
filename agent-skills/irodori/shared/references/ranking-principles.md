@@ -130,3 +130,6 @@ Coverage安全装置の追加契約 [C](分離原則) / [P](profile値):
   順序に意味がある配列は入力順を保持する。
 - hash計算時は既存の `input_hash` / `input_hash_algorithm` をnullとして除外し、
   同じ意味・同じ設定・同じ計算版なら配列入力順に関係なく同じhashにする。
+- 非公開分析の`input-snapshot`、analysis config、coverage contract/profile/schemaの管理用fingerprintは、
+  checkout環境の差を除くためCRLFだけをLFへ正規化してからSHA-256を計算する。
+  JSONの空白・key順・値と、frozen snapshot内の既存artifact fingerprintは書き換えない。

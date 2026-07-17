@@ -15,8 +15,9 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-function sha256File(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+function sha256CanonicalTextFile(path) {
+  const canonicalText = readFileSync(path, "utf8").replaceAll("\r\n", "\n");
+  return createHash("sha256").update(canonicalText, "utf8").digest("hex");
 }
 
 function check(checks, checkId, condition, detail) {
@@ -46,9 +47,9 @@ export function validateCoverageArtifacts() {
   profiles.profiles.map((profile) => profile.profile_id));
   check(checks, "profiles_proposed", profiles.profiles.every((profile) => profile.value_status === "proposed")
     && profiles.status === "proposed" && profiles.publication_status === "draft", profiles.status);
-  check(checks, "contract_hash", committed.coverage_contract?.contract_sha256 === sha256File(contractPath), committed.coverage_contract?.contract_sha256);
-  check(checks, "profiles_hash", committed.coverage_contract?.profiles_sha256 === sha256File(profilesPath), committed.coverage_contract?.profiles_sha256);
-  check(checks, "schema_hash", committed.coverage_contract?.schema_sha256 === sha256File(schemaPath), committed.coverage_contract?.schema_sha256);
+  check(checks, "contract_hash", committed.coverage_contract?.contract_sha256 === sha256CanonicalTextFile(contractPath), committed.coverage_contract?.contract_sha256);
+  check(checks, "profiles_hash", committed.coverage_contract?.profiles_sha256 === sha256CanonicalTextFile(profilesPath), committed.coverage_contract?.profiles_sha256);
+  check(checks, "schema_hash", committed.coverage_contract?.schema_sha256 === sha256CanonicalTextFile(schemaPath), committed.coverage_contract?.schema_sha256);
   check(checks, "deterministic_result", JSON.stringify(rebuilt) === JSON.stringify(committed), "rebuilt analysis matches committed analysis-result.json");
   check(checks, "snapshot_verified", committed.snapshot_verification?.result === "pass", committed.snapshot_verification?.result);
   check(checks, "snapshot_hash_preserved", committed.snapshot_sha256 === "dc825f9d70b2236851f34bf41f09869ad51acf78dd1ac48f3bed4c89c001f493",

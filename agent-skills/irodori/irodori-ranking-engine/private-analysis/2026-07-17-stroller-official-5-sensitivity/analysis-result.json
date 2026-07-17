@@ -7,7 +7,7 @@
   "disclaimer": "非公開感度分析の試算。実在商品の確定score、公開順位、推奨、販売判断ではない。",
   "snapshot_id": "snapshot-stroller-official-5-private-sensitivity-2026-07-17",
   "snapshot_sha256": "dc825f9d70b2236851f34bf41f09869ad51acf78dd1ac48f3bed4c89c001f493",
-  "config_sha256": "71586beaf0d8cc30d682ef01c46da1450654a0bde048d6b15c437510534c72b4",
+  "config_sha256": "2c94525cfec02291247ed28f2117a04795a8dea431d02a64a3a0b760e2ef4c06",
   "rubric_id": "stroller-train-commute-proposal-v1",
   "rubric_version": "1.1.0",
   "engine_calc_version": "calc-train-prototype-0.2.0/private-sensitivity-coverage-0.2.0",

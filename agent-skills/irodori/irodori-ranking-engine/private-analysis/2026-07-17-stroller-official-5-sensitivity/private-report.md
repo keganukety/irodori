@@ -14,7 +14,7 @@ criterion coverage、parent-axis coverage、weighted coverageを分離し、scor
 - snapshot: `snapshot-stroller-official-5-private-sensitivity-2026-07-17`
 - snapshot SHA-256: `dc825f9d70b2236851f34bf41f09869ad51acf78dd1ac48f3bed4c89c001f493`
 - source origin/main commit: `6d8c2e86e1a2b45aabcfa67ba03d599789be0a45`
-- analysis config SHA-256: `71586beaf0d8cc30d682ef01c46da1450654a0bde048d6b15c437510534c72b4`
+- analysis config SHA-256: `2c94525cfec02291247ed28f2117a04795a8dea431d02a64a3a0b760e2ef4c06`
 - coverage contract SHA-256: `2b0bc1b48179f9cc2d273862bff0ea3cf84a80336d449d1c579bdfe56a006300`
 - proposed profiles SHA-256: `d7457086f5b6ed0241223fc2b78a8d17a30fbacae6bfbcd09c11d3a06342619c`
 - machine-readable schema SHA-256: `7ae5e8a90026cc1f469636c6ee53c09f4b2bd887b6ee32b83d324e0147d6a944`
