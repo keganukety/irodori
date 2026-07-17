@@ -1,0 +1,91 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "rvw-2026-07-16-cybex-libelle-2026-official",
+  "created_at": "2026-07-16T16:45:00+09:00",
+  "updated_at": "2026-07-16T16:45:00+09:00",
+  "review_report_id": "rvw-2026-07-16-cybex-libelle-2026-official",
+  "run_id": "run-2026-07-16-cybex-libelle-2026-official",
+  "summary": "CYBEX公式情報限定run(Melioパイロットと同一手法)。ブランドCYBEX・正式商品名Libelle・モデル年2026(ダウンロードセンター表記)・市場JP(日本向け取説revision a)を確認した。モデル共通型番は未確認でnull、商品コード526001009はCinnamon Yellowのvariantへ分離し、identification_statusはprovisional。取説(LIBELLE リベル・CTP JAPAN発行)から規定重量6ヶ月頃〜22kg・バスケット5kg・保証2年間を照合した。公式情報内の矛盾は検出していない。価格は公式ページ非表示のためunconfirmed。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-cybex-libelle-2026-jp",
+      "identification_status": "provisional",
+      "source_count": 4,
+      "claim_count": 26,
+      "unconfirmed_axes": ["folding_ease", "self_standing", "price"],
+      "conflicts": 0
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "audit_01_manufacturer_official_sources_only",
+      "result": "pass",
+      "detail": "4/4がCYBEX公式サイト、公式ダウンロードセンター、または公式ページから直接到達した取扱説明書。全件primary/self_published_by_maker。"
+    },
+    {
+      "check_name": "audit_02_no_search_snippets_as_evidence",
+      "result": "pass",
+      "detail": "検索は発見経路のみ。source/claimに検索結果スニペットを保存していない。"
+    },
+    {
+      "check_name": "audit_03_model_year_2026_evidence",
+      "result": "pass",
+      "detail": "src-lib26-002のLibelle (2026)とclm-lib26-014へ戻れる。2025年モデルとの併載はclm-lib26-022。"
+    },
+    {
+      "check_name": "audit_04_product_code_is_variant_code",
+      "result": "pass",
+      "detail": "model_numberはnull。526001009はCinnamon Yellowのvariants[].product_codeおよびsource.variant_product_code_as_writtenへ分離。"
+    },
+    {
+      "check_name": "audit_05_current_and_2025_separated",
+      "result": "pass",
+      "detail": "st-go-libelle-6(2026)とst-go-libelle-5(2025)を別商品として扱い、2025仕様を混入していない。"
+    },
+    {
+      "check_name": "audit_06_pdf_official_discovery_route",
+      "result": "pass",
+      "detail": "src-lib26-003にdiscovery_page_url、direct_asset_url、discovered_via_official_page=trueを構造化保存。"
+    },
+    {
+      "check_name": "audit_07_manufacturer_claim_separated",
+      "result": "pass",
+      "detail": "hand luggage compatible(機内持ち込み対応)表現はmanufacturer_claimとして分離。one-pull harnessの『片手』はハーネス操作でありfolding_easeへ流用していない。"
+    },
+    {
+      "check_name": "audit_08_unknown_values_are_null",
+      "result": "pass",
+      "detail": "folding_ease / self_standing / priceはvalue: null / unconfirmed / supporting_claims: []。"
+    },
+    {
+      "check_name": "audit_09_inference_labeled",
+      "result": "pass",
+      "detail": "モデル年関係の導出(clm-lib26-026)はirodori_inference/inference/unconfirmedとしderived_fromに導出元2claimを保持。"
+    },
+    {
+      "check_name": "audit_10_no_real_product_score_or_rank",
+      "result": "pass",
+      "detail": "run内にranking_input/ranking_resultファイルがなく、実在商品用得点・順位フィールドもない。"
+    },
+    {
+      "check_name": "audit_11_all_contract_validations_pass",
+      "result": "pass",
+      "detail": "validate-run.mjsでrun_manifest/product_identity/source×4/claim×26/feature×14/review_reportと参照整合性を検証。"
+    }
+  ],
+  "open_questions": [
+    "モデル全体に共通する型番は未確認。確認できるまではmodel_number: null / identification_status: provisionalを維持する",
+    "Cinnamon Yellow以外の商品コードと、色違い間の仕様同一性は未確認",
+    "取扱説明書の表題は『LIBELLE リベル』で年式の明記がなく、Libelle (2026)日本向けページからの到達を根拠にmatch_status: probableを維持する",
+    "片手での折りたたみ操作可否・折りたたみ時の自立可否は公式テキストで未確認",
+    "公式価格は未確認(公式ページに価格表示なし)。ローカルproducts(id 7)の29,975円・重量6.3kgと公式仕様6kgの差異は人間レビューが必要",
+    "トラベルシステム使用時(インファントカーシート装着時)の対応月齢は未確認",
+    "2025年モデルとの公式な後継関係の明言は未確認(inferenceとしてのみ保持)"
+  ],
+  "recommended_next_actions": [
+    "取説PDFの折りたたみ手順ページを人間が目視確認し、片手操作・自立可否を確定する",
+    "site_product_id 7(ローカル『リベル 2026』)の重量6.3kg・価格29,975円の由来を確認し、公式仕様(6kg・価格非表示)との差異を解消する",
+    "モデル共通型番と他カラーvariantを追加確認する"
+  ],
+  "publication_status": "review_required"
+}

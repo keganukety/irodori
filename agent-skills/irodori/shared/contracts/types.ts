@@ -293,6 +293,8 @@ export interface ProductIdentity extends BaseContractRecord {
   manufacturer_name: string | null;
   model_number: string | null;
   model_year: number | null;
+  /** Domestic generation label. It must not be promoted to model_year or model_number. */
+  generation_code?: string | null;
   market: Market;
   lifecycle_status: LifecycleStatus;
   predecessor_of: string | null;
@@ -367,6 +369,8 @@ export interface SourceRecord extends BaseContractRecord {
   external_rank_metadata: ExternalRankMetadata | null;
   acquisition_status: "acquired" | "partial" | "failed" | "skipped";
   acquisition_failure_reason: string | null;
+  /** Consent-gated manual state. AI must not advance this state by accepting terms. */
+  manual_gate_status?: "skipped_terms_acceptance_required" | "human_download_required" | "user_provided_manual_pending";
   /** Structured provenance for directly linked assets such as manuals. */
   discovery_page_url?: string | null;
   direct_asset_url?: string | null;

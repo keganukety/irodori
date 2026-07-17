@@ -383,6 +383,9 @@ export function validateProductIdentity(value: unknown): ValidationReport<Produc
     nullableString(item.manufacturer_name, collector, "$.manufacturer_name");
     nullableString(item.model_number, collector, "$.model_number");
     nullableNumber(item.model_year, collector, "$.model_year");
+    if (item.generation_code !== undefined) {
+      nullableString(item.generation_code, collector, "$.generation_code");
+    }
     if (typeof item.model_year === "number"
       && (!Number.isInteger(item.model_year) || item.model_year < 1900 || item.model_year > 2200)) {
       collector.fail("$.model_year", "value.model_year", "1900〜2200の整数が必要です");
@@ -653,6 +656,17 @@ export function validateSourceRecord(value: unknown): ValidationReport<SourceRec
     }
     enumValue(item.acquisition_status, ["acquired", "partial", "failed", "skipped"] as const, collector, "$.acquisition_status");
     nullableString(item.acquisition_failure_reason, collector, "$.acquisition_failure_reason");
+    if (item.manual_gate_status !== undefined) {
+      enumValue(
+        item.manual_gate_status,
+        ["skipped_terms_acceptance_required", "human_download_required", "user_provided_manual_pending"] as const,
+        collector,
+        "$.manual_gate_status",
+      );
+      if (item.acquisition_status !== "skipped") {
+        collector.fail("$.manual_gate_status", "manual_gate.skipped_required", "manual gate状態はacquisition_status: skippedで保持します");
+      }
+    }
     if (item.discovery_page_url !== undefined) url(item.discovery_page_url, collector, "$.discovery_page_url", true);
     if (item.direct_asset_url !== undefined) url(item.direct_asset_url, collector, "$.direct_asset_url", true);
     if (item.discovered_via_official_page !== undefined

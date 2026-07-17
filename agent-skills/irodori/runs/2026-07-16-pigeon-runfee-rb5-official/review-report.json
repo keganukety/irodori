@@ -1,0 +1,85 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "rvw-2026-07-16-pigeon-runfee-rb5-official",
+  "created_at": "2026-07-16T16:15:00+09:00",
+  "updated_at": "2026-07-16T16:15:00+09:00",
+  "review_report_id": "rvw-2026-07-16-pigeon-runfee-rb5-official",
+  "run_id": "run-2026-07-16-pigeon-runfee-rb5-official",
+  "summary": "ピジョン公式情報限定run。ブランド・正式商品名Runfee RB5・市場JP・現行性をpigeon.infoブランドページ・ピジョン株式会社商品情報ページ・公式一覧ページで確認した。商品名中のRB5をgeneration_codeとして保持し、model_number/model_yearには昇格していない。カラー別商品コード(1042807/1042808)はvariantへ分離。取扱説明書は同意ゲートのため未取得で、max_load・自立・保証・同梱物・警告は未確認。機構factとメーカーの走行性能訴求は別claimに分離した。ローカルproductsに該当候補がなくsite_product_match_statusはunmatched。実在商品のranking_input、ranking_result、observed_score、score、順位は作成していない。",
+  "product_summaries": [
+    {
+      "product_identity_id": "pid-pigeon-runfee-rb5-jp",
+      "identification_status": "provisional",
+      "source_count": 5,
+      "claim_count": 20,
+      "unconfirmed_axes": ["max_load", "self_standing", "warranty", "included_accessories", "caution"],
+      "conflicts": 0
+    }
+  ],
+  "validation_summary": [
+    {
+      "check_name": "audit_01_manufacturer_official_sources_only",
+      "result": "pass",
+      "detail": "5/5がピジョン公式ドメイン(pigeon.info / products.pigeon.co.jp / support.pigeon.co.jp)。全件primary/self_published_by_maker。"
+    },
+    {
+      "check_name": "audit_02_no_search_snippets_as_evidence",
+      "result": "pass",
+      "detail": "検索は公式ページの発見経路のみ。claimはサーバ返却HTMLの直接確認に基づく。"
+    },
+    {
+      "check_name": "audit_03_generation_code_rb5_with_variant_codes",
+      "result": "pass",
+      "detail": "RB5をgeneration_codeとし、model_number/model_yearはnull。カラー別商品コード(1042807/1042808)はvariants[].product_codeへ分離。"
+    },
+    {
+      "check_name": "audit_04_manual_gate_recorded_as_skipped",
+      "result": "pass",
+      "detail": "取説ダウンロードページは『同意してダウンロード』ゲートのためacquisition_status: skipped + 理由付きで記録。"
+    },
+    {
+      "check_name": "audit_05_unknown_values_are_null",
+      "result": "pass",
+      "detail": "max_load / self_standing / warranty / included_accessories / cautionはvalue: null / unconfirmed / supporting_claims: []。安全基準A形からのmax_load推定はしていない。"
+    },
+    {
+      "check_name": "audit_06_open_size_two_configurations_preserved",
+      "result": "pass",
+      "detail": "展開時サイズは背面位を正規化値に採用し、対面位は別claimで保持(使用状態の違いであり矛盾ではない)。"
+    },
+    {
+      "check_name": "audit_07_award_as_metadata_only",
+      "result": "pass",
+      "detail": "グッドデザイン賞受賞表記はexternal_rank_metadataにのみ保持し、得点・axisへ入力していない。"
+    },
+    {
+      "check_name": "audit_08_no_survey_claims_stored",
+      "result": "pass",
+      "detail": "ページ内の『ピジョン調べ(n=528)』等の調査系比較表現は証拠として保存していない。"
+    },
+    {
+      "check_name": "audit_09_no_real_product_score_or_rank",
+      "result": "pass",
+      "detail": "run内にranking_input/ranking_resultがなく、得点・順位フィールドもない。"
+    },
+    {
+      "check_name": "audit_10_all_contract_validations_pass",
+      "result": "pass",
+      "detail": "validate-run.mjsでrun_manifest/product_identity/source×5/claim×19/feature×14/review_reportと参照整合性を検証。"
+    }
+  ],
+  "open_questions": [
+    "対応体重の上限(max_load)は公式ページで未確認。取扱説明書または公式資料での確認が必要(安全基準A形からの推定はしない)",
+    "折りたたみ時の自立可否・保証条件・同梱物・警告事項は取扱説明書(同意ゲートのため未取得)での確認が必要",
+    "RB5世代のモデル年(発売年)は公式ページで未確認。公式ニュースリリースでの確認が望ましい",
+    "キャメル/ストーングレー間の仕様同一性は明示記載がなくunverified",
+    "旧世代(RB1〜RB4)との公式な後継関係の明言は未確認(販売終了ページの存在は把握)",
+    "ローカルproductsにランフィの登録候補がないため、サイト側で扱う場合は新規登録判断が必要"
+  ],
+  "recommended_next_actions": [
+    "人間の判断で取説ダウンロードの利用条件に同意し、max_load・自立・保証・同梱物を追加確認する",
+    "公式ニュースリリースでRB5の発売時期を確認しmodel_year相当情報を補強する",
+    "IRODORI productsへの新規登録要否を判断する(現状unmatched)"
+  ],
+  "publication_status": "review_required"
+}

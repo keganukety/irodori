@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.1.0",
+  "proposal_id": "stroller-train-commute-axis-classification-v1",
+  "status": "proposed",
+  "human_approval_status": "provisional_approved",
+  "applies_to_real_products": false,
+  "unknown_policy": "null_and_unconfirmed_never_false_or_zero",
+  "subjective_axis_classification": [
+    {
+      "axis_id": "portability",
+      "classification": "split_into_subaxes",
+      "replacement": ["transport_burden", "carry_assistance"],
+      "independent_score_input": false,
+      "deprecation_status": "deprecated_as_independent_input",
+      "reason": "重量負担と携行補助を分離し、portability自体を独立入力にしない"
+    },
+    {
+      "axis_id": "train_fitness",
+      "classification": "editorial_composite_output",
+      "replacement": ["station_space_fit", "transport_burden", "folding_independence", "carry_assistance"],
+      "raw_input_allowed": false,
+      "independent_score_input": false,
+      "reason": "確認済み親軸から編集判断として作る結果でありraw factではない"
+    },
+    {
+      "axis_id": "maneuverability",
+      "classification": "requires_third_party_measurement",
+      "score_eligible": false,
+      "mechanism_fact_scoring_allowed": false,
+      "required_before_scoring": "approved_standardized_third_party_protocol",
+      "reason": "公式のタイヤ・サスペンション・押しやすさ訴求だけでは実走性能を測れない"
+    },
+    {
+      "axis_id": "one_operator_fitness",
+      "classification": "editorial_composite_output",
+      "replacement": ["folding_independence", "carry_assistance"],
+      "raw_input_allowed": false,
+      "independent_score_input": false,
+      "body_weight_reuse_allowed": false,
+      "reason": "確認済み親軸から作る編集結果であり、body weightを再度独立加点しない"
+    }
+  ],
+  "deprecated_or_unscored_axes": [
+    {
+      "axis_id": "folding_ease",
+      "classification": "deprecated",
+      "replacement": "folding_independence",
+      "reason": "主観raw inputを明示操作factへ分解する"
+    },
+    {
+      "axis_id": "basket_capacity",
+      "classification": "descriptive_only_until_comparable_units",
+      "score_eligible": false,
+      "reason": "kgとLを相互換算しない"
+    }
+  ],
+  "field_layers": [
+    {"field_id":"body_weight_kg","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"measurement_scope","comparison_layer":"raw","unknown_rule":"unknown"},
+    {"field_id":"measurement_condition","comparison_layer":"raw","unknown_rule":"unknown"},
+    {"field_id":"approximation_status","comparison_layer":"raw","unknown_rule":"unknown"},
+    {"field_id":"unfolded_width_mm","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"folded_width_mm","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"folded_depth_mm","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"folded_height_mm","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"target_age_min_months","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"target_age_max_months","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"max_child_weight_kg","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"one_hand_fold_explicit","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"one_hand_unfold_explicit","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"fold_step_count","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"requires_two_hands","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"requires_bending","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"requires_seat_removal","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"self_standing_explicit","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"folded_lock","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"fold_with_seat_attached","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"carry_handle","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"carry_strap","comparison_layer":"raw","unknown_rule":"null_not_false"},
+    {"field_id":"carrying_position","comparison_layer":"raw","unknown_rule":"null"},
+    {"field_id":"folded_bounding_box_volume_l","comparison_layer":"derived","semantic_limit":"reference proxy; never actual occupied volume"},
+    {"field_id":"folded_floor_footprint_cm2","comparison_layer":"derived","semantic_limit":"standing-base outer rectangle only"},
+    {"field_id":"carry_assistance_level","comparison_layer":"derived","unknown_rule":"unknown"},
+    {"field_id":"transport_burden","comparison_layer":"editorial","human_approval_required":true},
+    {"field_id":"station_space_fit","comparison_layer":"editorial","human_approval_required":true},
+    {"field_id":"folding_independence","comparison_layer":"editorial","human_approval_required":true},
+    {"field_id":"carry_assistance","comparison_layer":"editorial","human_approval_required":true},
+    {"field_id":"train_fitness","comparison_layer":"editorial_composite_output","raw_input_allowed":false},
+    {"field_id":"one_operator_fitness","comparison_layer":"editorial_composite_output","raw_input_allowed":false},
+    {"field_id":"maneuverability","comparison_layer":"unscored","third_party_measurement_required":true}
+  ]
+}

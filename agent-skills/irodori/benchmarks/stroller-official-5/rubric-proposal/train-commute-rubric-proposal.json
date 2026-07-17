@@ -1,0 +1,93 @@
+{
+  "rubric_id": "stroller-train-commute-proposal-v1",
+  "version": "1.1.0",
+  "status": "proposed",
+  "human_approval_status": "provisional_approved",
+  "applies_to_real_products": false,
+  "real_product_output_scope": ["comparability", "eligibility_candidate", "measurement_scope"],
+  "applicable_scenarios": ["primary_from_1_month", "primary_from_6_months", "second_stroller_from_7_months", "compact_travel_from_7_months"],
+  "comparison_axes": [
+    {
+      "axis_id": "transport_burden",
+      "status": "proposed",
+      "primary_inputs": ["body_weight_kg", "measurement_scope", "approximation_status", "carry_handle", "carry_strap"],
+      "positive_contribution_candidates": ["body_weight_kg"],
+      "gate_or_context_only": ["measurement_scope", "approximation_status", "carry_handle", "carry_strap"],
+      "rule": "body_weight_kg may directly contribute only to this parent axis"
+    },
+    {
+      "axis_id": "station_space_fit",
+      "status": "proposed",
+      "primary_inputs": ["unfolded_width_mm", "folded_width_mm", "folded_depth_mm", "folded_height_mm", "folded_floor_footprint_cm2"],
+      "reference_only": ["folded_bounding_box_volume_l"],
+      "semantic_limit": "bounding-box volume is not actual occupied volume"
+    },
+    {
+      "axis_id": "folding_independence",
+      "status": "proposed",
+      "primary_inputs": ["one_hand_fold_explicit", "one_hand_unfold_explicit", "fold_step_count", "requires_two_hands", "requires_bending", "requires_seat_removal", "self_standing_explicit", "folded_lock", "fold_with_seat_attached"]
+    },
+    {
+      "axis_id": "carry_assistance",
+      "status": "proposed",
+      "primary_inputs": ["carry_handle", "carry_strap", "carrying_position", "carry_assistance_level"]
+    }
+  ],
+  "editorial_composite_outputs": [
+    {"axis_id":"train_fitness","source_axes":["station_space_fit","transport_burden","folding_independence","carry_assistance"],"raw_input_allowed":false,"independent_positive_contribution":false},
+    {"axis_id":"one_operator_fitness","source_axes":["folding_independence","carry_assistance"],"raw_input_allowed":false,"body_weight_reuse_allowed":false,"independent_positive_contribution":false}
+  ],
+  "initial_score_exclusions": ["basket_capacity", "maneuverability", "suspension", "tire_count", "tire_diameter", "review_sentiment", "external_ranking", "rakuten_ranking", "manufacturer_marketing_claim"],
+  "allocation_status": {
+    "status": "not_defined",
+    "point_allocation_finalized": false,
+    "ordinal_output_allowed": false,
+    "sensitivity_analysis_completed": false
+  },
+  "raw_fact_contribution_contract": [
+    {"raw_fact_id":"body_weight_kg","positive_contribution_axis":"transport_burden","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"carry_handle","positive_contribution_axis":"carry_assistance","transport_burden_role":"context_only","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"carry_strap","positive_contribution_axis":"carry_assistance","transport_burden_role":"context_only","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"unfolded_width_mm","positive_contribution_axis":"station_space_fit","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"folded_width_mm","positive_contribution_axis":"station_space_fit","contribution_group":"folded_floor_footprint","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"folded_depth_mm","positive_contribution_axis":"station_space_fit","contribution_group":"folded_floor_footprint","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"folded_height_mm","positive_contribution_axis":null,"role":"reference_only","maximum_positive_contribution_axes":0},
+    {"raw_fact_id":"one_hand_fold_explicit","positive_contribution_axis":"folding_independence","contribution_group":"one_hand_operation","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"one_hand_unfold_explicit","positive_contribution_axis":"folding_independence","contribution_group":"one_hand_operation","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"requires_two_hands","positive_contribution_axis":"folding_independence","contribution_group":"one_hand_operation","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"fold_step_count","positive_contribution_axis":"folding_independence","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"requires_seat_removal","positive_contribution_axis":"folding_independence","contribution_group":"seat_attached_operation","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"fold_with_seat_attached","positive_contribution_axis":"folding_independence","contribution_group":"seat_attached_operation","semantic_alias_of":"requires_seat_removal","maximum_positive_contribution_axes":1},
+    {"raw_fact_id":"wheel_diameter","positive_contribution_axis":null,"role":"unscored_mechanism_fact","maximum_positive_contribution_axes":0},
+    {"raw_fact_id":"suspension","positive_contribution_axis":null,"role":"unscored_mechanism_fact","maximum_positive_contribution_axes":0},
+    {"raw_fact_id":"manufacturer_maneuverability_claim","positive_contribution_axis":null,"role":"manufacturer_claim_only","maximum_positive_contribution_axes":0}
+  ],
+  "boundary_grid": [
+    {"boundary_id":"body_weight_kg","candidate_values":[4.0,5.0,6.0,7.0],"unit":"kg","status":"proposed","rationale":"5商品公式値の近傍で次工程のband感度を確認する候補","permanent_threshold":false,"sensitivity_test_required":true,"human_approval_status":"provisional_approved","supporting_dataset":"five_product_official_benchmark","limitation":"5商品だけでは恒久境界を決定できない"},
+    {"boundary_id":"unfolded_width_mm","candidate_values":[460,480,500,530],"unit":"mm","status":"proposed","rationale":"展開幅候補の境界前後を次工程で比較する","permanent_threshold":false,"sensitivity_test_required":true,"human_approval_status":"provisional_approved","supporting_dataset":"five_product_official_benchmark","limitation":"5商品だけでは恒久境界を決定できない"},
+    {"boundary_id":"folded_floor_footprint_cm2","candidate_values":[800,1200,1600,2200],"unit":"cm2","status":"proposed","rationale":"立置き床面外接矩形の境界前後を次工程で比較する","permanent_threshold":false,"sensitivity_test_required":true,"human_approval_status":"provisional_approved","supporting_dataset":"five_product_official_benchmark","limitation":"5商品だけでは恒久境界を決定できない"},
+    {"boundary_id":"fold_step_count","candidate_values":[1,2,3,{"minimum":4,"label":"4_or_more"}],"unit":"operations","status":"proposed","rationale":"公式手順から確認できる操作数の候補bandを次工程で比較する","permanent_threshold":false,"sensitivity_test_required":true,"human_approval_status":"provisional_approved","supporting_dataset":"five_product_official_benchmark","limitation":"5商品だけでは恒久境界を決定できない"}
+  ],
+  "missing_data_policy": {
+    "required_fact_missing": "eligibility_unknown_and_participation_on_hold",
+    "optional_fact_missing": "decrease_coverage_without_zero_or_false",
+    "all_parent_subaxes_missing": "parent_axis_unavailable",
+    "coverage_threshold_adopted": false
+  },
+  "double_counting_policy": {
+    "one_raw_fact_max_positive_contribution_axes": 1,
+    "semantic_aliases_share_one_contribution_group": true,
+    "editorial_composites_add_new_raw_contribution": false,
+    "body_weight_reuse_outside_transport_burden": false,
+    "validation_required": true
+  },
+  "human_approval_required": true,
+  "limitations": [
+    "no real five-product score, order, winner, recommendation, or sensitivity result may be generated",
+    "all boundary candidates remain proposed and non-permanent",
+    "point allocation is not defined in this proposal",
+    "folded bounding-box volume is not actual occupied volume",
+    "basket kg and L remain separate",
+    "maneuverability remains unscored until a standardized third-party protocol is approved"
+  ]
+}

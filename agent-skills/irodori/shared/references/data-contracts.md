@@ -102,6 +102,7 @@
 | `manufacturer_name` | string | 任意 | 製造元(ブランドと異なる場合) | null | P |
 | `model_number` | string \| null | 任意 | 型番(公式表記) | null + `unconfirmed_fields` に記載 | C |
 | `model_year` | number \| null | 任意 | モデル年(西暦) | null + `unconfirmed_fields` に記載。**推測しない** | C |
+| `generation_code` | string \| null | 任意 | 国内世代記号。`model_year` / `model_number` へ自動昇格しない | null | C |
 | `market` | string | 必須 | `JP` / `overseas` / `unknown` | `unknown` | C |
 | `lifecycle_status` | string | 必須 | `current` / `discontinued` / `unknown` | `unknown` | C |
 | `predecessor_of` / `successor_of` | string \| null | 任意 | 新旧関係にある `product_identity_id` | null | C |
@@ -178,6 +179,7 @@
 | `external_rank_metadata` | object \| null | 任意 | 他媒体の順位・星の**参考メタデータ**(得点化禁止)。`{rank_label, rank_value, scale_note}` | null | C(禁止則)/P(形式) |
 | `acquisition_status` | string | 必須 | `acquired` / `partial` / `failed` / `skipped` | 省略不可 | C |
 | `acquisition_failure_reason` | string \| null | 条件付き必須 | `failed` / `skipped` の場合必須 | — | C |
+| `manual_gate_status` | string | 任意 | `skipped_terms_acceptance_required` / `human_download_required` / `user_provided_manual_pending`。AIは同意操作で状態を進めない | — | C |
 | `discovery_page_url` | string \| null | official_manualで0.3.0以降必須 | 直接資産へ到達した公式親ページ | null | C |
 | `direct_asset_url` | string \| null | official_manualで0.3.0以降必須 | PDF等の直接URL | null | C |
 | `discovered_via_official_page` | boolean \| null | official_manualで0.3.0以降必須 | 公式ページから直接到達した確認。trueでなければ公式資料扱いしない | null | C |

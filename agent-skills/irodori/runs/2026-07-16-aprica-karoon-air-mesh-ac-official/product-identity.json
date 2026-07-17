@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.4.0",
+  "record_id": "pid-aprica-karoon-air-mesh-ac-jp",
+  "created_at": "2026-07-16T15:10:00+09:00",
+  "updated_at": "2026-07-16T15:10:00+09:00",
+  "notes": "ブランド アップリカ・正式商品名 カルーンエアー メッシュ AC・市場JPを公式商品ページと公式ベビーカー一覧ページで確認。公式商品名末尾のACをgeneration_codeとして保持し、model_yearやmodel_numberへは昇格しない。発売時期は2024年9月。品番はカラー別(BE 2206924 / GR 2206925)でありモデル共通型番は未確認のためmodel_numberはnull。サイト運営者はNewell Brands Japan G.K.(フッター著作権表記)だが製造者法人名としての明示は未確認。",
+  "product_identity_id": "pid-aprica-karoon-air-mesh-ac-jp",
+  "official_name": "カルーンエアー メッシュ AC",
+  "brand_name": "アップリカ",
+  "manufacturer_name": null,
+  "model_number": null,
+  "model_year": null,
+  "generation_code": "AC",
+  "market": "JP",
+  "lifecycle_status": "current",
+  "predecessor_of": null,
+  "successor_of": null,
+  "variant_of": null,
+  "variant_axis": null,
+  "category": "stroller",
+  "official_url": "https://www.aprica.jp/products/babycar/detail/reversible_lw/karoonair_mesh_ac/",
+  "identification_status": "provisional",
+  "identification_evidence": [
+    "src-krnac-001",
+    "src-krnac-002"
+  ],
+  "unconfirmed_fields": [
+    "manufacturer_name",
+    "model_number",
+    "model_year",
+    "predecessor_of",
+    "successor_of",
+    "variant_specification_equivalence_between_colors"
+  ],
+  "site_product_id": "5",
+  "site_product_match_status": "probable",
+  "variants": [
+    {
+      "variant_id": "var-aprica-karoon-air-mesh-ac-jp-beige",
+      "color_name": "ベージュ BE",
+      "product_code": "2206924",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-krnac-014"],
+      "notes": "公式商品ページの品番/JANコード欄(JAN 4969220010465)。仕様表は色別に分かれていないが、色間の仕様同一性の明示記載はないためunverified。"
+    },
+    {
+      "variant_id": "var-aprica-karoon-air-mesh-ac-jp-gray",
+      "color_name": "グレー GR",
+      "product_code": "2206925",
+      "specification_equivalence_status": "unverified",
+      "supporting_claims": ["clm-krnac-014"],
+      "notes": "公式商品ページの品番/JANコード欄(JAN 4969220010472)。仕様表は色別に分かれていないが、色間の仕様同一性の明示記載はないためunverified。"
+    }
+  ]
+}

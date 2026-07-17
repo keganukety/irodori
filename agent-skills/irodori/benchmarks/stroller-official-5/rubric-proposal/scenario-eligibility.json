@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.1.0",
+  "proposal_id": "stroller-scenario-eligibility-v1",
+  "status": "proposed",
+  "human_approval_status": "provisional_approved",
+  "eligibility_states": ["eligible", "ineligible", "unknown", "not_applicable"],
+  "participation_statuses": ["candidate", "excluded", "on_hold", "not_applicable"],
+  "disposition_rules": {
+    "eligible": "candidate_without_rank",
+    "ineligible": "exclude_without_zero_or_last_place",
+    "unknown": "on_hold",
+    "not_applicable": "exclude_without_evaluation"
+  },
+  "upper_coverage_rule": "target_age_max_months >= 36 OR max_child_weight_kg >= 15; if neither can be confirmed, eligibility is unknown and participation is on_hold",
+  "scenarios": [
+    {
+      "scenario_id": "primary_from_1_month",
+      "target_use_window_months": [1, 36],
+      "maximum_start_age_months": 1,
+      "minimum_end_age_months": 36,
+      "alternative_minimum_child_weight_kg": 15,
+      "newborn_use_required": false,
+      "seat_direction_requirement": "any",
+      "participation_required_inputs": ["target_age_min_months", "target_age_max_months_or_max_child_weight_kg"],
+      "status": "proposed",
+      "human_approval_status": "provisional_approved"
+    },
+    {
+      "scenario_id": "primary_from_6_months",
+      "target_use_window_months": [6, 36],
+      "maximum_start_age_months": 6,
+      "minimum_end_age_months": 36,
+      "alternative_minimum_child_weight_kg": 15,
+      "newborn_use_required": false,
+      "seat_direction_requirement": "any",
+      "participation_required_inputs": ["target_age_min_months", "target_age_max_months_or_max_child_weight_kg"],
+      "status": "proposed",
+      "human_approval_status": "provisional_approved"
+    },
+    {
+      "scenario_id": "second_stroller_from_7_months",
+      "target_use_window_months": [7, 36],
+      "maximum_start_age_months": 7,
+      "minimum_end_age_months": 36,
+      "alternative_minimum_child_weight_kg": 15,
+      "newborn_use_required": false,
+      "seat_direction_requirement": "any",
+      "participation_required_inputs": ["target_age_min_months", "target_age_max_months_or_max_child_weight_kg"],
+      "status": "proposed",
+      "human_approval_status": "provisional_approved"
+    },
+    {
+      "scenario_id": "compact_travel_from_7_months",
+      "target_use_window_months": [7, 36],
+      "maximum_start_age_months": 7,
+      "minimum_end_age_months": 36,
+      "alternative_minimum_child_weight_kg": 15,
+      "newborn_use_required": false,
+      "seat_direction_requirement": "any",
+      "participation_required_inputs": ["target_age_min_months", "target_age_max_months_or_max_child_weight_kg", "body_weight_kg", "folded_width_mm", "folded_depth_mm", "folded_height_mm"],
+      "airline_carry_on_inference_allowed": false,
+      "airline_specific_rule_check_required": true,
+      "status": "proposed",
+      "human_approval_status": "provisional_approved"
+    }
+  ],
+  "category_separation": {
+    "rule": "A形/B形 labels are descriptive only; scenario age-window eligibility is the gate",
+    "prohibition": "do not put an age-ineligible product at zero points or last place",
+    "unknown_rule": "missing required evidence produces eligibility unknown and participation_status on_hold"
+  }
+}
