@@ -7,8 +7,9 @@ import {
   normalizeProductDisplayName,
 } from './shared-ui';
 import { isSupabaseConfigured, supabase } from './supabaseClient';
+import { selectPublicProducts, type PublicProduct as SharedProduct } from './lib/publicProducts';
 import { setupProductQuickView } from './product-quick-view';
-import type { Brand, Product as SharedProduct, ProductColor } from './types';
+import type { Brand, ProductColor } from './types';
 
 type Product = {
   id: string | number;
@@ -297,9 +298,7 @@ async function loadHomeState(): Promise<HomeState> {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
+    const { data, error } = await selectPublicProducts()
       .order('rank_no', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .limit(240);

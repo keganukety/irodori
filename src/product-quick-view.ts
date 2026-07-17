@@ -1,6 +1,7 @@
 import './product-quick-view.css';
 import { normalizeProductDisplayName } from './shared-ui';
-import type { Brand, Product, ProductColor } from './types';
+import type { PublicProduct as Product } from './lib/publicProducts';
+import type { Brand, ProductColor } from './types';
 
 type ProductImageMap = Map<string, string>;
 type ProductColorMap = Map<string, ProductColor[]>;

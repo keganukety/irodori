@@ -2,7 +2,8 @@ import './styles.css';
 import './brand.css';
 import { applyFadeUpAnimations, mountCommonHeader, normalizeProductDisplayName } from './shared-ui';
 import { supabase } from './lib/supabase';
-import type { Brand, Product, ProductUploadedImage } from './types';
+import { selectPublicProducts, type PublicProduct as Product } from './lib/publicProducts';
+import type { Brand, ProductUploadedImage } from './types';
 
 type BrandAsset = {
   asset_key: string;
@@ -96,7 +97,7 @@ async function renderBrandPage(): Promise<void> {
   }
 
   const [productsResult, logo, hero] = await Promise.all([
-    supabase.from('products').select('*').eq('brand_id', brand.id).order('rank_no', { ascending: true, nullsFirst: false }),
+    selectPublicProducts().eq('brand_id', brand.id).order('rank_no', { ascending: true, nullsFirst: false }),
     loadBrandAsset(brand, 'logo'),
     loadBrandAsset(brand, 'hero'),
   ]);
@@ -354,6 +355,8 @@ function getProductNavButtonName(product: Product): string {
 }
 
 function getProductDescription(product: Product): string {
+  // 公開用の説明カラムだけを候補にする。管理用の内部テキストへは
+  // フォールバックしない(該当が無ければ説明ブロックごと非表示になる)。
   const description = getFirstText(product, [
     'description',
     'short_description',
@@ -361,7 +364,6 @@ function getProductDescription(product: Product): string {
     'feature_description',
     'summary',
     'caption',
-    'memo',
   ]);
   return description.length > 160 ? `${description.slice(0, 157)}...` : description;
 }
