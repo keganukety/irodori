@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "scenes": [
+    {
+      "schemaVersion": 1,
+      "id": "room-2026-10-08",
+      "date": "2026-10-08",
+      "title": "一人暮らし 韓国風｜上から見る部屋づくり",
+      "summary": "こんな部屋で暮らしてみたい🏠 色や素材が近い家具・雑貨を集めてみました🪵",
+      "disclosure": "【PR】部屋をイメージしてみました🏠 商品そのものの写真ではありません。紹介するのは、色や形が近いアイテムです。",
+      "imageUrl": "/room-scenes/room-2026-10-08/room.png",
+      "imageAlt": "一人暮らし 韓国風｜上から見る部屋づくり。イメージした部屋の俯瞰画像。",
+      "products": [
+        {
+          "itemCode": "sanwadirect:10089437",
+          "name": "白いスリムデスク｜幅120cm",
+          "itemUrl": "https://item.rakuten.co.jp/sanwadirect/100-deskf014/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/54e0db2b.31e7c5c0.54e0db2c.aa1a81a9/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsanwadirect%2F100-deskf014%2F&m=https%3A%2F%2Fitem.rakuten.co.jp%2Fsanwadirect%2F100-deskf014%2F",
+          "imageUrl": "https://tshop.r10s.jp/sanwadirect/cabinet/1/100-deskf014.jpg?downsize=400:*",
+          "price": 9780,
+          "rating": 4.59,
+          "reviewCount": 493,
+          "ratingCheckedAt": "2026-10-09T12:31:39Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/sanwadirect/100-deskf014/",
+          "similarityReason": "白い天板と脚が、明るいお部屋になじみます🤍 幅120×奥行45×高さ70cm。脚と背面の補強、収納の構造は部屋のイメージと異なります。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396267560335"
+        },
+        {
+          "itemCode": "manabe-interior-hearts:10018207",
+          "name": "洗える白いシャギーラグ｜130×190cm",
+          "itemUrl": "https://item.rakuten.co.jp/manabe-interior-hearts/12000759/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/54e0db2b.31e7c5c0.54e0db2c.aa1a81a9/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fmanabe-interior-hearts%2F12000759%2F&m=https%3A%2F%2Fitem.rakuten.co.jp%2Fmanabe-interior-hearts%2F12000759%2F",
+          "imageUrl": "https://tshop.r10s.jp/manabe-interior-hearts/cabinet/05021651/series/700/12000759t.jpg?downsize=350:*",
+          "price": 4999,
+          "rating": 4.63,
+          "reviewCount": 38,
+          "ratingCheckedAt": "2026-10-09T12:31:39Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/manabe-interior-hearts/12000759/",
+          "similarityReason": "明るい色とふわっとした毛足で、足元をやさしい雰囲気に🤍 ホワイトの130×190cmを選びました。部屋のイメージとは白さや毛足の見え方が異なります。",
+          "availability": "available"
+        }
+      ],
+      "themeLabel": "一人暮らし 韓国風",
+      "roomCollectionUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1800012752197283"
+    }
+  ]
+}
