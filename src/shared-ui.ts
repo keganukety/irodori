@@ -326,6 +326,7 @@ export function mountCommonHeader(page: HeaderPage = 'other'): void {
           <a class="${page === 'compare' ? 'is-current' : ''}" href="/compare.html">比較</a>
           <a class="${page === 'guide' ? 'is-current' : ''}" href="/stroller-guide.html">ベビーカーの選び方</a>
           <a href="/products.html#ranking">ランキング</a>
+          <a href="/rooms.html">暮らしの部屋</a>
         </nav>
       </div>
     `;

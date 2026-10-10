@@ -15,6 +15,7 @@ export default defineConfig({
         affiliateAdmin: 'affiliate-admin.html',
         strollerGuide: 'stroller-guide.html',
         privacy: 'privacy.html',
+        rooms: 'rooms.html',
       },
     },
   },
