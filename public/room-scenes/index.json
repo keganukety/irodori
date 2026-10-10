@@ -3,6 +3,65 @@
   "scenes": [
     {
       "schemaVersion": 1,
+      "id": "room-2026-10-09",
+      "date": "2026-10-09",
+      "title": "一人暮らし ホテルライク｜上から見る部屋づくり",
+      "summary": "こんな部屋で暮らしてみたい🏠 色や素材が近い家具・雑貨を集めてみました🪵",
+      "disclosure": "【PR】部屋をイメージしてみました🏠 商品そのものの写真ではありません。紹介するのは、色や形が近いアイテムです。",
+      "imageUrl": "/room-scenes/room-2026-10-09/room.png",
+      "imageAlt": "ダークウッドとベージュでまとめたホテルライクな部屋を上から見たイメージ",
+      "products": [
+        {
+          "itemCode": "sanwadirect:10098005",
+          "name": "ブラウン木目のスリムデスク",
+          "itemUrl": "https://item.rakuten.co.jp/sanwadirect/100-deskn012/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/54e0db2b.31e7c5c0.54e0db2c.aa1a81a9/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fsanwadirect%2F100-deskn012%2F&m=https%3A%2F%2Fitem.rakuten.co.jp%2Fsanwadirect%2F100-deskn012%2F",
+          "imageUrl": "https://tshop.r10s.jp/sanwadirect/cabinet/1/100-deskn012.jpg?downsize=400:*",
+          "price": 10800,
+          "rating": 4.7,
+          "reviewCount": 10,
+          "ratingCheckedAt": "2026-10-09T12:45:41Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/sanwadirect/100-deskn012/",
+          "similarityReason": "ブラウンの長方形天板と細い黒い脚が、落ち着いたデスクまわりになじみそうです。実商品は120×45×70cmで、天板は木目をプリントした化粧板。部屋のイメージより木目の濃淡が強く、背面にはクロスの補強があります。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396382216378"
+        },
+        {
+          "itemCode": "cocopla:10002982",
+          "name": "ベージュの洗える麻混ラグ",
+          "itemUrl": "https://item.rakuten.co.jp/cocopla/101-vqg0124b0006/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/54e0db2b.31e7c5c0.54e0db2c.aa1a81a9/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fcocopla%2F101-vqg0124b0006%2F&m=https%3A%2F%2Fitem.rakuten.co.jp%2Fcocopla%2F101-vqg0124b0006%2F",
+          "imageUrl": "https://tshop.r10s.jp/cocopla/cabinet/item/011/vqg0124b0006_a001.jpg?_ex=200x200&s=0&r=1",
+          "price": 4380,
+          "rating": 4.69,
+          "reviewCount": 16,
+          "ratingCheckedAt": "2026-10-09T12:45:41Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/cocopla/101-vqg0124b0006/",
+          "similarityReason": "淡いベージュの長方形ラグで、木の床に柔らかな色を添えられそうです。実商品は綿と麻の表地を使ったキルト仕立て。部屋のイメージの無地の布面とは異なり、四角い縫い目があります。選んだサイズは130×185cm、厚さ約5mmです。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396382305104"
+        },
+        {
+          "itemCode": "yaruki-light:10000162",
+          "name": "布シェードのコードレスライト",
+          "itemUrl": "https://item.rakuten.co.jp/yaruki-light/lut0038/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/54e0db2b.31e7c5c0.54e0db2c.aa1a81a9/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fyaruki-light%2Flut0038%2F&m=https%3A%2F%2Fitem.rakuten.co.jp%2Fyaruki-light%2Flut0038%2F",
+          "imageUrl": "https://tshop.r10s.jp/yaruki-light/cabinet/11568312/11655837/12583115/lut0038-1.jpg?_ex=200x200&s=0&r=1",
+          "price": 2699,
+          "rating": 4.75,
+          "reviewCount": 12,
+          "ratingCheckedAt": "2026-10-09T12:45:41Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/yaruki-light/lut0038/",
+          "similarityReason": "ベージュのシェードとゴールド色の脚が、暖かな明かりの雰囲気に近いライトです。実商品にはシェードの縦ひだと、盛り上がった丸い台座があります。素材は鉄と布で、高さ30cm。充電してコードレスで使えます。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396382349933"
+        }
+      ],
+      "themeLabel": "一人暮らし ホテルライク",
+      "roomCollectionUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1800012754538390"
+    },
+    {
+      "schemaVersion": 1,
       "id": "room-2026-10-08",
       "date": "2026-10-08",
       "title": "一人暮らし 韓国風｜上から見る部屋づくり",
