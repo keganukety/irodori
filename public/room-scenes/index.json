@@ -9,7 +9,7 @@
       "summary": "こんな部屋で暮らしてみたい🏠 色や素材が近い家具・雑貨を集めてみました🪵",
       "disclosure": "【PR】部屋をイメージしてみました🏠 商品そのものの写真ではありません。紹介するのは、色や形が近いアイテムです。",
       "imageUrl": "/room-scenes/room-2026-10-08/room.png",
-      "imageAlt": "一人暮らし 韓国風｜上から見る部屋づくり。イメージした部屋の俯瞰画像。",
+      "imageAlt": "白と淡いブルーでまとめたワンルームを上から見た部屋のイメージ",
       "products": [
         {
           "itemCode": "sanwadirect:10089437",
@@ -23,8 +23,7 @@
           "ratingCheckedAt": "2026-10-09T12:31:39Z",
           "ratingSourceUrl": "https://item.rakuten.co.jp/sanwadirect/100-deskf014/",
           "similarityReason": "白い天板と脚が、明るいお部屋になじみます🤍 幅120×奥行45×高さ70cm。脚と背面の補強、収納の構造は部屋のイメージと異なります。",
-          "availability": "available",
-          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396267560335"
+          "availability": "available"
         },
         {
           "itemCode": "manabe-interior-hearts:10018207",
@@ -41,8 +40,7 @@
           "availability": "available"
         }
       ],
-      "themeLabel": "一人暮らし 韓国風",
-      "roomCollectionUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1800012752197283"
+      "themeLabel": "一人暮らし 韓国風"
     }
   ]
 }
