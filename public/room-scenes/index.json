@@ -3,6 +3,65 @@
   "scenes": [
     {
       "schemaVersion": 1,
+      "id": "room-2026-10-10",
+      "date": "2026-10-10",
+      "title": "一人暮らし 男性｜上から見る部屋づくり",
+      "summary": "こんな部屋で暮らしてみたい🏠 色や素材が近い家具・雑貨を集めてみました🪵",
+      "disclosure": "【PR】部屋をイメージしてみました🏠 商品そのものの写真ではありません。紹介するのは、色や形が近いアイテムです。",
+      "imageUrl": "/room-scenes/room-2026-10-10/room.png",
+      "imageAlt": "一人暮らし 男性｜上から見る部屋づくり。部屋の俯瞰画像。",
+      "products": [
+        {
+          "itemCode": "lushroom:10000206",
+          "name": "ウォールナット無垢のデスク",
+          "itemUrl": "https://item.rakuten.co.jp/lushroom/30068/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/g00t1v0n.jtqnf11f.g00t1v0n.jtqng01d/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Flushroom%2F30068%2F&m=http%3A%2F%2Fm.rakuten.co.jp%2Flushroom%2Fi%2F10000206%2F&rafcid=wsc_i_is_f64e5858-a5d9-44d6-b286-5461a16d085c",
+          "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/lushroom/cabinet/30068.jpg?_ex=128x128",
+          "price": 81800,
+          "rating": 4.82,
+          "reviewCount": 22,
+          "ratingCheckedAt": "2026-10-10T12:00:38.874950Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/lushroom/30068/",
+          "similarityReason": "濃い木目と黒い脚を合わせたデスク。商品は幅120×奥行60cmで、天板の縁や脚・収納の形は部屋イメージと異なります。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396460290426"
+        },
+        {
+          "itemCode": "neore:10036599",
+          "name": "洗えるマイクロファイバーラグ",
+          "itemUrl": "https://item.rakuten.co.jp/neore/microfiber140200/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/g00px41n.jtqnff53.g00px41n.jtqngeb4/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fneore%2Fmicrofiber140200%2F&m=http%3A%2F%2Fm.rakuten.co.jp%2Fneore%2Fi%2F10036599%2F&rafcid=wsc_i_is_f64e5858-a5d9-44d6-b286-5461a16d085c",
+          "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/neore/cabinet/ts2/microfiber140200s.jpg?_ex=128x128",
+          "price": 14850,
+          "rating": 4.53,
+          "reviewCount": 5298,
+          "ratingCheckedAt": "2026-10-10T12:00:40.217002Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/neore/microfiber140200/",
+          "similarityReason": "長方形の無地ラグで床を落ち着いた雰囲気に。フェザーグレーは部屋イメージより明るく、実商品は毛足20mmの柔らかな見た目です。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396460494399"
+        },
+        {
+          "itemCode": "interiorworks:10009033",
+          "name": "木目×黒フレームの4段ラック",
+          "itemUrl": "https://item.rakuten.co.jp/interiorworks/iw-20/",
+          "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/g00q2ghn.jtqnfa2a.g00q2ghn.jtqng16b/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Finteriorworks%2Fiw-20%2F&m=http%3A%2F%2Fm.rakuten.co.jp%2Finteriorworks%2Fi%2F10009033%2F&rafcid=wsc_i_is_f64e5858-a5d9-44d6-b286-5461a16d085c",
+          "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/interiorworks/cabinet/or/syuno/iw-20wh_00a.jpg?_ex=128x128",
+          "price": 10800,
+          "rating": 4.62,
+          "reviewCount": 50,
+          "ratingCheckedAt": "2026-10-10T12:00:38.874950Z",
+          "ratingSourceUrl": "https://item.rakuten.co.jp/interiorworks/iw-20/",
+          "similarityReason": "木目と黒いフレームの組み合わせが近いオープンラック。実商品は幅45cmの4段タイプで、部屋イメージとは高さや段数が異なります。",
+          "availability": "available",
+          "roomPostUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1700396460580417"
+        }
+      ],
+      "themeLabel": "一人暮らし 男性",
+      "roomCollectionUrl": "https://room.rakuten.co.jp/room_nekoneko.nyannnnyan/1800012755359420"
+    },
+    {
+      "schemaVersion": 1,
       "id": "room-2026-10-09",
       "date": "2026-10-09",
       "title": "一人暮らし ホテルライク｜上から見る部屋づくり",
